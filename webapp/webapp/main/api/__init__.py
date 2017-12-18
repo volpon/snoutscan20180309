@@ -5,7 +5,7 @@ from flask import Flask, request, jsonify
 from main import app
 from main.api.auth import jwt_required, current_identity
 
-from main.api.matcher import find_best_match
+from main.api.matcher import ImageFeatures, find_best_match
 
 from main.api.model import db, Profile, Photo
 
@@ -146,7 +146,7 @@ def api_query_match():
     image_data = image.get('data', None)
     image_type = image.get('type', None)
 
-    profile_id, per = find_best_match(image_data, image_type)
+    profile_id, per = find_best_match(image_data, image_type, profiles = Profile.query.all())
 
     if profile_id is None:
         return jsonify({'status': 'not found'}), 200

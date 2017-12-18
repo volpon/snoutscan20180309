@@ -8,6 +8,7 @@ from sqlalchemy.orm import relationship
 from flask_sqlalchemy import SQLAlchemy
 
 from main import app
+from main.api.matcher import ImageFeatures
 
 # Environment variables are defined in app.yaml.
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['SQLALCHEMY_DATABASE_URI']
@@ -91,7 +92,7 @@ class Profile(db.Model):
             return { 'status': 409, 'message': 'profile not found' }
 
         profile.photo.set_base64(image_data, image_type)
-
+        
         db.session.commit()
 
         return None
@@ -128,22 +129,26 @@ class Photo(db.Model):
 
     data = db.Column(MEDIUMBLOB)
     type = db.Column(db.String(46))
+    features = db.Column(MEDIUMBLOB)
 
     def __init__(self):
         pass
 
     def set_base64(self, data, type):
 
-        if not data:
+        if data:
+            self.set_binary(base64.b64decode(data), type)
+        else:
             self.data = None
             self.type = None
-        else:
-            self.data = base64.b64decode(data)
-            self.type = type
+            self.features = None
 
     def set_binary(self, data, type):
         self.data = data
         self.type = type
+
+        fs = ImageFeatures.from_image(self.data)
+        self.features = fs.encode()
 
     def get_base64(self):
         if not self.data:

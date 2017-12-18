@@ -1,14 +1,110 @@
 import cv2
 import numpy as np
 import base64
-from main.api.model import Profile, Photo
+import json
+import io
 
-def image_from_base64(data, type):
+def image_from_base64(data, type = None):
     return image_from_binary(base64.b64decode(data), type)
 
-def image_from_binary(data, type):
+def image_from_binary(data, type = None):
     data = np.array(bytearray(data), dtype=np.uint8)
     return cv2.imdecode(data, 0)
+
+
+class ImageFeatures(object):
+
+    def __init__(self, features = None):
+
+        if isinstance(features, bytes):
+            self.decode(features)
+        else:
+            self.descriptors = None
+
+        pass
+
+    @classmethod
+    def from_image(cls, image):
+
+        if (isinstance(image, str)):
+            image = image_from_base64(image)
+
+        if (isinstance(image, bytes)):
+            image = image_from_binary(image)
+
+        # Initiate BRISK detector
+        detector = cv2.BRISK_create()
+
+        # Initiate BRIEF extractor
+        descriptorExtractor = cv2.xfeatures2d.BriefDescriptorExtractor_create()
+
+        keypoints = detector.detect(image, None)
+        keypoints, descriptors = descriptorExtractor.compute(image, keypoints)
+
+        x = cls()
+        x.descriptors = descriptors
+        return x
+
+    def encode(self):
+
+        memfile = io.BytesIO()
+        np.save(memfile, self.descriptors)
+        memfile.seek(0)
+
+        serialized = memfile.read()
+
+        return serialized
+
+    def decode(self, serialized):
+
+        memfile = io.BytesIO(serialized)
+        self.descriptors = np.load(memfile)
+
+
+class ImageMatcher(object):
+
+    def __init__(self, image: ImageFeatures):
+
+        self.image = image
+
+        # Create BFMatcher object
+        self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+        pass
+
+    def match(self, image2: ImageFeatures):
+        """
+        @return percent
+        """
+
+        if image2 is None or image2.descriptors is None:
+            return None
+
+        # Match image descriptors
+        matches = self.matcher.match(self.image.descriptors, image2.descriptors);
+        
+        # quick calculation of the max and min distances between keypoints
+
+        max_dist = 0;
+        min_dist = 100;
+
+        for m in matches:
+            if m.distance < min_dist:
+                min_dist = m.distance
+            if m.distance > max_dist:
+                max_dist = m.distance
+
+        # calculate good matches
+
+        good_matches = []
+        for m in matches:
+            if m.distance <= 3 * min_dist:
+                good_matches.append(m)
+
+        # show user percentage of match
+        percent = (100 * len(good_matches)) / len(matches);
+
+        return percent;
+
 
 class MatchResult(object):
 
@@ -145,17 +241,12 @@ class MatchFragment(object):
 
         return MatchResult(name, outputImg, percent);
 
+def find_best_match(image_data, image_type, profiles):
 
-def find_best_match(image_data, image_type):
-
-    image1 = image_from_base64(image_data, image_type)
-
-    if image1 is None:
+    if image_data is None:
         return None, None
 
-    match = MatchFragment()
-
-    profiles = Profile.query.all()
+    matcher = ImageMatcher(ImageFeatures.from_image(image_data))
 
     best_per = 0
     best_id = 0
@@ -164,19 +255,14 @@ def find_best_match(image_data, image_type):
 
         photo = profile.photo
 
-        data2, type2 = photo.get_binary()
-
-        if data2 is None:
+        if photo.features is None:
             continue
+        
+        image2 = ImageFeatures(photo.features)
 
-        image2 = image_from_binary(data2, type2)
+        per = matcher.match(image2)
 
-        if image2 is None:
-            continue
-
-        per = match.compare(image1, image2)
-
-        if per > best_per:
+        if per and per > best_per:
             best_per = per
             best_id = profile.id
 
