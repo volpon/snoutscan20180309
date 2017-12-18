@@ -1,0 +1,172 @@
+﻿{% extends "layout.html" %}
+
+{% block content %}
+
+<h2>{{ title }}</h2>
+<h3>{{ message }} : {{ profile_id }}</h3>
+
+<img src="/profile/{{ profile_id }}/photo" width="256" height="256" />
+
+<div><label>name:</label>{{fields.name}}</div>
+<div><label>breed:</label>{{fields.breed}}</div>
+<div><label>sex:</label>{{fields.sex}}</div>
+<div><label>age:</label>{{fields.age}}</div>
+<div><label>location:</label>{{fields.location}}</div>
+
+<div id="access-token"></div>
+<div id="all-cookie"></div>
+
+<p>
+    <div id="form-messages"></div>
+
+    <form id="form-upload" action="" method="POST" enctype="multipart/form-data">
+        <div id="photo_preview"><img id="previewing" src="noimage.png" /></div>
+        <div class="field"><label>Upload Photo:</label><input type="file" id="photo" name="photo" size="32" required> </div>
+        <input type="submit" value="submit" />
+    </form>
+</p>
+
+<br />
+
+<div id="delete-messages"></div>
+
+<form id="form-delete" action="" method="DELETE">
+    <input type="submit" value="Delete Profile" />
+</form>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+    $('#access-token').text('access_token: ' + window.sessionStorage.accessToken);
+    $('#all-cookie').text('cookie: ' + document.cookie);
+
+
+    $(document).ready(function (e) {
+
+        var form = $('#form-upload');
+        var formMessage = $('#form-messages');
+
+        function preview(fname) {
+
+
+        };
+
+        function upload_photo(image_data, image_type) {
+
+            var formData = {
+                'image': { 'data': image_data, 'type': image_type }
+            }
+
+            var dataJSON = JSON.stringify(formData);
+
+            $.ajax({
+                url: "/api/profile/{{profile_id}}/photo",
+                type: "PUT",
+                dataType: 'json',
+                contentType: 'application/json',
+                data: dataJSON,
+                processData: false,
+                beforeSend: set_jwt_auth_header
+            }).done(function (response) {
+
+                $(formMessage).removeClass('error');
+                $(formMessage).addClass('success');
+                $(formMessage).text('photo uploaded successfully');
+                $('#photo').val("")
+
+            }).fail(function (data) {
+
+                $(formMessage).removeClass('success');
+                $(formMessage).addClass('error');
+
+                if (data.responseJSON) {
+                    $(formMessage).text('upload fail: ' + data.responseJSON.error.message);
+                } else {
+                    $(formMessage).text('Oops! An error occured and your message could not be sent.');
+                }
+            });
+        };
+
+        $(form).submit(function (event) {
+
+            event.preventDefault();
+
+            var file = this[0].files[0];
+
+            var encoded = null;
+
+            var reader = new FileReader();
+
+            reader.onload = function () {
+                encoded = btoa(reader.result);
+                upload_photo(encoded, file.type);
+            };
+
+            reader.readAsBinaryString(file);
+
+        });
+
+        $(function () {
+            $("#photo").change(function () {
+                $(formMessage).empty(); // To remove the previous error message
+                var file = this.files[0];
+                var imagefile = file.type;
+                var match = ["image/jpeg", "image/png", "image/jpg"];
+                if (!((imagefile == match[0]) || (imagefile == match[1]) || (imagefile == match[2]))) {
+                    $('#previewing').attr('src', 'noimage.png');
+                    $(formMessage).html("<p id='error'>Please Select A valid Image File</p>" + "<h4>Note</h4>" + "<span id='error_message'>Only jpeg, jpg and png Images type allowed</span>");
+                    return false;
+                }
+                else {
+                    var reader = new FileReader();
+                    reader.onload = imageIsLoaded;
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        });
+
+        function imageIsLoaded(e) {
+            $("#photo").css("color", "green");
+            $('#photo_preview').css("display", "block");
+            $('#previewing').attr('src', e.target.result);
+            $('#previewing').attr('width', '250px');
+            $('#previewing').attr('height', '230px');
+        };
+
+        $('#form-delete').submit(function (event) {
+
+            event.preventDefault();
+
+            formMessage = $('#delete-messages')
+
+            $.ajax({
+                url: "/api/profile/{{profile_id}}",
+                type: "DELETE",
+                dataType: 'json',
+                contentType: 'application/json',
+                data: '{}',
+                processData: false,
+                beforeSend: set_jwt_auth_header
+            }).done(function (response) {
+
+                $(formMessage).removeClass('error');
+                $(formMessage).addClass('success');
+                $(formMessage).text('profile delete successful');
+
+                clear_access_token();
+
+            }).fail(function (data) {
+                $(formMessage).removeClass('success');
+                $(formMessage).addClass('error');
+                $(formMessage).text('profile delete failed');
+            });
+
+        });
+
+    });
+
+</script>
+{% endblock %}

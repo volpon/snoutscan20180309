@@ -1,0 +1,70 @@
+﻿{% extends "layout.html" %}
+
+{% block content %}
+
+
+<h2>{{ title }}.</h2>
+<h3>{{ message }}</h3>
+
+<p>Use this area to provide additional information.</p>
+
+<div id="form-messages"></div>
+
+<form id="form" action="/api/auth" method="POST">
+    <div class="field"><label>Email:</label><input type="email" id="email" name="email" /></div>
+    <div class="field"><lavel>password:</lavel><input type="text" id="password" name="password" /></div>
+    <p><input type="submit" value="Login" /></p>
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+    $(document).ready(function () {
+
+        // Set up an event listener for the contact form.
+        $('#form').submit(function (event) {
+
+            event.preventDefault();
+
+            var formData = { 'email': $('#email').val(), 'password': $('#password').val() }
+            var formMessage = $('#form-messages')
+
+            $.ajax({
+                type: 'POST',
+                url: '/api/auth',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                processData: false,
+            }).done(function (response) {
+
+                $(formMessage).removeClass('error');
+                $(formMessage).addClass('success');
+                $(formMessage).text('access_token: ' + response.access_token);
+
+                set_access_token(response.access_token, response.profile);
+
+                window.location.replace("/profile/" + response.profile);
+
+            }).fail(function (data) {
+
+                clear_access_token();
+
+                $(formMessage).removeClass('success');
+                $(formMessage).addClass('error');
+
+                if (data.responseJSON) {
+                    $(formMessage).text('auth fail: ' + data.responseJSON.error.message);
+                } else {
+                    $(formMessage).text('Oops! An error occured and your message could not be sent.');
+                }
+
+            });
+        });
+
+    });
+
+</script>
+{% endblock %}

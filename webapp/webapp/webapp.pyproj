@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>7cbb36bd-f8a7-4bb0-8b6e-2324f7bc054a</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <ProjectTypeGuids>{789894c7-04a9-4a11-a6b5-3f4435165112};{1b580a1a-fdb3-4b32-83e1-6407eb2722e6};{349c5851-65df-11da-9384-00065b846f21};{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <StartupFile>runserver.py</StartupFile>
+    <SearchPath>
+    </SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <LaunchProvider>Web launcher</LaunchProvider>
+    <WebBrowserUrl>http://localhost</WebBrowserUrl>
+    <OutputPath>.</OutputPath>
+    <SuppressCollectPythonCloudServiceFiles>true</SuppressCollectPythonCloudServiceFiles>
+    <Name>webapp</Name>
+    <RootNamespace>webapp</RootNamespace>
+    <InterpreterId>MSBuild|env|$(MSBuildProjectFullPath)</InterpreterId>
+    <PythonRunWebServerCommandEnvironment>SQLALCHEMY_DATABASE_URI=mysql+pymysql://dev:devdev@localhost/SnoutScan</PythonRunWebServerCommandEnvironment>
+    <Environment>SQLALCHEMY_DATABASE_URI=mysql+pymysql://dev:devdev@localhost/SnoutScan</Environment>
+    <WebBrowserPort>5555</WebBrowserPort>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="main\api\auth.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="main\api\matcher.py" />
+    <Compile Include="main\api\model.py" />
+    <Compile Include="main\api\test.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="main\api\__init__.py" />
+    <Compile Include="create_tables.py" />
+    <Compile Include="runserver.py" />
+    <Compile Include="main\__init__.py" />
+    <Compile Include="main\views.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="D:\projects\Job\ProvisionLab\SnoutScan\SnoutScan\webapp\webapp\main\api\" />
+    <Folder Include="D:\projects\Job\ProvisionLab\SnoutScan\SnoutScan\webapp\webapp\main\api\__pycache__\" />
+    <Folder Include="D:\projects\Job\ProvisionLab\SnoutScan\SnoutScan\webapp\webapp\main\" />
+    <Folder Include="D:\projects\Job\ProvisionLab\SnoutScan\SnoutScan\webapp\webapp\main\static\" />
+    <Folder Include="D:\projects\Job\ProvisionLab\SnoutScan\SnoutScan\webapp\webapp\main\static\content\" />
+    <Folder Include="D:\projects\Job\ProvisionLab\SnoutScan\SnoutScan\webapp\webapp\main\static\fonts\" />
+    <Folder Include="D:\projects\Job\ProvisionLab\SnoutScan\SnoutScan\webapp\webapp\main\static\scripts\" />
+    <Folder Include="D:\projects\Job\ProvisionLab\SnoutScan\SnoutScan\webapp\webapp\main\templates\" />
+    <Folder Include="main\" />
+    <Folder Include="main\api\" />
+    <Folder Include="main\api\__pycache__\" />
+    <Folder Include="main\static\" />
+    <Folder Include="main\static\content\" />
+    <Folder Include="main\static\fonts\" />
+    <Folder Include="main\static\scripts\" />
+    <Folder Include="main\templates\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="app.yaml" />
+    <Content Include="main\api\__pycache__\matcher.cpython-36.pyc" />
+    <Content Include="main\api\__pycache__\model.cpython-36.pyc" />
+    <Content Include="main\api\__pycache__\__init__.cpython-36.pyc" />
+    <Content Include="main\static\scripts\api.js">
+      <SubType>Code</SubType>
+    </Content>
+    <Content Include="main\templates\login.html" />
+    <Content Include="main\templates\match.html" />
+    <Content Include="main\templates\profile.html" />
+    <Content Include="requirements.txt" />
+    <Content Include="main\static\content\bootstrap.css" />
+    <Content Include="main\static\content\bootstrap.min.css" />
+    <Content Include="main\static\content\site.css" />
+    <Content Include="main\static\fonts\glyphicons-halflings-regular.eot" />
+    <Content Include="main\static\fonts\glyphicons-halflings-regular.svg" />
+    <Content Include="main\static\fonts\glyphicons-halflings-regular.ttf" />
+    <Content Include="main\static\fonts\glyphicons-halflings-regular.woff" />
+    <Content Include="main\static\scripts\bootstrap.js" />
+    <Content Include="main\static\scripts\bootstrap.min.js" />
+    <Content Include="main\static\scripts\jquery-1.10.2.intellisense.js" />
+    <Content Include="main\static\scripts\jquery-1.10.2.js" />
+    <Content Include="main\static\scripts\jquery-1.10.2.min.js" />
+    <Content Include="main\static\scripts\jquery-1.10.2.min.map" />
+    <Content Include="main\static\scripts\jquery.validate-vsdoc.js" />
+    <Content Include="main\static\scripts\jquery.validate.js" />
+    <Content Include="main\static\scripts\jquery.validate.min.js" />
+    <Content Include="main\static\scripts\jquery.validate.unobtrusive.js" />
+    <Content Include="main\static\scripts\jquery.validate.unobtrusive.min.js" />
+    <Content Include="main\static\scripts\modernizr-2.6.2.js" />
+    <Content Include="main\static\scripts\respond.js" />
+    <Content Include="main\static\scripts\respond.min.js" />
+    <Content Include="main\static\scripts\_references.js" />
+    <Content Include="main\templates\about.html" />
+    <Content Include="main\templates\contact.html" />
+    <Content Include="main\templates\index.html" />
+    <Content Include="main\templates\layout.html" />
+    <Content Include="main\templates\signup.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <Interpreter Include="env\">
+      <Id>env</Id>
+      <Version>3.6</Version>
+      <Description>env (Python 3.6 (64-bit))</Description>
+      <InterpreterPath>Scripts\python.exe</InterpreterPath>
+      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
+      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
+      <Architecture>X64</Architecture>
+    </Interpreter>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.Web.targets" />
+  <!-- Specify pre- and post-build commands in the BeforeBuild and 
+       AfterBuild targets below. -->
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <AutoAssignPort>True</AutoAssignPort>
+          <UseCustomServer>True</UseCustomServer>
+          <CustomServerUrl>http://localhost</CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}" User="">
+        <WebProjectProperties>
+          <StartPageUrl>
+          </StartPageUrl>
+          <StartAction>CurrentPage</StartAction>
+          <AspNetDebugging>True</AspNetDebugging>
+          <SilverlightDebugging>False</SilverlightDebugging>
+          <NativeDebugging>False</NativeDebugging>
+          <SQLDebugging>False</SQLDebugging>
+          <ExternalProgram>
+          </ExternalProgram>
+          <StartExternalURL>
+          </StartExternalURL>
+          <StartCmdLineArguments>
+          </StartCmdLineArguments>
+          <StartWorkingDirectory>
+          </StartWorkingDirectory>
+          <EnableENC>False</EnableENC>
+          <AlwaysStartWebServerOnDebug>False</AlwaysStartWebServerOnDebug>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>

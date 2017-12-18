@@ -1,0 +1,71 @@
+﻿{% extends "layout.html" %}
+
+{% block content %}
+
+
+<h2>{{ title }}.</h2>
+<h3>{{ message }}</h3>
+
+<p>Use this area to provide additional information.</p>
+
+<div id="form-messages"></div>
+
+<form id="form" action="" method="POST">
+    <div class="field"><label>Email:</label><input type="email" name="email" required /></div>
+    <div class="field"><label>Password:</label><input type="password" name="password" required /></div>
+    <br>
+    <div class="field"><lavel>Phone:</lavel><input type="text" name="phone" /></div>
+    <div class="field"><label>Name:</label><input type="text" name="name" /></div>
+    <p>Breed <input type="text" name="breed" /></p>
+    <p>Sex <input type="text" name="sex" /></p>
+    <p>Age <input type="text" name="age" /></p>
+    <p>Location <input type="text" name="location" /></p>
+    <p><input type="submit" value="Signup" /></p>
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+    $(document).ready(function () {
+
+        $(form).submit(function (event) {
+
+            event.preventDefault();
+
+            var form = $('#form');
+            var formMessages = $('#form-messages');
+
+            $.ajax({
+                type: 'POST',
+                url: '/api/profile/signup',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify($(form).serializeObject()),
+                processData: false,
+            }).done(function (response) {
+
+                $(formMessages).removeClass('error');
+                $(formMessages).addClass('success');
+                $(formMessages).text('profile created');
+
+                window.location.replace("/profile/" + response.profile_id);
+                //window.location.href = "/upload_photo";
+
+            }).fail(function (data) {
+                $(formMessages).removeClass('success');
+                $(formMessages).addClass('error');
+
+                if (data.responseJSON) {
+                    $(formMessages).text('error: ' + data.responseJSON.error.message);
+                } else {
+                    $(formMessages).text('Oops! An error occured and your message could not be sent.');
+                }
+            });
+        });
+
+    });
+
+</script>
+{% endblock %}

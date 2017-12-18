@@ -1,0 +1,113 @@
+﻿{% extends "layout.html" %}
+
+{% block content %}
+
+<h2>{{ title }}</h2>
+<h3>{{ message }}</h3>
+
+<p>
+
+    <div id="form-messages"></div>
+
+    <form id="form-upload" action="" method="POST" enctype="multipart/form-data">
+        <div id="photo_preview"><img id="previewing" src="noimage.png" /></div>
+        <div class="field"><label>Upload Photo:</label><input type="file" id="photo" name="photo" size="32" required> </div>
+        <input type="submit" value="submit" />
+    </form>
+
+</p>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+    $(document).ready(function (e) {
+
+        var form = $('#form-upload');
+        var formMessage = $('#form-messages');
+
+        function upload_photo(image_data, image_type) {
+
+            var formData = {
+                'image': { 'data': image_data, 'type': image_type }
+            }
+
+            var dataJSON = JSON.stringify(formData);
+
+            $.ajax({
+                url: "/api/query_match",
+                type: "POST",
+                dataType: 'json',
+                contentType: 'application/json',
+                data: dataJSON,
+                processData: false,
+            }).done(function (response) {
+
+                $(formMessage).removeClass('error');
+                $(formMessage).addClass('success');
+                $(formMessage).text(JSON.stringify(response));
+                $('#photo').val("")
+
+            }).fail(function (data) {
+
+                $(formMessage).removeClass('success');
+                $(formMessage).addClass('error');
+
+                if (data.responseJSON) {
+                    $(formMessage).text('upload fail: ' + data.responseJSON.error.message);
+                } else {
+                    $(formMessage).text('Oops! An error occured and your message could not be sent.');
+                }
+            });
+        };
+
+        $(form).submit(function (event) {
+
+            event.preventDefault();
+
+            var file = this[0].files[0];
+
+            var encoded = null;
+
+            var reader = new FileReader();
+
+            reader.onload = function () {
+                encoded = btoa(reader.result);
+                upload_photo(encoded, file.type);
+            };
+
+            reader.readAsBinaryString(file);
+
+        });
+
+        $(function () {
+            $("#photo").change(function () {
+                $(formMessage).empty(); // To remove the previous error message
+                var file = this.files[0];
+                var imagefile = file.type;
+                var match = ["image/jpeg", "image/png", "image/jpg"];
+                if (!((imagefile == match[0]) || (imagefile == match[1]) || (imagefile == match[2]))) {
+                    $('#previewing').attr('src', 'noimage.png');
+                    $(formMessage).html("<p id='error'>Please Select A valid Image File</p>" + "<h4>Note</h4>" + "<span id='error_message'>Only jpeg, jpg and png Images type allowed</span>");
+                    return false;
+                }
+                else {
+                    var reader = new FileReader();
+                    reader.onload = imageIsLoaded;
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        });
+
+        function imageIsLoaded(e) {
+            $("#photo").css("color", "green");
+            $('#photo_preview').css("display", "block");
+            $('#previewing').attr('src', e.target.result);
+            $('#previewing').attr('width', '250px');
+            $('#previewing').attr('height', '230px');
+        };
+    });
+
+</script>
+{% endblock %}
