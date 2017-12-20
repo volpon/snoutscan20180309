@@ -10,7 +10,7 @@
 
 <div id="form-messages"></div>
 
-<form id="form" action="" method="POST">
+<form id="form" action="#" method="POST">
     <div class="field"><label>Email:</label><input type="email" name="email" required /></div>
     <div class="field"><label>Password:</label><input type="password" name="password" required /></div>
     <br>
@@ -50,9 +50,7 @@
                 $(formMessages).addClass('success');
                 $(formMessages).text('profile created');
 
-                window.location.replace("/profile/" + response.profile_id);
-                //window.location.href = "/upload_photo";
-
+                window.location.replace("/login");
             }).fail(function (data) {
                 $(formMessages).removeClass('success');
                 $(formMessages).addClass('error');

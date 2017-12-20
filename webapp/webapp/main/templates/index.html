@@ -23,4 +23,15 @@
     </div>
 </div>
 
+Profiles:
+
+<table>
+    {% for pr in profiles %}
+    <tr>
+        <td>{{pr['id']}}</td>
+        <td><a href="/profile/{{pr['id']}}">{{pr['email']}}</a></td>
+    </tr>
+    {% endfor %}
+</table>
+
 {% endblock %}

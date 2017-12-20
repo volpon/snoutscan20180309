@@ -8,6 +8,8 @@ import logging
 from flask import Flask
 app = Flask(__name__)
 
+from main.api.model import db
+
 import main.api
 import main.views
 

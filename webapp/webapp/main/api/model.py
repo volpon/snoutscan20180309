@@ -3,7 +3,7 @@ import datetime
 import base64
 
 import sqlalchemy
-from sqlalchemy.dialects.mysql import MEDIUMBLOB, MEDIUMTEXT
+#from sqlalchemy.dialects.mysql import MEDIUMBLOB
 from sqlalchemy.orm import relationship
 from flask_sqlalchemy import SQLAlchemy
 
@@ -11,7 +11,8 @@ from main import app
 from main.api.matcher import ImageFeatures
 
 # Environment variables are defined in app.yaml.
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['SQLALCHEMY_DATABASE_URI']
+#app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['SQLALCHEMY_DATABASE_URI']
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -127,9 +128,11 @@ class Photo(db.Model):
     profile_id = db.Column(db.Integer, db.ForeignKey('profile.id'))
     profile = relationship("Profile", back_populates="photo")
 
-    data = db.Column(MEDIUMBLOB)
+    #data = db.Column(MEDIUMBLOB)
+    data = db.Column(db.LargeBinary)
     type = db.Column(db.String(46))
-    features = db.Column(MEDIUMBLOB)
+    #features = db.Column(MEDIUMBLOB)
+    features = db.Column(db.LargeBinary)
 
     def __init__(self):
         pass

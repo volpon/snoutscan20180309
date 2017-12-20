@@ -28,10 +28,17 @@ def is_access_denied(profile_id):
 @app.route('/home')
 def home():
     """Renders the home page."""
+
+
+    profiles = Profile.query.all()
+
+    ps = [ { 'id' : p.id, 'email': p.email } for p in profiles]
+
     return render_template(
         'index.html',
         title='Home Page',
         year=datetime.now().year,
+        profiles=ps
     )
 
 @app.route('/contact')
@@ -41,7 +48,7 @@ def contact():
         'contact.html',
         title='Contact',
         year=datetime.now().year,
-        message='Your contact page.'
+        message='Your contact page.',
     )
 
 @app.route('/about')
