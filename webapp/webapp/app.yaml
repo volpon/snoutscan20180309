@@ -10,12 +10,12 @@ env_variables:
     # Replace user, password, database, and instance connection name with the values obtained
     # when configuring your Cloud SQL instance.
     SQLALCHEMY_DATABASE_URI: >-
-      mysql+pymysql://USER:PASSWORD@/DATABASE?unix_socket=/cloudsql/INSTANCE_CONNECTION_NAME
+      mysql+pymysql://USER:PASSWORD@/DATABASE?unix_socket=/cloudsql/snoutscan:us-central1:snoutdb
 #[END env]
 
 #[START cloudsql_settings]
 # Replace project and instance with the values obtained  when configuring your
 # Cloud SQL instance.
 beta_settings:
-    cloud_sql_instances: INSTANCE_CONNECTION_NAME
+    cloud_sql_instances: snoutscan:us-central1:snoutdb
 #[END cloudsql_settings]
