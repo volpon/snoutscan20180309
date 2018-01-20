@@ -18,6 +18,7 @@ class User(object):
     def __init__(self, profile):
         self.id = profile.id
         self.email = profile.email
+        self.isadmin = profile.isadmin
 
 def authenticate(email, password):
 
@@ -38,7 +39,7 @@ def identity(payload):
 
     user_id = payload['identity']
 
-    return {'profile_id': user_id}
+    return {'profile_id': user_id, 'isadmin': False}
 
 jwt = JWT(app, authenticate, identity)
 

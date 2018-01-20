@@ -2,46 +2,52 @@ import os
 import datetime
 import base64
 
+is_heroku = 'DATABASE_URL' in os.environ.keys()
+is_postgres = is_heroku
+
 import sqlalchemy
-#from sqlalchemy.dialects.mysql import MEDIUMBLOB
 from sqlalchemy.orm import relationship
 from flask_sqlalchemy import SQLAlchemy
+
+
+if is_postgres:
+    MEDIUMBLOB = db.LargeBinary
+else:
+    from sqlalchemy.dialects.mysql import MEDIUMBLOB
 
 from main import app
 from main.api.matcher import ImageFeatures
 
 # Environment variables are defined in app.yaml.
-#app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['SQLALCHEMY_DATABASE_URI']
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
+
+if is_heroku:
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['SQLALCHEMY_DATABASE_URI']
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
 class Profile(db.Model):
 
-    __tablename__ = 'profile'
+    __tablename__ = 'profiles'
 
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(46))
     password = db.Column(db.String(46))
+    isadmin = db.Column(db.Boolean)
     phone = db.Column(db.String(46))
-    name = db.Column(db.String(46))
-    breed = db.Column(db.String(46))
-    sex = db.Column(db.String(46))
-    age = db.Column(db.String(46))
-    location = db.Column(db.String(46))
-    photo = db.relationship("Photo", uselist=False, cascade="all,delete", back_populates="profile")
 
-    def __init__(self, email, password, fields: dict):
+    friends = db.relationship("Friend", cascade="all,delete", back_populates="profile")
+
+    def __init__(self, email, password, fields: dict = {}):
+
         self.email = email
         self.password = password
+        self.isadmin = False
 
         self.phone = fields.get('phone', '')
-        self.name = fields.get('name', '')
-        self.breed = fields.get('breed', '')
-        self.sex = fields.get('sex', '')
-        self.age = fields.get('age', '')
-        self.location = fields.get('location', '')
         pass
 
     @classmethod
@@ -57,7 +63,6 @@ class Profile(db.Model):
             return None, { 'status': 409, 'message': 'profile with this email already exists' }
 
         p = Profile(email, password, fields)
-        p.photo = Photo()
 
         db.session.add(p)
         db.session.commit()
@@ -82,21 +87,80 @@ class Profile(db.Model):
 
         return profile
 
-    @classmethod
-    def set_photo(cls, id, image_data, image_type):
+    def get_fields(self):
 
-        profile = db.session.query(cls)\
+        return {
+            'phone' : self.phone if self.phone else '',
+            }
+
+    def update_fields(self, fields):
+
+        allowed_fields = ['phone']
+
+        for k,v in fields.items():
+            if k in allowed_fields and isinstance(v,str):
+                setattr(self, k, v);
+
+        db.session.commit()
+        pass
+
+class Friend(db.Model):
+
+    __tablename__ = 'friends'
+
+    id = db.Column(db.Integer, primary_key=True)
+    profile_id = db.Column(db.Integer, db.ForeignKey('profiles.id'))
+    profile = relationship("Profile", back_populates="friends")
+
+    name = db.Column(db.String(46))
+    breed = db.Column(db.String(46))
+    sex = db.Column(db.String(46))
+    age = db.Column(db.String(46))
+    location = db.Column(db.String(46))
+
+    photo = db.relationship("Photo", uselist=False, cascade="all,delete", back_populates="friend")
+
+    def __init__(self, profile, fields: dict):
+
+        self.profile = profile
+
+        self.name = fields.get('name', '')
+        self.breed = fields.get('breed', '')
+        self.sex = fields.get('sex', '')
+        self.age = fields.get('age', '')
+        self.location = fields.get('location', '')
+
+        self.photo = Photo()
+
+        pass
+
+    @classmethod
+    def create(cls, profile, fields: dict):
+
+        f = Friend(profile, fields)
+
+        db.session.add(f)
+        db.session.commit()
+
+        return f, None
+
+    @classmethod
+    def find_by_id(cls, id):
+
+        obj = db.session.query(cls)\
             .filter_by(id=id)\
             .one_or_none()
 
-        if profile is None:
-            return { 'status': 409, 'message': 'profile not found' }
+        return obj
 
-        profile.photo.set_base64(image_data, image_type)
-        
-        db.session.commit()
+    @classmethod
+    def find_by_profile_id(cls, profile_id):
 
-        return None
+        obj = db.session.query(cls)\
+            .filter_by(profile_id=profile_id)
+
+        return obj
+
 
     def get_fields(self):
 
@@ -120,26 +184,31 @@ class Profile(db.Model):
         pass
 
 
+    def set_photo(self, image_data, image_type):
+
+        self.photo.set_base64(image_data, image_type)
+        
+        db.session.commit()
+        return None
+
 class Photo(db.Model):
 
-    __tablename__ = 'photo'
+    __tablename__ = 'photos'
 
     id = db.Column(db.Integer, primary_key=True)
-    profile_id = db.Column(db.Integer, db.ForeignKey('profile.id'))
-    profile = relationship("Profile", back_populates="photo")
+    friend_id = db.Column(db.Integer, db.ForeignKey('friends.id'))
+    friend = relationship("Friend", back_populates="photo")
 
-    #data = db.Column(MEDIUMBLOB)
-    data = db.Column(db.LargeBinary)
+    data = db.Column(MEDIUMBLOB)
     type = db.Column(db.String(46))
-    #features = db.Column(MEDIUMBLOB)
-    features = db.Column(db.LargeBinary)
+    features = db.Column(MEDIUMBLOB)
 
     def __init__(self):
         pass
 
     def set_base64(self, data, type):
 
-        if data:
+        if isinstance(data, str):
             self.set_binary(base64.b64decode(data), type)
         else:
             self.data = None
@@ -147,6 +216,7 @@ class Photo(db.Model):
             self.features = None
 
     def set_binary(self, data, type):
+
         self.data = data
         self.type = type
 
@@ -154,9 +224,11 @@ class Photo(db.Model):
         self.features = fs.encode()
 
     def get_base64(self):
+
         if not self.data:
             return None, None
-        return base64.b64encode(self.data), self.type
+
+        return str(base64.b64encode(self.data), "utf-8"), self.type
 
     def get_binary(self):
         return self.data, self.type

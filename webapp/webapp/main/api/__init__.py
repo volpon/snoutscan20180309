@@ -7,7 +7,7 @@ from main.api.auth import jwt_required, current_identity
 
 from main.api.matcher import ImageFeatures, find_best_match
 
-from main.api.model import db, Profile, Photo
+from main.api.model import db, Profile, Friend, Photo
 
 import main.api.test
 
@@ -23,7 +23,21 @@ def decode_input():
     return input
 
 def is_access_denied(profile_id):
-    return current_identity is None or current_identity['profile_id'] != profile_id
+
+    if current_identity is None:
+        return True
+
+    if current_identity['profile_id'] == profile_id:
+        return False
+
+    if current_identity['isadmin']:
+        return False
+
+    return True
+
+###
+### Profile
+###
 
 @app.route('/api/profile/signup', methods=["POST"])
 def api_profile_signup():
@@ -90,41 +104,158 @@ def api_profile_get(profile_id: int):
 
     return jsonify(fields), 200
 
-@app.route('/api/profile/<int:profile_id>/photo', methods=["GET"])
-def api_profile_get_photo(profile_id: int):
+###
+### Friend
+###
 
-    profile = Profile.find_by_id(profile_id)
-
-    if profile is None:
-        return jsonify({'error': {'message': 'Profile not exists'}}), 404
-
-    data, type = profile.photo.get_base64()
-    if data is None:
-        return jsonify({'error': {'message': 'Photo not uploaded'}}), 404
-
-    return jsonify({'image' : {'data' : data, 'type' : type}}), 200
-
-@app.route('/api/profile/<int:profile_id>/photo', methods=["PUT"])
+@app.route('/api/profile/<int:profile_id>/friends', methods=["GET"])
 @jwt_required()
-def api_profile_set_photo(profile_id: int):
+def api_profile_friends_get(profile_id: int):
+    """
+    @return list of friends for profile
+    """
 
     if is_access_denied(profile_id):
         return jsonify({'error': {'message': 'forbidden'}}), 403
 
+    friends = Friend.find_by_profile_id(profile_id)
+
+    if friends is None:
+        return jsonify({'error': {'message': 'not found'}}), 404
+
+    out = [ {'friend_id':f.id, 'name':f.name} for f in friends ]
+
+    return jsonify(out), 200
+
+@app.route('/api/profile/<int:profile_id>/friends/new', methods=["POST"])
+@jwt_required()
+def api_friend_create(profile_id:int):
+
+    if is_access_denied(profile_id):
+        return jsonify({'error': {'message': 'forbidden'}}), 403
+
+    profile = Profile.find_by_id(profile_id)
+
+    if profile is None:
+        print('profile not found')
+        return jsonify({'error': {'message': 'profile not found'}}), 404
+
+    fields = decode_input()
+
+    if fields is None:
+        return jsonify({'error': {'message': 'invalid input'}}), 400
+
+    friend, error = Friend.create(profile, fields)
+
+    if friend is None:
+        return jsonify({'error': error}), error['status']
+
+    return jsonify({'friend_id': friend.id}), 201
+
+@app.route('/api/friend/<int:friend_id>', methods=["GET"])
+def api_friend_get(friend_id: int):
+
+    friend = Friend.find_by_id(friend_id)
+
+    if friend is None:
+        return jsonify({'error': {'message': 'friend not found'}}), 404
+
+    fields = friend.get_fields()
+
+    return jsonify(fields), 200
+
+@app.route('/api/friend/<int:friend_id>', methods=["PUT"])
+@jwt_required()
+def api_friend_put(friend_id: int):
+
+    friend = Friend.find_by_id(friend_id)
+
+    if friend is None:
+        return jsonify({'error': {'message': 'friend not exists'}}), 404
+
+    if is_access_denied(friend.profile_id):
+        return jsonify({'error': {'message': 'forbidden'}}), 403
+
+    fields = decode_input()
+
+    if fields is None:
+        return jsonify({'error': {'message': 'invalid input'}}), 400
+
+    friend.update_fields(fields)
+
+    return '', 204
+
+@app.route('/api/friend/<int:friend_id>', methods=["DELETE"])
+@jwt_required()
+def api_friend_delete(friend_id: int):
+
+    friend = Friend.find_by_id(friend_id)
+
+    if friend is None:
+        return jsonify({'error': {'message': 'friend not found'}}), 404
+
+    if is_access_denied(friend.profile_id):
+        return jsonify({'error': {'message': 'forbidden'}}), 403
+
+    db.session.delete(friend)
+    db.session.commit()
+
+    return '', 204
+
+###
+### Photo
+###
+
+@app.route('/api/friend/<int:friend_id>/photo', methods=["GET"])
+def api_friend_get_photo(friend_id: int):
+
+    friend = Friend.find_by_id(friend_id)
+
+    if friend is None:
+        return jsonify({'error': {'message': 'friend not exists'}}), 404
+
+    image_data, type = friend.photo.get_base64()
+    if image_data is None:
+        return jsonify({'error': {'message': 'Photo not uploaded'}}), 404
+
+    #print("GET: ", image_data)
+    #print("GET: image_data size: ", len(image_data))
+
+    return jsonify({'image' : {'data' : image_data, 'type' : type}}), 200
+
+@app.route('/api/friend/<int:friend_id>/photo', methods=["PUT"])
+@jwt_required()
+def api_friend_set_photo(friend_id: int):
+
+    friend = Friend.find_by_id(friend_id)
+
+    if friend is None:
+        return jsonify({'error': {'message': 'friend not exists'}}), 404
+
+    if is_access_denied(friend.profile_id):
+        return jsonify({'error': {'message': 'forbidden'}}), 403
+
     data = request.get_json()
 
-    if data is None:
+    if not isinstance(data, dict):
         return jsonify({'error': {'message': 'invalid input'}}), 400
 
     image = data.get('image', None)
 
-    if image is None:
+    if not isinstance(image, dict):
         return jsonify({'error': {'message': 'invalid input'}}), 400
 
     image_data = image.get('data', None)
     image_type = image.get('type', None)
 
-    error = Profile.set_photo(profile_id, image_data, image_type)
+    #print("PUT: ", image_data)
+    #print("PUT: image_data size: ", len(image_data))
+    
+    #image_data = bytes(image_data, "utf-8")
+
+    #print("PUT: ", image_data)
+
+    error = friend.set_photo(image_data, image_type)
 
     #print("{}: {}".format(image_type, image_data))
 
@@ -146,9 +277,11 @@ def api_query_match():
     image_data = image.get('data', None)
     image_type = image.get('type', None)
 
-    profile_id, per = find_best_match(image_data, image_type, profiles = Profile.query.all())
+    #image_data = bytes(image_data, "utf-8")
 
-    if profile_id is None:
+    friend_id, per = find_best_match(image_data, image_type, friends = Friend.query.all())
+
+    if friend_id is None:
         return jsonify({'status': 'not found'}), 200
 
-    return jsonify({'status': 'found', 'profile' : profile_id, 'percent' : per }), 200
+    return jsonify({'status': 'found', 'friend' : friend_id, 'percent' : per }), 200

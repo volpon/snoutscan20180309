@@ -32,7 +32,7 @@ def home():
 
     profiles = Profile.query.all()
 
-    ps = [ { 'id' : p.id, 'email': p.email } for p in profiles]
+    ps = [ { 'id' : p.id, 'email': p.email } for p in profiles if not p.isadmin ]
 
     return render_template(
         'index.html',

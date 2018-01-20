@@ -27,7 +27,7 @@ class ImageFeatures(object):
     def from_image(cls, image):
 
         if (isinstance(image, str)):
-            image = image_from_base64(image)
+            image = image_from_base64(bytes(image, "utf-8"))
 
         if (isinstance(image, bytes)):
             image = image_from_binary(image)
@@ -81,6 +81,8 @@ class ImageMatcher(object):
 
         # Match image descriptors
         matches = self.matcher.match(self.image.descriptors, image2.descriptors);
+        if len(matches) == 0:
+            return 0
         
         # quick calculation of the max and min distances between keypoints
 
@@ -203,6 +205,8 @@ class MatchFragment(object):
 
         # Match image descriptors
         matches = matcher.match(descriptors1, descriptors2);
+        if len(matches) == 0:
+            return None
         
         # Feature and connection colors
         RED = (255, 0, 0)
@@ -241,7 +245,7 @@ class MatchFragment(object):
 
         return MatchResult(name, outputImg, percent);
 
-def find_best_match(image_data, image_type, profiles):
+def find_best_match(image_data, image_type, friends):
 
     if image_data is None:
         return None, None
@@ -251,9 +255,9 @@ def find_best_match(image_data, image_type, profiles):
     best_per = 0
     best_id = 0
 
-    for profile in profiles:
+    for friend in friends:
 
-        photo = profile.photo
+        photo = friend.photo
 
         if photo.features is None:
             continue
@@ -264,7 +268,7 @@ def find_best_match(image_data, image_type, profiles):
 
         if per and per > best_per:
             best_per = per
-            best_id = profile.id
+            best_id = friend.id
 
     if best_per > 50:
         return best_id, best_per
