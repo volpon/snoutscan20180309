@@ -52,7 +52,7 @@ def api_profile_signup():
     if profile is None:
         return jsonify({'error': error}), error['status']
 
-    return jsonify({'profile_id': profile.id}), 201
+    return jsonify({'profile_id': profile.id}), 201, {'location': '/api/profile/{}'.format(profile.id)}
 
 @app.route('/api/profile/<int:profile_id>', methods=["DELETE"])
 @jwt_required()
@@ -150,7 +150,7 @@ def api_friend_create(profile_id:int):
     if friend is None:
         return jsonify({'error': error}), error['status']
 
-    return jsonify({'friend_id': friend.id}), 201
+    return jsonify({'friend_id': friend.id}), 201, {'location': '/api/friend/{}'.format(friend.id)}
 
 @app.route('/api/friend/<int:friend_id>', methods=["GET"])
 def api_friend_get(friend_id: int):

@@ -46,14 +46,12 @@
     <Compile Include="main\views.py" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="D:\projects\Job\ProvisionLab\SnoutScan\SnoutScan\webapp\webapp\main\api\" />
-    <Folder Include="D:\projects\Job\ProvisionLab\SnoutScan\SnoutScan\webapp\webapp\main\api\__pycache__\" />
-    <Folder Include="D:\projects\Job\ProvisionLab\SnoutScan\SnoutScan\webapp\webapp\main\" />
-    <Folder Include="D:\projects\Job\ProvisionLab\SnoutScan\SnoutScan\webapp\webapp\main\static\" />
-    <Folder Include="D:\projects\Job\ProvisionLab\SnoutScan\SnoutScan\webapp\webapp\main\static\content\" />
-    <Folder Include="D:\projects\Job\ProvisionLab\SnoutScan\SnoutScan\webapp\webapp\main\static\fonts\" />
-    <Folder Include="D:\projects\Job\ProvisionLab\SnoutScan\SnoutScan\webapp\webapp\main\static\scripts\" />
-    <Folder Include="D:\projects\Job\ProvisionLab\SnoutScan\SnoutScan\webapp\webapp\main\templates\" />
+    <Folder Include="main\api\" />
+    <Folder Include="main\" />
+    <Folder Include="main\static\" />
+    <Folder Include="main\static\content\" />
+    <Folder Include="main\static\fonts\" />
+    <Folder Include="main\static\scripts\" />
     <Folder Include="main\" />
     <Folder Include="main\api\" />
     <Folder Include="main\api\__pycache__\" />
@@ -65,9 +63,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="app.yaml" />
-    <Content Include="main\api\__pycache__\matcher.cpython-36.pyc" />
-    <Content Include="main\api\__pycache__\model.cpython-36.pyc" />
-    <Content Include="main\api\__pycache__\__init__.cpython-36.pyc" />
     <Content Include="main\static\scripts\api.js">
       <SubType>Code</SubType>
     </Content>

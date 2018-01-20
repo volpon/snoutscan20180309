@@ -21,6 +21,7 @@ ADD requirements.txt /app/
 RUN pip install -r requirements.txt
 ADD . /app/
 
-CMD gunicorn -b :$PORT main:app
+CMD gunicorn main:app -b :$PORT
+#CMD gunicorn main:app -D -b :443 --certfile=ssl_cert/cert.crt --keyfile=ssl_cert/cert.key
 
 # [END dockerfile]

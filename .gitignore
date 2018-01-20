@@ -260,4 +260,7 @@ paket-files/
 __pycache__/
 *.pyc
 *.bak
+
+# VS Code
 *.code-workspace
+.vscode/

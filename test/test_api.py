@@ -4,18 +4,22 @@ import requests
 import json
 import base64
 
+import logging
+
 ##################################################
 
-api_url = 'http://localhost:5555'
-api_username = 'a@a.a'
-api_password = 'a'
-api_verify_ssl=False
+#api_url = 'http://localhost:5555'
+api_url = 'https://snout-cloud.appspot.com'
+api_verify_ssl=True
 
 test_email = "test@a.a"
 test_password = "test"
 
+session = requests.Session()
+#session.trust_env = False
+
 def do_auth(username, password):
-    r = requests.post(
+    r = session.post(
         '{0}/api/auth'.format(api_url),
         json={'email': username,'password': password},
         verify=api_verify_ssl)
@@ -33,7 +37,7 @@ def do_create(self, email, password, fields = None):
 
     if fields is not None: json.update(fields)
     
-    r = requests.post('{0}/api/profile/signup'.format(api_url),
+    r = session.post('{0}/api/profile/signup'.format(api_url),
         json=json,
         verify=api_verify_ssl)
 
@@ -44,7 +48,9 @@ def do_create(self, email, password, fields = None):
         # not created and not exists
         return None
 
-    #self.assertEqual(r.status_code, 201)
+    #print("headers: ", r.headers)
+
+    self.assertEqual(r.status_code, 201)
     res = r.json()
 
     self.assertTrue(isinstance(res, dict))
@@ -56,7 +62,7 @@ def do_create(self, email, password, fields = None):
 
 def do_delete(self, access_token, profile_id):
 
-    r = requests.delete('{0}/api/profile/{1}'.format(api_url, profile_id),
+    r = session.delete('{0}/api/profile/{1}'.format(api_url, profile_id),
         headers = {'Authorization': 'JWT {0}'.format(access_token) },
         json= {},
         verify=api_verify_ssl)
@@ -65,7 +71,7 @@ def do_delete(self, access_token, profile_id):
 
 def do_add_friend(self, access_token, profile_id, fields = None):
     
-        r = requests.post('{0}/api/profile/{1}/friends/new'.format(api_url, profile_id),
+        r = session.post('{0}/api/profile/{1}/friends/new'.format(api_url, profile_id),
             headers = {'Authorization': 'JWT {0}'.format(access_token) },
             json= {
                 'name': 'name1',
@@ -108,7 +114,7 @@ def do_set_photo(self, access_token, friend_id, fname):
     image_data, image_type = load_image(fname)
     
     # set photo        
-    r = requests.put('{0}/api/friend/{1}/photo'.format(api_url, friend_id),
+    r = session.put('{0}/api/friend/{1}/photo'.format(api_url, friend_id),
         headers = {'Authorization': 'JWT {0}'.format(access_token) },
         json= {'image': { 'data': image_data, 'type': image_type }},
         verify=api_verify_ssl)
@@ -180,17 +186,20 @@ class Test_profile(unittest.TestCase):
 
     def tearDown(self):
         # login
-        access_token, profile_id = do_auth(test_email, test_password)
+        #access_token, profile_id = do_auth(test_email, test_password)
 
         # delete profile
-        if access_token is not None and profile_id is not None:
-            do_delete(self, access_token, profile_id)
+        if self.access_token is not None and self.profile_id is not None:
+            do_delete(self, self.access_token, self.profile_id)
 
     def test_get(self):
 
-        r = requests.get('{0}/api/profile/{1}'.format(api_url, self.profile_id),
-            json= {},
+        r = session.get('{0}/api/profile/{1}'.format(api_url, self.profile_id),
             verify=api_verify_ssl)
+
+        if r.status_code // 100 == 4:
+            print("headers: ", r.headers)
+            print("text: ", r.text)
 
         self.assertEqual(r.status_code, 200)
 
@@ -204,7 +213,7 @@ class Test_profile(unittest.TestCase):
     def test_put_and_get(self):
 
         # put
-        r = requests.put('{0}/api/profile/{1}'.format(api_url, self.profile_id),
+        r = session.put('{0}/api/profile/{1}'.format(api_url, self.profile_id),
             headers = {'Authorization': 'JWT {0}'.format(self.access_token) },
             json= {
                 'phone':'phone1'
@@ -214,9 +223,12 @@ class Test_profile(unittest.TestCase):
         self.assertEqual(r.status_code, 204)
 
         # get
-        r = requests.get('{0}/api/profile/{1}'.format(api_url, self.profile_id),
-            json= {},
+        r = session.get('{0}/api/profile/{1}'.format(api_url, self.profile_id),
             verify=api_verify_ssl)
+
+        if r.status_code // 100 == 4:
+            print("headers: ", r.headers)
+            print("text: ", r.text)
         
         self.assertEqual(r.status_code, 200)
 
@@ -246,7 +258,7 @@ class Test_friends(unittest.TestCase):
     def test_get(self):
 
         # get friends list
-        r = requests.get('{0}/api/profile/{1}/friends'.format(api_url, self.profile_id),
+        r = session.get('{0}/api/profile/{1}/friends'.format(api_url, self.profile_id),
             headers = {'Authorization': 'JWT {0}'.format(self.access_token) },
             verify=api_verify_ssl)
 
@@ -270,7 +282,7 @@ class Test_friends(unittest.TestCase):
             })
 
         # get friends list
-        r = requests.get('{0}/api/profile/{1}/friends'.format(api_url, self.profile_id),
+        r = session.get('{0}/api/profile/{1}/friends'.format(api_url, self.profile_id),
             headers = {'Authorization': 'JWT {0}'.format(self.access_token) },
             verify=api_verify_ssl)
 
@@ -283,7 +295,7 @@ class Test_friends(unittest.TestCase):
         self.assertEqual(friends[0].get('friend_id'), friend_id)
         
         # get friend data
-        r = requests.get('{0}/api/friend/{1}'.format(api_url, friend_id),
+        r = session.get('{0}/api/friend/{1}'.format(api_url, friend_id),
             verify=api_verify_ssl)
 
         self.assertEqual(r.status_code, 200)
@@ -304,7 +316,7 @@ class Test_friends(unittest.TestCase):
         #self.assertEqual(friend.get('location'), 'location1')
 
         # delete friend
-        r = requests.delete('{0}/api/friend/{1}'.format(api_url, friend_id),
+        r = session.delete('{0}/api/friend/{1}'.format(api_url, friend_id),
             headers = {'Authorization': 'JWT {0}'.format(self.access_token) },
             json= {},
             verify=api_verify_ssl)
@@ -313,7 +325,7 @@ class Test_friends(unittest.TestCase):
 
         # check delete
         # get friends list
-        r = requests.get('{0}/api/profile/{1}/friends'.format(api_url, self.profile_id),
+        r = session.get('{0}/api/profile/{1}/friends'.format(api_url, self.profile_id),
             headers = {'Authorization': 'JWT {0}'.format(self.access_token) },
             verify=api_verify_ssl)
 
@@ -348,7 +360,7 @@ class Test_photo(unittest.TestCase):
         #print("PUT image_data size: ", len(image_data))
 
         # get photo        
-        r = requests.get('{0}/api/friend/{1}/photo'.format(api_url, self.friend_id),
+        r = session.get('{0}/api/friend/{1}/photo'.format(api_url, self.friend_id),
             verify=api_verify_ssl)
 
         self.assertEqual(r.status_code, 200)
@@ -389,7 +401,7 @@ class Test_match(unittest.TestCase):
 
         image_data, image_type = load_image("snout_0001.jpg")
 
-        r = requests.post('{0}/api/query_match'.format(api_url),
+        r = session.post('{0}/api/query_match'.format(api_url),
             json= {'image': { 'data': image_data, 'type': image_type }},
             verify=api_verify_ssl)
         
@@ -405,7 +417,7 @@ class Test_match(unittest.TestCase):
     
         image_data, image_type = load_image("snout_0002.jpg")
 
-        r = requests.post('{0}/api/query_match'.format(api_url),
+        r = session.post('{0}/api/query_match'.format(api_url),
             json= {'image': { 'data': image_data, 'type': image_type }},
             verify=api_verify_ssl)
         
@@ -421,7 +433,7 @@ class Test_match(unittest.TestCase):
         
         image_data, image_type = load_image("snout_0003.jpg")
 
-        r = requests.post('{0}/api/query_match'.format(api_url),
+        r = session.post('{0}/api/query_match'.format(api_url),
             json= {'image': { 'data': image_data, 'type': image_type }},
             verify=api_verify_ssl)
         
@@ -434,11 +446,18 @@ class Test_match(unittest.TestCase):
 
 if __name__ == '__main__':
     print("Testing API_URL: \'{}\'".format(api_url))      
+
+    #logging.basicConfig() 
+    #logging.getLogger().setLevel(logging.DEBUG)
+    #requests_log = logging.getLogger("requests.packages.urllib3")
+    #requests_log.setLevel(logging.DEBUG)
+    #requests_log.propagate = True
+    
     unittest.main()
     #unittest.main(argv=["", "Test_signup"])
     #unittest.main(argv=["", "Test_signup.test_create_and_delete"])
     #unittest.main(argv=["", "Test_auth.test_1"])
-    #unittest.main(argv=["", "Test_profile"])
+    #unittest.main(argv=["", "Test_profile.test_get"])
     #unittest.main(argv=["", "Test_friends"])
     #unittest.main(argv=["", "Test_friends.test_create_get_delete"])
     #unittest.main(argv=["", "Test_photo"])
