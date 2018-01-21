@@ -100,9 +100,10 @@ def api_profile_get(profile_id: int):
     if profile is None:
         return jsonify({'error': {'message': 'profile not found'}}), 404
 
-    fields = profile.get_fields()
+    output = {'profile_id': profile_id }
+    output.update(profile.get_fields())
 
-    return jsonify(fields), 200
+    return jsonify(output), 200
 
 ###
 ### Friend
@@ -160,9 +161,10 @@ def api_friend_get(friend_id: int):
     if friend is None:
         return jsonify({'error': {'message': 'friend not found'}}), 404
 
-    fields = friend.get_fields()
+    output = {'friend_id': friend_id }
+    output.update(friend.get_fields())
 
-    return jsonify(fields), 200
+    return jsonify(output), 200
 
 @app.route('/api/friend/<int:friend_id>', methods=["PUT"])
 @jwt_required()

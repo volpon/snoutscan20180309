@@ -206,6 +206,7 @@ class Test_profile(unittest.TestCase):
         res = r.json()
         self.assertTrue(isinstance(res, dict))
 
+        self.assertEqual(res.get('profile_id'), self.profile_id)
         self.assertEqual(res.get('email'), None)
         self.assertEqual(res.get('password'), None)
         self.assertTrue(isinstance(res.get('phone'), str))
@@ -235,6 +236,7 @@ class Test_profile(unittest.TestCase):
         res = r.json()
         self.assertTrue(isinstance(res, dict))
 
+        self.assertEqual(res.get('profile_id'), self.profile_id)
         self.assertEqual(res.get('email'), None)
         self.assertEqual(res.get('password'), None)
         self.assertEqual(res.get('phone'), 'phone1')
@@ -255,7 +257,7 @@ class Test_friends(unittest.TestCase):
         if self.access_token is not None and self.profile_id is not None:
             do_delete(self, self.access_token, self.profile_id)
 
-    def test_get(self):
+    def test_get_list(self):
 
         # get friends list
         r = session.get('{0}/api/profile/{1}/friends'.format(api_url, self.profile_id),
@@ -303,17 +305,18 @@ class Test_friends(unittest.TestCase):
         friend = r.json()
         self.assertTrue(isinstance(friend, dict))
         
-        self.assertTrue(isinstance(friend.get('name'), str))
-        self.assertTrue(isinstance(friend.get('breed'), str))
-        self.assertTrue(isinstance(friend.get('sex'), str))
-        self.assertTrue(isinstance(friend.get('age'), str))
-        self.assertTrue(isinstance(friend.get('location'), str))
+        #self.assertTrue(isinstance(friend.get('name'), str))
+        #self.assertTrue(isinstance(friend.get('breed'), str))
+        #self.assertTrue(isinstance(friend.get('sex'), str))
+        #self.assertTrue(isinstance(friend.get('age'), str))
+        #self.assertTrue(isinstance(friend.get('location'), str))
 
-        #self.assertEqual(friend.get('name'), 'name1')
-        #self.assertEqual(friend.get('breed'), 'breed1')
-        #self.assertEqual(friend.get('sex'), 'sex1')
-        #self.assertEqual(friend.get('age'), 'age1')
-        #self.assertEqual(friend.get('location'), 'location1')
+        self.assertEqual(friend.get('friend_id'), friend_id)
+        self.assertEqual(friend.get('name'), 'name1')
+        self.assertEqual(friend.get('breed'), 'breed1')
+        self.assertEqual(friend.get('sex'), 'sex1')
+        self.assertEqual(friend.get('age'), 'age1')
+        self.assertEqual(friend.get('location'), 'location1')
 
         # delete friend
         r = session.delete('{0}/api/friend/{1}'.format(api_url, friend_id),
