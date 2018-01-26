@@ -37,7 +37,10 @@ class Profile(db.Model):
     email = db.Column(db.String(46))
     password = db.Column(db.String(46))
     isadmin = db.Column(db.Boolean)
+
     phone = db.Column(db.String(46))
+    use_phone = db.Column(db.Boolean)
+    use_msg = db.Column(db.Boolean)
 
     friends = db.relationship("Friend", cascade="all,delete", back_populates="profile")
 
@@ -48,6 +51,8 @@ class Profile(db.Model):
         self.isadmin = False
 
         self.phone = fields.get('phone', '')
+        self.use_phone = bool(fields.get('use_phone', False))
+        self.use_msg = bool(fields.get('use_msg', False))
         pass
 
     @classmethod
@@ -91,14 +96,21 @@ class Profile(db.Model):
 
         return {
             'phone' : self.phone if self.phone else '',
+            'use_phone' : self.use_phone if self.use_phone else False,
+            'use_msg' : self.use_msg if self.use_msg else False,
             }
 
     def update_fields(self, fields):
 
-        allowed_fields = ['phone']
+        allowed_fields = {
+            'phone':str, 
+            'use_phone':bool, 
+            'use_msg':bool, 
+        }
 
         for k,v in fields.items():
-            if k in allowed_fields and isinstance(v,str):
+            tp = allowed_fields.get(k)
+            if tp and isinstance(v,tp):
                 setattr(self, k, v);
 
         db.session.commit()
@@ -117,6 +129,7 @@ class Friend(db.Model):
     sex = db.Column(db.String(46))
     age = db.Column(db.String(46))
     location = db.Column(db.String(46))
+    status= db.Column(db.String(16))
 
     photo = db.relationship("Photo", uselist=False, cascade="all,delete", back_populates="friend")
 
@@ -129,6 +142,7 @@ class Friend(db.Model):
         self.sex = fields.get('sex', '')
         self.age = fields.get('age', '')
         self.location = fields.get('location', '')
+        self.status = fields.get('status', '')
 
         self.photo = Photo()
 
@@ -169,15 +183,24 @@ class Friend(db.Model):
             'breed' : self.breed if self.breed else '',
             'sex' : self.sex if self.sex else '',
             'age' : self.age if self.age else '',
-            'location' : self.location if self.location else ''
+            'location' : self.location if self.location else '',
+            'status' : self.status if self.status else '',
             }
 
     def update_fields(self, fields):
 
-        allowed_fields = ['name', 'breed', 'sex', 'age', 'location']
+        allowed_fields = {
+            'name':str, 
+            'breed':str, 
+            'sex':str, 
+            'age':str, 
+            'location':str,
+            'status':str
+        }
 
         for k,v in fields.items():
-            if k in allowed_fields and isinstance(v,str):
+            tp = allowed_fields.get(k)
+            if tp and isinstance(v,tp):
                 setattr(self, k, v);
 
         db.session.commit()

@@ -78,7 +78,8 @@ def do_add_friend(self, access_token, profile_id, fields = None):
                 'breed': 'breed1', 
                 'sex': 'sex1', 
                 'age': 'age1', 
-                'location': 'location1'
+                'location': 'location1',
+                'status': 'lost'
             },
             verify=api_verify_ssl)
 
@@ -210,6 +211,8 @@ class Test_profile(unittest.TestCase):
         self.assertEqual(res.get('email'), None)
         self.assertEqual(res.get('password'), None)
         self.assertTrue(isinstance(res.get('phone'), str))
+        self.assertTrue(isinstance(res.get('use_phone'), bool))
+        self.assertTrue(isinstance(res.get('use_msg'), bool))
 
     def test_put_and_get(self):
 
@@ -217,7 +220,9 @@ class Test_profile(unittest.TestCase):
         r = session.put('{0}/api/profile/{1}'.format(api_url, self.profile_id),
             headers = {'Authorization': 'JWT {0}'.format(self.access_token) },
             json= {
-                'phone':'phone1'
+                'phone':'phone1',
+                'use_phone': True,
+                'use_msg': False,
             },
             verify=api_verify_ssl)
 
@@ -240,6 +245,8 @@ class Test_profile(unittest.TestCase):
         self.assertEqual(res.get('email'), None)
         self.assertEqual(res.get('password'), None)
         self.assertEqual(res.get('phone'), 'phone1')
+        self.assertEqual(res.get('use_phone'), True)
+        self.assertEqual(res.get('use_msg'), False)
         
 class Test_friends(unittest.TestCase):
     
@@ -280,7 +287,8 @@ class Test_friends(unittest.TestCase):
                 'breed': 'breed1', 
                 'sex': 'sex1', 
                 'age': 'age1', 
-                'location': 'location1'
+                'location': 'location1',
+                'status': 'lost'
             })
 
         # get friends list
@@ -317,6 +325,7 @@ class Test_friends(unittest.TestCase):
         self.assertEqual(friend.get('sex'), 'sex1')
         self.assertEqual(friend.get('age'), 'age1')
         self.assertEqual(friend.get('location'), 'location1')
+        self.assertEqual(friend.get('status'), 'lost')
 
         # delete friend
         r = session.delete('{0}/api/friend/{1}'.format(api_url, friend_id),
