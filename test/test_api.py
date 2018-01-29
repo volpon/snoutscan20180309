@@ -71,16 +71,19 @@ def do_delete(self, access_token, profile_id):
 
 def do_add_friend(self, access_token, profile_id, fields = None):
     
-        r = session.post('{0}/api/profile/{1}/friends/new'.format(api_url, profile_id),
-            headers = {'Authorization': 'JWT {0}'.format(access_token) },
-            json= {
+        if fields is None:
+            fields = {
                 'name': 'name1',
                 'breed': 'breed1', 
                 'sex': 'sex1', 
                 'age': 'age1', 
                 'location': 'location1',
                 'status': 'lost'
-            },
+            }
+    
+        r = session.post('{0}/api/profile/{1}/friends/new'.format(api_url, profile_id),
+            headers = {'Authorization': 'JWT {0}'.format(access_token) },
+            json= fields,
             verify=api_verify_ssl)
 
         self.assertEqual(r.status_code, 201)
@@ -266,6 +269,24 @@ class Test_friends(unittest.TestCase):
 
     def test_get_list(self):
 
+        friend_id2 = do_add_friend(self, self.access_token, self.profile_id, fields = {
+                'name': 'name1',
+                'breed': 'breed1', 
+                'sex': 'sex1', 
+                'age': 'age1', 
+                'location': 'location1',
+                'status': 'lost'
+            })
+
+        friend_id2 = do_add_friend(self, self.access_token, self.profile_id, fields = {
+                'name': 'name2',
+                'breed': 'breed2', 
+                'sex': 'sex2', 
+                'age': 'age2', 
+                'location': 'location2',
+                'status': 'lost'
+            })
+
         # get friends list
         r = session.get('{0}/api/profile/{1}/friends'.format(api_url, self.profile_id),
             headers = {'Authorization': 'JWT {0}'.format(self.access_token) },
@@ -276,9 +297,20 @@ class Test_friends(unittest.TestCase):
         friends = r.json()
         self.assertTrue(isinstance(friends, list))
 
+        self.assertEqual(len(friends), 2)
+
         for friend in friends:
             self.assertTrue(isinstance(friend, dict))
-            self.assertTrue(isinstance(res.get('name'), str))
+            self.assertTrue(isinstance(friend.get('name'), str))
+            self.assertTrue(friend['name'] == 'name1' or friend['name']=='name2')
+
+            sufix = friend['name'][-1]
+
+            self.assertEqual(friend.get('breed'), 'breed'+sufix)
+            self.assertEqual(friend.get('sex'), 'sex'+sufix)
+            self.assertEqual(friend.get('age'), 'age'+sufix)
+            self.assertEqual(friend.get('location'), 'location'+sufix)
+            self.assertEqual(friend.get('status'), 'lost')
            
     def test_create_get_delete(self):
 
@@ -346,6 +378,51 @@ class Test_friends(unittest.TestCase):
         friends = r.json()
         self.assertTrue(isinstance(friends, list))
         self.assertEqual(len(friends), 0)
+
+    def test_put_and_get(self):
+    
+        friend_id = do_add_friend(self, self.access_token, self.profile_id, fields = {
+                'name': 'name1',
+                'breed': 'breed1', 
+                'sex': 'sex1', 
+                'age': 'age1', 
+                'location': 'location1',
+                'status': 'lost'
+            })
+
+        self.assertTrue(isinstance(friend_id,int))
+
+        # put
+        r = session.put('{0}/api/friend/{1}'.format(api_url, friend_id),
+            headers = {'Authorization': 'JWT {0}'.format(self.access_token) },
+            json= {
+                'name': 'name2',
+                'breed': 'breed2', 
+                'sex': 'sex2', 
+                'age': 'age2', 
+                'location': 'location2',
+                'status': 'found'
+            },
+            verify=api_verify_ssl)
+
+        self.assertEqual(r.status_code, 204)
+
+        # get
+        r = session.get('{0}/api/friend/{1}'.format(api_url, friend_id),
+            verify=api_verify_ssl)
+
+        self.assertEqual(r.status_code, 200)
+
+        friend = r.json()
+        self.assertTrue(isinstance(friend, dict))
+        
+        self.assertEqual(friend.get('friend_id'), friend_id)
+        self.assertEqual(friend.get('name'), 'name2')
+        self.assertEqual(friend.get('breed'), 'breed2')
+        self.assertEqual(friend.get('sex'), 'sex2')
+        self.assertEqual(friend.get('age'), 'age2')
+        self.assertEqual(friend.get('location'), 'location2')
+        self.assertEqual(friend.get('status'), 'found')
 
 class Test_photo(unittest.TestCase):
         
@@ -471,6 +548,8 @@ if __name__ == '__main__':
     #unittest.main(argv=["", "Test_auth.test_1"])
     #unittest.main(argv=["", "Test_profile.test_get"])
     #unittest.main(argv=["", "Test_friends"])
+    #unittest.main(argv=["", "Test_friends.test_get_list"])
+    #unittest.main(argv=["", "Test_friends.test_put_and_get"])
     #unittest.main(argv=["", "Test_friends.test_create_get_delete"])
     #unittest.main(argv=["", "Test_photo"])
     #unittest.main(argv=["", "Test_photo.test_put_get"])

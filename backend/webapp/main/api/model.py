@@ -176,9 +176,9 @@ class Friend(db.Model):
         return obj
 
 
-    def get_fields(self):
-
-        return {
+    def get_fields(self, with_id=False):
+        
+        fx = {
             'name' : self.name if self.name else '',
             'breed' : self.breed if self.breed else '',
             'sex' : self.sex if self.sex else '',
@@ -186,6 +186,11 @@ class Friend(db.Model):
             'location' : self.location if self.location else '',
             'status' : self.status if self.status else '',
             }
+
+        if with_id:
+            fx.update({'friend_id': self.id})
+
+        return fx
 
     def update_fields(self, fields):
 

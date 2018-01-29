@@ -124,7 +124,7 @@ def api_profile_friends_get(profile_id: int):
     if friends is None:
         return jsonify({'error': {'message': 'not found'}}), 404
 
-    out = [ {'friend_id':f.id, 'name':f.name} for f in friends ]
+    out = [ f.get_fields(with_id=True) for f in friends ]
 
     return jsonify(out), 200
 
@@ -211,19 +211,37 @@ def api_friend_delete(friend_id: int):
 @app.route('/api/friend/<int:friend_id>/photo', methods=["GET"])
 def api_friend_get_photo(friend_id: int):
 
+    #print("accept: ", request.headers.getlist('accept'))
+    #print("application/json: ", request.accept_mimetypes["application/json"])
+    #print("image/*: ", request.accept_mimetypes["image/*"])
+
     friend = Friend.find_by_id(friend_id)
 
-    if friend is None:
-        return jsonify({'error': {'message': 'friend not exists'}}), 404
+    if request.accept_mimetypes["application/json"] >= 1:
 
-    image_data, type = friend.photo.get_base64()
-    if image_data is None:
-        return jsonify({'error': {'message': 'Photo not uploaded'}}), 404
+        if friend is None:
+            return jsonify({'error': {'message': 'friend not exists'}}), 404
 
-    #print("GET: ", image_data)
-    #print("GET: image_data size: ", len(image_data))
+        image_data, type = friend.photo.get_base64()
+        if image_data is None:
+            return jsonify({'error': {'message': 'Photo not uploaded'}}), 404
 
-    return jsonify({'image' : {'data' : image_data, 'type' : type}}), 200
+        #print("GET: ", image_data)
+        #print("GET: image_data size: ", len(image_data))
+
+        return jsonify({'image' : {'data' : image_data, 'type' : type}}), 200
+
+    else:
+
+        if friend is None:
+            return 'Not found', 404, {'Content-Type': 'text/plain; charset=utf-8'}
+
+        data, type = friend.photo.get_binary()
+
+        if not data or not type:
+            return 'Not found', 404, {'Content-Type': 'text/plain; charset=utf-8'}
+
+        return data, 200, { 'Content-Type': type }
 
 @app.route('/api/friend/<int:friend_id>/photo', methods=["PUT"])
 @jwt_required()

@@ -5,7 +5,7 @@ Routes and views for the flask application.
 from datetime import datetime
 from flask import request, render_template
 from main import app
-from main.api.model import Profile
+from main.api.model import Profile, Friend
 from main.api.auth import jwt
 
 
@@ -102,15 +102,15 @@ def profile(profile_id):
         fields=profile.get_fields()
     )
 
-@app.route('/profile/<int:profile_id>/photo')
-def profile_photo(profile_id: int):
+@app.route('/friend/<int:friend_id>/photo')
+def profile_photo(friend_id: int):
 
-    profile = Profile.find_by_id(profile_id)
+    friend = Friend.find_by_id(friend_id)
 
-    if profile is None:
+    if friend is None:
         return 'Not found', 404, {'Content-Type': 'text/plain; charset=utf-8'}
 
-    data, type = profile.photo.get_binary()
+    data, type = friend.photo.get_binary()
 
     if not data or not type:
         return 'Not found', 404, {'Content-Type': 'text/plain; charset=utf-8'}
