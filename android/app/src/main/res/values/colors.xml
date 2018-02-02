@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#7eb5d4</color>
+    <color name="colorPrimaryDark">#1c6199</color>
+    <color name="colorAccent">#8cc63f</color>
+
+    <color name="colorWhite">#ffffff</color>
+    <color name="colorBlack">#000000</color>
+    <color name="colorClear">#00ffffff</color>
+    <color name="colorGreenTranspalent">#3300ff00</color>
+    <color name="colorSwatch">#b1dfef</color>
+    <color name="colorAlert">#ed4432</color>
+    <color name="colorNeutralDark">#a5b3b7</color>
+    <color name="colorNeutralLight">#e1eaea</color>
+    <color name="button_color">#45d05c</color>
+    <color name="pink_color">#fbc0ad</color>
+    <color name="edt_normal_color">#f2b983</color>
+    <color name="fb_button_color">#4D662d91</color>
+    <color name="button_border">#f5d6b4</color>
+    <color name="btn_found_selected_bg">#5d3f9c</color>
+    <color name="btn_found_selected_border">#7d48e3</color>
+    <color name="btn_lost_bg">#ff2d55</color>
+    <color name="btn_match_bg">#9dd3e9</color>
+    <color name="btn_match_border">#3e6fb1</color>
+    <color name="btn_found_bg">#feedf1</color>
+    <color name="btn_found_border">#ea8096</color>
+    <color name="grey_text_color">#6f6e6e</color>
+    <color name="darkgrey_text_color">#545454</color>
+    <color name="profile_text_color">#dac9fe</color>
+    <color name="dog_profile_bg">#f5f5f5</color>
+    <color name="dot_dog_profile_selected">#8a8a8a</color>
+    <color name="dot_dog_profile">#d1d1d1</color>
+
+    <color name="progress_bg">#70000000</color>
+</resources>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="20dp"
+    android:background="@drawable/custom_login_button"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center"
+        android:text="Select image source"
+        android:textColor="@color/colorAlert"
+        android:textSize="16sp" />
+    <!--app:font="BPreplay_Regular.otf" />-->
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:background="@color/colorPrimary" />
+
+    <TextView
+        android:id="@+id/select_camera"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:gravity="center"
+        android:text="Select from Camera"
+        android:textColor="@color/colorPrimaryDark"
+        android:textSize="20sp" />
+    <!--app:font="BPreplay_Bold.otf"/>-->
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:background="@color/colorPrimaryDark" />
+
+    <TextView
+        android:id="@+id/select_library"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:gravity="center"
+        android:text="Select from Library"
+        android:textColor="@color/colorPrimaryDark"
+        android:textSize="20sp" />
+    <!--app:font="BPreplay_Bold.otf"/>-->
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:background="@color/colorPrimaryDark" />
+
+    <TextView
+        android:id="@+id/select_cancel"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:gravity="center"
+        android:text="Cancel"
+        android:textColor="@color/colorAlert"
+        android:textSize="20sp" />
+    <!--app:font="BPreplay_Bold.otf"/>-->
+
+</LinearLayout>

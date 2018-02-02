@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">SnoutScan</string>
+    <string name="no_internet">Please enable network connection</string>
+    <string name="email_error_message">Email could not be empty</string>
+    <string name="pass_error_message">Password could not be empty</string>
+    <string name="text_my_profile">MY PROFILE</string>
+    <string name="text_btn_register">Register</string>
+    <string name="text_registerdog_data">REGISTER DOG</string>
+    <string name="toast_dog_profile_updated">Dog profile updated</string>
+    <string name="skip">SKIP</string>
+    <string name="next">NEXT</string>
+    <string name="lets_go">LET\'S GO!</string>
+    <string name="tutorial_text_1">Your pet\'s snout is like\na fingerprint. Capture it…</string>
+    <string name="tutorial_text_2">…register your pet, and if lost,\nalert the community.</string>
+    <string name="tutorial_text_3">Anyone can identify your pet\nand notify you he\'s been found.</string>
+    <string name="forgot_pass">Forgot Password</string>
+    <string name="sign_in">Sign In</string>
+    <string name="first_time">First Time?</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="fb_sign_in">Sign in with facebook</string>
+    <string name="username_hint">Username</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Password</string>
+    <string name="mobile_hint">Mobile Phone Number</string>
+    <string name="alerts_title">ALERTS</string>
+    <string name="dog_profile">DOG PROFILE</string>
+    <string name="my_profile">MY PROFILE</string>
+    <string name="profile_text">PROFILE</string>
+    <string name="scan_text">SCAN</string>
+    <string name="vet">VET</string>
+    <string name="settings">SETTINGS</string>
+    <string name="contact_owner">Contact my owner by:</string>
+    <string name="app_messaging">Snoutscan App Messaging</string>
+    <string name="call_mobile">Call Mobile Number</string>
+    <string name="lost">I\'m Lost!</string>
+    <string name="found">Found</string>
+    <string name="match">Match</string>
+    <string name="contact_me">I can be contacted by:</string>
+
+</resources>
