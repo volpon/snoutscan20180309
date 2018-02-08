@@ -11,8 +11,10 @@ import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.provisionlab.snoutscan.R;
 import com.provisionlab.snoutscan.models.DogItem;
+import com.provisionlab.snoutscan.models.Error;
 import com.provisionlab.snoutscan.server.ApiService;
 import com.provisionlab.snoutscan.server.RetrofitApi;
 import com.provisionlab.snoutscan.utilities.CustomEditText;
@@ -128,18 +130,23 @@ public class RegisterDogActivity extends AppCompatActivity {
 
             Log.d(TAG, "Dog " + dogItem);
 
-            if (Utils.isConnectedToNetwork(this)) {
+            if (dogItem.getName().isEmpty()) {
+                Toast.makeText(this, "Name could not be empty", Toast.LENGTH_SHORT).show();
+            } else if (dogItem.getAge().isEmpty()) {
+                Toast.makeText(this, "Age could not be empty", Toast.LENGTH_SHORT).show();
+            } else if (dogItem.getSex().isEmpty()) {
+                Toast.makeText(this, "Sex could not be empty", Toast.LENGTH_SHORT).show();
+            } else {
                 findViewById(R.id.progress_layout).setVisibility(View.VISIBLE);
-
                 compositeDisposable.add(apiService.addNewDog(
                         JWT + " " + SharedPrefsUtil.getStringData(this, TOKEN),
                         SharedPrefsUtil.getIntData(this, PROFILE_ID), dogItem)
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribeOn(Schedulers.io())
                         .subscribe(this::handleRegisterResponse, this::handleRegisterError));
-            } else {
-                Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_LONG).show();
             }
+        } else {
+            Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -156,10 +163,12 @@ public class RegisterDogActivity extends AppCompatActivity {
         if (t != null) {
             if (t instanceof HttpException) {
                 ResponseBody responseBody = ((HttpException) t).response().errorBody();
-                Log.d(TAG, "ResponseError " + (responseBody != null ? responseBody.string() : null));
+
+                Toast.makeText(this, "Error: " +
+                        (responseBody != null ? new Gson().fromJson(responseBody.string(), Error.class).getError().getMessage() : null), Toast.LENGTH_LONG).show();
+            } else {
+                Log.d(TAG, "Error " + t.getMessage());
             }
-            Toast.makeText(this, "Error " + t.getMessage(), Toast.LENGTH_LONG).show();
-            Log.d(TAG, "Error " + t.getMessage());
         }
     }
 

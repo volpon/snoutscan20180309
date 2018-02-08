@@ -50,16 +50,20 @@ public class Utils {
     }
 
     public static String getAge(DogItem dogItem) {
-        if (dogItem.getAge() != null && dogItem.getAge().length() > 0) {
-            String[] ageArray = dogItem.getAge().split(" ");
-            return ageArray[0] + " years, " + ageArray[1] + " months.";
+        if (!dogItem.getAge().trim().isEmpty()) {
+            if (dogItem.getAge() != null && dogItem.getAge().length() > 0) {
+                String[] ageArray = dogItem.getAge().split(" ");
+                return ageArray[0] + " years, " + ageArray[1] + " months.";
+            } else {
+                return dogItem.getAge();
+            }
         } else {
-            return dogItem.getAge();
+            return "";
         }
     }
 
     public static String getUrl(DogItem dogItem) {
-        String url = "https://" + AppConstants.SERVER_URL + "/profile/" + dogItem.getDogId() + "/photo";
+        String url = "https://" + AppConstants.SERVER_URL + "/friend/" + dogItem.getDogId() + "/photo";
         Log.d(TAG, "Photo " + url);
         return url;
     }

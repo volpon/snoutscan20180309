@@ -27,8 +27,10 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.gson.Gson;
 import com.provisionlab.snoutscan.R;
 import com.provisionlab.snoutscan.models.DogItem;
+import com.provisionlab.snoutscan.models.Error;
 import com.provisionlab.snoutscan.models.Image;
 import com.provisionlab.snoutscan.models.ImageObject;
 import com.provisionlab.snoutscan.models.Profile;
@@ -52,6 +54,8 @@ import butterknife.OnClick;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
+import okhttp3.ResponseBody;
+import retrofit2.HttpException;
 import retrofit2.Response;
 
 import static com.provisionlab.snoutscan.activities.LoginActivity.TOKEN;
@@ -108,6 +112,8 @@ public class DogDetailActivity extends AppCompatActivity {
         initUI();
 
         compositeDisposable = new CompositeDisposable();
+
+        getProfileData();
     }
 
     private void initUI() {
@@ -183,46 +189,40 @@ public class DogDetailActivity extends AppCompatActivity {
 
     private void getProfileData() {
         if (Utils.isConnectedToNetwork(this)) {
+            findViewById(R.id.progress_layout).setVisibility(View.VISIBLE);
             ApiService apiService = RetrofitApi.getInstance().getApiService();
 
-            if (Utils.isConnectedToNetwork(this)) {
-                findViewById(R.id.progress_layout).setVisibility(View.VISIBLE);
-
-                compositeDisposable.add(apiService.fetchProfileData(
-                        SharedPrefsUtil.getIntData(this, PROFILE_ID))
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribeOn(Schedulers.io())
-                        .subscribe(this::handleProfileResponse, this::handleProfileError));
-            } else {
-                Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_LONG).show();
-            }
+            compositeDisposable.add(apiService.fetchProfileData(
+                    SharedPrefsUtil.getIntData(this, PROFILE_ID))
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeOn(Schedulers.io())
+                    .subscribe(this::handleProfileResponse, this::handleProfileError));
+        } else {
+            Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_LONG).show();
         }
     }
 
     private void uploadPhoto() {
         if (Utils.isConnectedToNetwork(this)) {
+            findViewById(R.id.progress_layout).setVisibility(View.VISIBLE);
             ApiService apiService = RetrofitApi.getInstance().getApiService();
 
-            if (Utils.isConnectedToNetwork(this)) {
-                findViewById(R.id.progress_layout).setVisibility(View.VISIBLE);
+            Image image = new Image();
+            image.setData(base64Image);
+            image.setType(mimeType);
+            ImageObject imageObject = new ImageObject(image);
 
-                Image image = new Image();
-                image.setData(base64Image);
-                image.setType(mimeType);
-                ImageObject imageObject = new ImageObject(image);
+            Log.d(TAG, "Image " + image);
 
-                Log.d(TAG, "Image " + image);
-
-                compositeDisposable.add(apiService.uploadPhoto(
-                        AppConstants.JWT + " " + SharedPrefsUtil.getStringData(this, TOKEN),
-                        dog.getDogId(),
-                        imageObject)
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribeOn(Schedulers.io())
-                        .subscribe(this::handleUploadResponse, this::handleUploadError));
-            } else {
-                Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_LONG).show();
-            }
+            compositeDisposable.add(apiService.uploadPhoto(
+                    AppConstants.JWT + " " + SharedPrefsUtil.getStringData(this, TOKEN),
+                    dog.getDogId(),
+                    imageObject)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeOn(Schedulers.io())
+                    .subscribe(this::handleUploadResponse, this::handleUploadError));
+        } else {
+            Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -236,10 +236,19 @@ public class DogDetailActivity extends AppCompatActivity {
         }
     }
 
-    private void handleUploadError(Throwable t) {
+    private void handleUploadError(Throwable t) throws IOException {
         findViewById(R.id.progress_layout).setVisibility(View.GONE);
-        Toast.makeText(this, "Error " + t.getMessage(), Toast.LENGTH_LONG).show();
-        Log.d(TAG, "Error " + t.getMessage());
+
+        if (t != null) {
+            if (t instanceof HttpException) {
+                ResponseBody responseBody = ((HttpException) t).response().errorBody();
+
+                Toast.makeText(this, "Error: " +
+                        (responseBody != null ? new Gson().fromJson(responseBody.string(), Error.class).getError().getMessage() : null), Toast.LENGTH_LONG).show();
+            } else {
+                Log.d(TAG, "Error " + t.getMessage());
+            }
+        }
     }
 
     private void handleProfileResponse(Profile profile) {
@@ -259,10 +268,19 @@ public class DogDetailActivity extends AppCompatActivity {
         }
     }
 
-    private void handleProfileError(Throwable t) {
+    private void handleProfileError(Throwable t) throws IOException {
         findViewById(R.id.progress_layout).setVisibility(View.GONE);
-        Toast.makeText(this, "Error " + t.getMessage(), Toast.LENGTH_LONG).show();
-        Log.d(TAG, "Error " + t.getMessage());
+
+        if (t != null) {
+            if (t instanceof HttpException) {
+                ResponseBody responseBody = ((HttpException) t).response().errorBody();
+
+                Toast.makeText(this, "Error: " +
+                        (responseBody != null ? new Gson().fromJson(responseBody.string(), Error.class).getError().getMessage() : null), Toast.LENGTH_LONG).show();
+            } else {
+                Log.d(TAG, "Error " + t.getMessage());
+            }
+        }
     }
 
     @Override

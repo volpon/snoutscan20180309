@@ -13,13 +13,17 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.provisionlab.snoutscan.R;
 import com.provisionlab.snoutscan.models.AuthObject;
+import com.provisionlab.snoutscan.models.Error;
 import com.provisionlab.snoutscan.models.LoginObject;
 import com.provisionlab.snoutscan.server.ApiService;
 import com.provisionlab.snoutscan.server.RetrofitApi;
 import com.provisionlab.snoutscan.utilities.SharedPrefsUtil;
 import com.provisionlab.snoutscan.utilities.Utils;
+
+import java.io.IOException;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -27,6 +31,8 @@ import butterknife.OnClick;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import okhttp3.ResponseBody;
+import retrofit2.HttpException;
 
 import static com.provisionlab.snoutscan.activities.SignupActivity.PROFILE_ID;
 import static com.provisionlab.snoutscan.activities.TutorialActivity.FIRST_RUN;
@@ -116,20 +122,18 @@ public class LoginActivity extends AppCompatActivity {
                 Toast.makeText(this, R.string.pass_error_message, Toast.LENGTH_SHORT).show();
             } else {
 
-                if (Utils.isConnectedToNetwork(this)) {
-                    findViewById(R.id.progress_layout).setVisibility(View.VISIBLE);
+                findViewById(R.id.progress_layout).setVisibility(View.VISIBLE);
 
-                    LoginObject loginObject = new LoginObject(email, password);
-                    Log.d(TAG, "LoginObject " + loginObject);
+                LoginObject loginObject = new LoginObject(email, password);
+                Log.d(TAG, "LoginObject " + loginObject);
 
-                    disposable = apiService.signIn(loginObject)
-                            .observeOn(AndroidSchedulers.mainThread())
-                            .subscribeOn(Schedulers.io())
-                            .subscribe(this::handleResponse, this::handleError);
-                } else {
-                    Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_LONG).show();
-                }
+                disposable = apiService.signIn(loginObject)
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribeOn(Schedulers.io())
+                        .subscribe(this::handleResponse, this::handleError);
             }
+        } else {
+            Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -142,10 +146,19 @@ public class LoginActivity extends AppCompatActivity {
         finish();
     }
 
-    private void handleError(Throwable t) {
+    private void handleError(Throwable t) throws IOException {
         findViewById(R.id.progress_layout).setVisibility(View.GONE);
-        Toast.makeText(this, "Error " + t.getMessage(), Toast.LENGTH_LONG).show();
-        Log.d(TAG, "Error " + t.getMessage());
+
+        if (t != null) {
+            if (t instanceof HttpException) {
+                ResponseBody responseBody = ((HttpException) t).response().errorBody();
+
+                Toast.makeText(this, "Error: " +
+                        (responseBody != null ? new Gson().fromJson(responseBody.string(), Error.class).getError().getMessage() : null), Toast.LENGTH_LONG).show();
+            } else {
+                Log.d(TAG, "Error " + t.getMessage());
+            }
+        }
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.provisionlab.snoutscan.models;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Created by Evgeniy on 27-Jan-18.
  */
@@ -9,7 +11,9 @@ public class RegisterObject {
     private String email;
     private String password;
     private String phone;
+    @SerializedName("use_msg")
     private boolean useMessaging;
+    @SerializedName("use_phone")
     private boolean usePhone;
 
     public RegisterObject() {

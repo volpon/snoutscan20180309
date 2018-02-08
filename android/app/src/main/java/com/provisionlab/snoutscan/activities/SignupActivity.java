@@ -24,7 +24,9 @@ import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.provisionlab.snoutscan.R;
+import com.provisionlab.snoutscan.models.Error;
 import com.provisionlab.snoutscan.models.Profile;
 import com.provisionlab.snoutscan.models.RegisterObject;
 import com.provisionlab.snoutscan.server.ApiService;
@@ -44,8 +46,10 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import okhttp3.ResponseBody;
+import retrofit2.HttpException;
 
 /**
  * Created by superlight on 10/30/2017 AD.
@@ -75,7 +79,7 @@ public class SignupActivity extends AppCompatActivity {
 
     public static final String PROFILE_ID = "profile_id";
     private static final String TAG = LoginActivity.class.getSimpleName();
-    private CompositeDisposable compositeDisposable;
+    private Disposable disposable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,8 +95,6 @@ public class SignupActivity extends AppCompatActivity {
                     new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                     200);
         }
-
-        compositeDisposable = new CompositeDisposable();
     }
 
     @Override
@@ -249,21 +251,17 @@ public class SignupActivity extends AppCompatActivity {
             } else if (password.equals("")) {
                 Toast.makeText(this, R.string.pass_error_message, Toast.LENGTH_SHORT).show();
             } else {
+                findViewById(R.id.progress_layout).setVisibility(View.VISIBLE);
+                RegisterObject registerObject = new RegisterObject(email, password, phone, useMessaging, usePhone);
+                Log.d(TAG, "RegisterObject " + registerObject);
 
-                if (Utils.isConnectedToNetwork(this)) {
-                    findViewById(R.id.progress_layout).setVisibility(View.VISIBLE);
-
-                    RegisterObject registerObject = new RegisterObject(email, password, phone, useMessaging, usePhone);
-                    Log.d(TAG, "RegisterObject " + registerObject);
-
-                    compositeDisposable.add(apiService.signUp(registerObject)
-                            .observeOn(AndroidSchedulers.mainThread())
-                            .subscribeOn(Schedulers.io())
-                            .subscribe(this::handleResponse, this::handleError));
-                } else {
-                    Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_LONG).show();
-                }
+                disposable = apiService.signUp(registerObject)
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribeOn(Schedulers.io())
+                        .subscribe(this::handleResponse, this::handleError);
             }
+        } else {
+            Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -274,15 +272,27 @@ public class SignupActivity extends AppCompatActivity {
         finish();
     }
 
-    private void handleError(Throwable t) {
+    private void handleError(Throwable t) throws IOException {
         findViewById(R.id.progress_layout).setVisibility(View.GONE);
-        Toast.makeText(this, "Error " + t.getMessage(), Toast.LENGTH_LONG).show();
-        Log.d(TAG, "Error " + t.getMessage());
+
+        if (t != null) {
+            if (t instanceof HttpException) {
+                ResponseBody responseBody = ((HttpException) t).response().errorBody();
+
+                Toast.makeText(this, "Error: " +
+                        (responseBody != null ? new Gson().fromJson(responseBody.string(), Error.class).getError().getMessage() : null), Toast.LENGTH_LONG).show();
+            } else {
+                Log.d(TAG, "Error " + t.getMessage());
+            }
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        compositeDisposable.clear();
+
+        if (disposable != null) {
+            disposable.dispose();
+        }
     }
 }

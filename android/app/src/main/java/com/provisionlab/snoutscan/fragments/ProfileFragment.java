@@ -17,10 +17,12 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.provisionlab.snoutscan.R;
 import com.provisionlab.snoutscan.activities.RegisterDogActivity;
 import com.provisionlab.snoutscan.adapters.ProfileDogListAdapter;
 import com.provisionlab.snoutscan.models.DogItem;
+import com.provisionlab.snoutscan.models.Error;
 import com.provisionlab.snoutscan.models.Profile;
 import com.provisionlab.snoutscan.server.ApiService;
 import com.provisionlab.snoutscan.server.RetrofitApi;
@@ -28,6 +30,7 @@ import com.provisionlab.snoutscan.utilities.AppConstants;
 import com.provisionlab.snoutscan.utilities.SharedPrefsUtil;
 import com.provisionlab.snoutscan.utilities.Utils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +40,8 @@ import butterknife.OnClick;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
+import okhttp3.ResponseBody;
+import retrofit2.HttpException;
 
 import static android.app.Activity.RESULT_OK;
 import static com.provisionlab.snoutscan.activities.LoginActivity.TOKEN;
@@ -110,38 +115,32 @@ public class ProfileFragment extends Fragment {
 
     private void getProfileData() {
         if (Utils.isConnectedToNetwork(getActivity())) {
+            getActivity().findViewById(R.id.progress_layout).setVisibility(View.VISIBLE);
             ApiService apiService = RetrofitApi.getInstance().getApiService();
 
-            if (Utils.isConnectedToNetwork(getActivity())) {
-                getActivity().findViewById(R.id.progress_layout).setVisibility(View.VISIBLE);
-
-                compositeDisposable.add(apiService.fetchProfileData(
-                        SharedPrefsUtil.getIntData(getActivity(), PROFILE_ID))
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribeOn(Schedulers.io())
-                        .subscribe(this::handleProfileResponse, this::handleProfileError));
-            } else {
-                Toast.makeText(getActivity(), getString(R.string.no_internet), Toast.LENGTH_LONG).show();
-            }
+            compositeDisposable.add(apiService.fetchProfileData(
+                    SharedPrefsUtil.getIntData(getActivity(), PROFILE_ID))
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeOn(Schedulers.io())
+                    .subscribe(this::handleProfileResponse, this::handleProfileError));
+        } else {
+            Toast.makeText(getActivity(), getString(R.string.no_internet), Toast.LENGTH_LONG).show();
         }
     }
 
     private void getDogs() {
         if (Utils.isConnectedToNetwork(getActivity())) {
+            getActivity().findViewById(R.id.progress_layout).setVisibility(View.VISIBLE);
             ApiService apiService = RetrofitApi.getInstance().getApiService();
 
-            if (Utils.isConnectedToNetwork(getActivity())) {
-                getActivity().findViewById(R.id.progress_layout).setVisibility(View.VISIBLE);
-
-                compositeDisposable.add(apiService.getDogs(
-                        AppConstants.JWT + " " + SharedPrefsUtil.getStringData(getActivity(), TOKEN),
-                        SharedPrefsUtil.getIntData(getActivity(), PROFILE_ID))
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribeOn(Schedulers.io())
-                        .subscribe(this::handleDogsResponse, this::handleDogsError));
-            } else {
-                Toast.makeText(getActivity(), getString(R.string.no_internet), Toast.LENGTH_LONG).show();
-            }
+            compositeDisposable.add(apiService.getDogs(
+                    AppConstants.JWT + " " + SharedPrefsUtil.getStringData(getActivity(), TOKEN),
+                    SharedPrefsUtil.getIntData(getActivity(), PROFILE_ID))
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeOn(Schedulers.io())
+                    .subscribe(this::handleDogsResponse, this::handleDogsError));
+        } else {
+            Toast.makeText(getActivity(), getString(R.string.no_internet), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -162,26 +161,46 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    private void handleProfileError(Throwable t) {
+    private void handleProfileError(Throwable t) throws IOException {
         getActivity().findViewById(R.id.progress_layout).setVisibility(View.GONE);
-        Toast.makeText(getActivity(), "Error " + t.getMessage(), Toast.LENGTH_LONG).show();
-        Log.d(TAG, "Error " + t.getMessage());
+
+        if (t != null) {
+            if (t instanceof HttpException) {
+                ResponseBody responseBody = ((HttpException) t).response().errorBody();
+
+                Toast.makeText(getActivity(), "Error: " +
+                        (responseBody != null ? new Gson().fromJson(responseBody.string(), Error.class).getError().getMessage() : null), Toast.LENGTH_LONG).show();
+            } else {
+                Log.d(TAG, "Error " + t.getMessage());
+            }
+        }
     }
 
     private void handleDogsResponse(List<DogItem> dogs) {
         getActivity().findViewById(R.id.progress_layout).setVisibility(View.GONE);
         Log.d(TAG, "Dogs " + dogs);
 
-        adapter = new ProfileDogListAdapter(getActivity(), (ArrayList<DogItem>) dogs);
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
-        mRecyclerView.setLayoutManager(linearLayoutManager);
-        mRecyclerView.setAdapter(adapter);
+        if (dogs != null && dogs.size() > 0) {
+            adapter = new ProfileDogListAdapter(getActivity(), (ArrayList<DogItem>) dogs);
+            LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
+            mRecyclerView.setLayoutManager(linearLayoutManager);
+            mRecyclerView.setAdapter(adapter);
+        }
     }
 
-    private void handleDogsError(Throwable t) {
+    private void handleDogsError(Throwable t) throws IOException {
         getActivity().findViewById(R.id.progress_layout).setVisibility(View.GONE);
-        Toast.makeText(getActivity(), "Error " + t.getMessage(), Toast.LENGTH_LONG).show();
-        Log.d(TAG, "Error " + t.getMessage());
+
+        if (t != null) {
+            if (t instanceof HttpException) {
+                ResponseBody responseBody = ((HttpException) t).response().errorBody();
+
+                Toast.makeText(getActivity(), "Error: " +
+                        (responseBody != null ? new Gson().fromJson(responseBody.string(), Error.class).getError().getMessage() : null), Toast.LENGTH_LONG).show();
+            } else {
+                Log.d(TAG, "Error " + t.getMessage());
+            }
+        }
     }
 
     @Override
