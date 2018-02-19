@@ -41,8 +41,8 @@
             android:layout_height="match_parent" />
 
         <RelativeLayout
-            android:layout_width="300dp"
-            android:layout_height="300dp"
+            android:layout_width="250dp"
+            android:layout_height="250dp"
             android:layout_centerInParent="true">
 
             <View
@@ -64,13 +64,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
-            android:background="@color/colorAlert"
+            android:background="@color/camera_text"
             android:gravity="center"
             android:padding="6dp"
-            android:text="Line your dogItem's snout up to be as large as possible in the green area"
+            android:text="@string/fill_green_space"
             android:textColor="@color/colorWhite"
-            android:textSize="11sp"/>
-            <!--app:font="BPreplay_Regular.otf" />-->
+            android:textSize="11sp" />
 
     </RelativeLayout>
 
@@ -84,15 +83,29 @@
         app:layout_constraintRight_toRightOf="parent">
 
         <ImageButton
-            android:id="@+id/btn_shater"
+            android:id="@+id/btn_shatter"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_centerInParent="true"
-            android:background="@color/colorClear"
+            android:background="?attr/selectableItemBackground"
             android:contentDescription="@string/app_name"
             android:scaleType="fitCenter"
             android:src="@drawable/img_camera_shater" />
 
+        <ImageButton
+            android:id="@+id/btn_sound"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_centerInParent="true"
+            android:layout_marginStart="40dp"
+            android:layout_toEndOf="@+id/btn_shatter"
+            android:background="?attr/selectableItemBackground"
+            android:contentDescription="@string/app_name"
+            android:scaleType="fitCenter"
+            android:src="@drawable/audio_trigger" />
+
     </RelativeLayout>
+
+    <include layout="@layout/progress_layout" />
 
 </android.support.constraint.ConstraintLayout>

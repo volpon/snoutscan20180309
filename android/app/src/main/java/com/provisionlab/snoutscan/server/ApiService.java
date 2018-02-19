@@ -77,5 +77,5 @@ public interface ApiService {
 
     @Headers("Content-Type: application/json")
     @POST("api/query_match")
-    Observable<Response<Void>> matchPhoto(@Body Image image);
+    Observable<Response<Void>> matchPhoto(@Body ImageObject image);
 }

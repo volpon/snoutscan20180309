@@ -30,6 +30,7 @@
     <color name="dog_profile_bg">#f5f5f5</color>
     <color name="dot_dog_profile_selected">#8a8a8a</color>
     <color name="dot_dog_profile">#d1d1d1</color>
+    <color name="camera_text">#7b9dfe</color>
 
     <color name="progress_bg">#70000000</color>
 </resources>

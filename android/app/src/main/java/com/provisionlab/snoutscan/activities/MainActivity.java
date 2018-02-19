@@ -1,11 +1,19 @@
 package com.provisionlab.snoutscan.activities;
 
+import android.Manifest;
 import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
+import com.karumi.dexter.Dexter;
+import com.karumi.dexter.PermissionToken;
+import com.karumi.dexter.listener.PermissionDeniedResponse;
+import com.karumi.dexter.listener.PermissionGrantedResponse;
+import com.karumi.dexter.listener.PermissionRequest;
+import com.karumi.dexter.listener.single.PermissionListener;
 import com.provisionlab.snoutscan.R;
 import com.provisionlab.snoutscan.fragments.AlertFragment;
 import com.provisionlab.snoutscan.fragments.HealthFragment;
@@ -22,6 +30,8 @@ import butterknife.ButterKnife;
  */
 
 public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     @BindView(R.id.navigation)
     BottomNavigationView navigation;
@@ -58,6 +68,26 @@ public class MainActivity extends AppCompatActivity {
         navigation.getMenu().getItem(0).setChecked(true);
         //For first time setup
         changeFragment(fragments.ALERT);
+
+        Dexter.withActivity(this)
+                .withPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                .withListener(new PermissionListener() {
+                                  @Override
+                                  public void onPermissionGranted(PermissionGrantedResponse response) {
+                                      Log.d(TAG, "Write external storage permission granted");
+                                  }
+
+                                  @Override
+                                  public void onPermissionDenied(PermissionDeniedResponse response) {
+                                      Log.d(TAG, "Write external storage permission denied!");
+                                  }
+
+                                  @Override
+                                  public void onPermissionRationaleShouldBeShown(PermissionRequest permission, PermissionToken token) {
+                                      token.continuePermissionRequest();
+                                  }
+                              }
+                ).check();
     }
 
 

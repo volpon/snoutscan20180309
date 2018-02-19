@@ -66,6 +66,8 @@ dependencies {
     implementation project(':crop_image_lib')
     provided 'org.glassfish:javax.annotation:10.0-b28'
 
+    implementation 'com.karumi:dexter:4.2.0'
+
     testImplementation 'junit:junit:4.12'
     androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'

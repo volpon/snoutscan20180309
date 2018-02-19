@@ -4,27 +4,45 @@ import android.app.ProgressDialog;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.hardware.Camera;
+import android.media.MediaPlayer;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Base64;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.provisionlab.snoutscan.R;
+import com.provisionlab.snoutscan.models.Error;
+import com.provisionlab.snoutscan.models.Image;
+import com.provisionlab.snoutscan.models.ImageObject;
+import com.provisionlab.snoutscan.server.ApiService;
+import com.provisionlab.snoutscan.server.RetrofitApi;
+import com.provisionlab.snoutscan.utilities.Utils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Calendar;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import okhttp3.ResponseBody;
+import retrofit2.HttpException;
+import retrofit2.Response;
 
 /**
  * Created by superlight on 10/31/2017 AD.
@@ -32,6 +50,7 @@ import butterknife.OnClick;
 
 public class ScanActivity extends AppCompatActivity {
 
+    private static final String TAG = ScanActivity.class.getSimpleName();
     private SurfaceHolder previewHolder = null;
     private Camera camera = null;
     private boolean inPreview = false;
@@ -41,6 +60,11 @@ public class ScanActivity extends AppCompatActivity {
     File imageFileFolder = null;
     private MediaScannerConnection msConn;
     ProgressDialog dialog;
+    private boolean isClicked = false;
+    private MediaPlayer player;
+    private String mimeType;
+    private String base64Image;
+    private Disposable disposable;
 
     @BindView(R.id.surface)
     SurfaceView preview;
@@ -53,6 +77,8 @@ public class ScanActivity extends AppCompatActivity {
         setContentView(R.layout.activity_scan);
 
         ButterKnife.bind(this);
+
+        player = MediaPlayer.create(this, R.raw.dogsounds);
 
         previewHolder = preview.getHolder();
         previewHolder.addCallback(surfaceCallback);
@@ -160,28 +186,43 @@ public class ScanActivity extends AppCompatActivity {
         protected String doInBackground(byte[]... data) {
             bmp = BitmapFactory.decodeByteArray(data[0], 0, data[0].length);
             mutableBitmap = bmp.copy(Bitmap.Config.ARGB_8888, true);
+
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            mutableBitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+            byte[] byteArray = byteArrayOutputStream.toByteArray();
+            base64Image = Base64.encodeToString(byteArray, Base64.DEFAULT);
+
             savePhoto(mutableBitmap);
             return null;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            matchPhoto();
         }
     }
 
     public void savePhoto(Bitmap bmp) {
-        imageFileFolder = new File(Environment.getExternalStorageDirectory(), "Rotate");
+        imageFileFolder = new File(Environment.getExternalStorageDirectory().toString() + File.separator + "Snoutscan/");
         imageFileFolder.mkdir();
-        FileOutputStream out = null;
+        FileOutputStream out;
         Calendar c = Calendar.getInstance();
         String date = fromInt(c.get(Calendar.MONTH)) + fromInt(c.get(Calendar.DAY_OF_MONTH)) + fromInt(c.get(Calendar.YEAR)) +
                 fromInt(c.get(Calendar.HOUR_OF_DAY)) + fromInt(c.get(Calendar.MINUTE)) + fromInt(c.get(Calendar.SECOND));
         imageFileName = new File(imageFileFolder, date.toString() + ".jpg");
+        Uri uri = Uri.parse(imageFileName.toString());
+        Log.d(TAG, "Uri " + uri);
+        mimeType = getContentResolver().getType(uri);
+
         try {
             out = new FileOutputStream(imageFileName);
             bmp.compress(Bitmap.CompressFormat.JPEG, 100, out);
             out.flush();
             out.close();
             scanPhoto(imageFileName.toString());
-            out = null;
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error " + e.getMessage());
         }
     }
 
@@ -193,27 +234,40 @@ public class ScanActivity extends AppCompatActivity {
         msConn = new MediaScannerConnection(ScanActivity.this, new MediaScannerConnection.MediaScannerConnectionClient() {
             public void onMediaScannerConnected() {
                 msConn.scanFile(imageFileName, null);
-                Log.i("msClient Photo Utility", "connection established");
+                Log.d(TAG, "connection established");
             }
 
             public void onScanCompleted(String path, Uri uri) {
                 msConn.disconnect();
                 dialog.dismiss();
-                Log.i("msClient Photo Utility", "scan completed");
-                finish();
+                Log.d(TAG, "scan completed");
             }
         });
         msConn.connect();
     }
 
-    @OnClick(R.id.btn_shater)
-    public void onShaterClick() {
-        onBack();
-    }
-
-    @OnClick(R.id.btn_back)
-    public void onBackClick() {
-        finish();
+    @OnClick({R.id.btn_shatter, R.id.btn_back, R.id.btn_sound})
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.btn_shatter:
+                onBack();
+                break;
+            case R.id.btn_back:
+                finish();
+                break;
+            case R.id.btn_sound:
+                if (!isClicked) {
+                    player = MediaPlayer.create(this, R.raw.dogsounds);
+                    player.start();
+                    isClicked = true;
+                    Log.d(TAG, "Start " + isClicked);
+                } else {
+                    player.stop();
+                    isClicked = false;
+                    Log.d(TAG, "Stop " + isClicked);
+                }
+                break;
+        }
     }
 
 //    @Override
@@ -225,9 +279,69 @@ public class ScanActivity extends AppCompatActivity {
 //    }
 
     public void onBack() {
-        Log.e("onBack :", "yes");
+        Log.d(TAG, "onBack: yes");
         camera.takePicture(null, null, photoCallback);
         inPreview = false;
     }
 
+    private void matchPhoto() {
+        if (Utils.isConnectedToNetwork(this)) {
+            findViewById(R.id.progress_layout).setVisibility(View.VISIBLE);
+            ApiService apiService = RetrofitApi.getInstance().getApiService();
+
+            Image image = new Image();
+            image.setData(base64Image);
+            image.setType(mimeType);
+            ImageObject imageObject = new ImageObject(image);
+
+            Log.d(TAG, "Image " + image);
+
+            disposable = apiService.matchPhoto(
+                    imageObject)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeOn(Schedulers.io())
+                    .subscribe(this::handleUploadResponse, this::handleUploadError);
+        } else {
+            Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void handleUploadResponse(Response<Void> result) {
+        findViewById(R.id.progress_layout).setVisibility(View.GONE);
+        Log.d(TAG, "Upload photo " + result);
+        if (result.code() == 200) {
+            Log.d(TAG, "Upload result response " + result.body().toString());
+        } else {
+            Log.d(TAG, "Error result response " + result.body().toString());
+        }
+        finish();
+    }
+
+    private void handleUploadError(Throwable t) throws IOException {
+        findViewById(R.id.progress_layout).setVisibility(View.GONE);
+
+        if (t != null) {
+            if (t instanceof HttpException) {
+                ResponseBody responseBody = ((HttpException) t).response().errorBody();
+
+                Toast.makeText(this, "Error: " +
+                        (responseBody != null ? new Gson().fromJson(responseBody.string(), Error.class).getError().getMessage() : null), Toast.LENGTH_LONG).show();
+            } else {
+                Log.d(TAG, "Error " + t.getMessage());
+            }
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (player != null) {
+            player.stop();
+            player.release();
+        }
+
+        if (disposable != null) {
+            disposable.dispose();
+        }
+    }
 }
