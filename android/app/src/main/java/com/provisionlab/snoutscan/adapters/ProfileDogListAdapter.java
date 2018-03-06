@@ -1,7 +1,6 @@
 package com.provisionlab.snoutscan.adapters;
 
 import android.content.Context;
-import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,13 +11,13 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.provisionlab.snoutscan.R;
-import com.provisionlab.snoutscan.activities.DogDetailActivity;
 import com.provisionlab.snoutscan.models.DogItem;
 import com.provisionlab.snoutscan.utilities.Utils;
 
 import java.util.ArrayList;
 
-import static com.provisionlab.snoutscan.activities.DogDetailActivity.DOG_DATA;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Created by superlight on 10/31/2017 AD.
@@ -28,6 +27,7 @@ public class ProfileDogListAdapter extends RecyclerView.Adapter<ProfileDogListAd
 
     private Context context;
     private final ArrayList<DogItem> dogsItems;
+    private OnDogClickListener onClickListener;
 
     public ProfileDogListAdapter(Context context, ArrayList<DogItem> dogsItems) {
         this.context = context;
@@ -44,24 +44,7 @@ public class ProfileDogListAdapter extends RecyclerView.Adapter<ProfileDogListAd
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        DogItem dogItem = dogsItems.get(position);
-        holder.dogName.setText(dogItem.getName());
-        holder.dogBreed.setText(dogItem.getBreed());
-        holder.dogSex.setText(dogItem.getSex());
-        holder.dogAge.setText(Utils.getAge(dogItem));
-        holder.dogLocation.setText(dogItem.getLocation());
-
-        holder.itemView.setOnClickListener(view -> {
-            Intent intent = new Intent(context, DogDetailActivity.class);
-            intent.putExtra(DOG_DATA, dogItem);
-            context.startActivity(intent);
-        });
-
-        Glide.with(holder.dogImageView.getContext())
-                .load(Utils.getUrl(dogItem))
-                .skipMemoryCache(true)
-                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .into(holder.dogImageView);
+        holder.bind(dogsItems.get(position));
     }
 
     @Override
@@ -69,22 +52,52 @@ public class ProfileDogListAdapter extends RecyclerView.Adapter<ProfileDogListAd
         return dogsItems.size();
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder {
+        @BindView(R.id.iv_dog_profile)
         ImageView dogImageView;
+        @BindView(R.id.txt_dog_name)
         TextView dogName;
+        @BindView(R.id.txt_breed)
         TextView dogBreed;
+        @BindView(R.id.txt_dog_sex)
         TextView dogSex;
+        @BindView(R.id.txt_dog_age)
         TextView dogAge;
+        @BindView(R.id.txt_dog_location)
         TextView dogLocation;
 
         ViewHolder(View itemView) {
             super(itemView);
-            dogImageView = itemView.findViewById(R.id.iv_dog_profile);
-            dogName = itemView.findViewById(R.id.txt_dog_name);
-            dogBreed = itemView.findViewById(R.id.txt_breed);
-            dogSex = itemView.findViewById(R.id.txt_dog_sex);
-            dogAge = itemView.findViewById(R.id.txt_dog_age);
-            dogLocation = itemView.findViewById(R.id.txt_dog_location);
+            ButterKnife.bind(this, itemView);
         }
+
+        public void bind(DogItem dogItem) {
+            dogName.setText(dogItem.getName());
+            dogBreed.setText(dogItem.getBreed());
+            dogSex.setText(dogItem.getSex());
+            dogAge.setText(Utils.getAge(dogItem));
+            dogLocation.setText(dogItem.getLocation());
+
+            itemView.setOnClickListener(view -> {
+                if (onClickListener != null) {
+                    onClickListener.onClick(dogItem);
+                }
+            });
+
+            Glide.with(dogImageView.getContext())
+                    .load(Utils.getUrl(dogItem))
+                    .skipMemoryCache(true)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .into(dogImageView);
+        }
+    }
+
+    public void setListener(OnDogClickListener listener) {
+        onClickListener = listener;
+    }
+
+
+    public interface OnDogClickListener {
+        void onClick(DogItem dogItem);
     }
 }

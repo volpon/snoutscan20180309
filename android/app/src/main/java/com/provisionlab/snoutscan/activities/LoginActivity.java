@@ -80,15 +80,13 @@ public class LoginActivity extends AppCompatActivity {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(this, "Camera Access permission granted.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Camera Access permission granted.",
+                            Toast.LENGTH_LONG).show();
                 } else {
-                    Toast.makeText(this, "Camera Access permission was denied.", Toast.LENGTH_LONG).show();
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
+                    Toast.makeText(this, "Camera Access permission was denied.",
+                            Toast.LENGTH_LONG).show();
                 }
                 break;
-            // other 'case' lines to check for other
-            // permissions this app might request
         }
     }
 
@@ -153,8 +151,9 @@ public class LoginActivity extends AppCompatActivity {
             if (t instanceof HttpException) {
                 ResponseBody responseBody = ((HttpException) t).response().errorBody();
 
-                Toast.makeText(this, "Error: " +
-                        (responseBody != null ? new Gson().fromJson(responseBody.string(), Error.class).getError().getMessage() : null), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, (responseBody != null ?
+                        new Gson().fromJson(responseBody.string(), Error.class).getError().getMessage() :
+                        null), Toast.LENGTH_LONG).show();
             } else {
                 Log.d(TAG, "Error " + t.getMessage());
             }

@@ -29,6 +29,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.gson.Gson;
 import com.provisionlab.snoutscan.R;
+import com.provisionlab.snoutscan.fragments.ProfileFragment;
 import com.provisionlab.snoutscan.models.DogItem;
 import com.provisionlab.snoutscan.models.Error;
 import com.provisionlab.snoutscan.models.Image;
@@ -60,6 +61,7 @@ import retrofit2.Response;
 
 import static com.provisionlab.snoutscan.activities.LoginActivity.TOKEN;
 import static com.provisionlab.snoutscan.activities.SignupActivity.PROFILE_ID;
+import static com.provisionlab.snoutscan.utilities.AppConstants.JWT;
 
 /**
  * Created by superlight on 11/2/2017 AD.
@@ -101,6 +103,7 @@ public class DogDetailActivity extends AppCompatActivity {
     private DogItem dog;
     private String mimeType;
     private String base64Image;
+    private ApiService apiService;
     private CompositeDisposable compositeDisposable;
 
     @Override
@@ -112,7 +115,7 @@ public class DogDetailActivity extends AppCompatActivity {
         initUI();
 
         compositeDisposable = new CompositeDisposable();
-
+        apiService = RetrofitApi.getInstance().getApiService();
         getProfileData();
     }
 
@@ -205,7 +208,6 @@ public class DogDetailActivity extends AppCompatActivity {
     private void uploadPhoto() {
         if (Utils.isConnectedToNetwork(this)) {
             findViewById(R.id.progress_layout).setVisibility(View.VISIBLE);
-            ApiService apiService = RetrofitApi.getInstance().getApiService();
 
             Image image = new Image();
             image.setData(base64Image);
@@ -381,12 +383,55 @@ public class DogDetailActivity extends AppCompatActivity {
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.back:
-            case R.id.close:
                 finish();
+                break;
+            case R.id.close:
+                deleteDog();
                 break;
             case R.id.profile_view:
                 popupActionSheet();
                 break;
+        }
+    }
+
+    private void deleteDog() {
+
+        if (Utils.isConnectedToNetwork(this)) {
+
+            compositeDisposable.add(apiService.deleteDog(
+                    JWT + " " + SharedPrefsUtil.getStringData(this, TOKEN),
+                    dog.getDogId())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeOn(Schedulers.io())
+                    .subscribe(this::handleDeleteDogResponse, this::handleDeleteDogError));
+        } else {
+            Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void handleDeleteDogResponse(Response<Void> result) {
+        findViewById(R.id.progress_layout).setVisibility(View.GONE);
+        if (result.code() == 204) {
+            Log.d(TAG, "Delete dog " + result.message());
+            Toast.makeText(this, "Dog deleted", Toast.LENGTH_SHORT).show();
+            setResult(ProfileFragment.DELETE_RESULT_CODE);
+            finish();
+        }
+    }
+
+    private void handleDeleteDogError(Throwable t) throws IOException {
+        findViewById(R.id.progress_layout).setVisibility(View.GONE);
+
+        if (t != null) {
+            if (t instanceof HttpException) {
+                ResponseBody responseBody = ((HttpException) t).response().errorBody();
+
+                Toast.makeText(this, (responseBody != null ?
+                        new Gson().fromJson(responseBody.string(), Error.class).getError().getMessage() :
+                        null), Toast.LENGTH_LONG).show();
+            } else {
+                Log.d(TAG, "Error " + t.getMessage());
+            }
         }
     }
 

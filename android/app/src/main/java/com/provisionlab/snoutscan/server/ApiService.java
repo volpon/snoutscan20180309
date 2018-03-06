@@ -62,7 +62,7 @@ public interface ApiService {
 
     @Headers("Content-Type: application/json")
     @DELETE("api/friend/{id}")
-    Observable<Response<Void>> getDogInfo(@Header("Authorization") String token,
+    Observable<Response<Void>> deleteDog(@Header("Authorization") String token,
                                           @Path("id") int id);
 
     @Headers("Content-Type: application/json")

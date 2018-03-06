@@ -19,6 +19,7 @@ import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.provisionlab.snoutscan.R;
+import com.provisionlab.snoutscan.activities.DogDetailActivity;
 import com.provisionlab.snoutscan.activities.RegisterDogActivity;
 import com.provisionlab.snoutscan.adapters.ProfileDogListAdapter;
 import com.provisionlab.snoutscan.models.DogItem;
@@ -44,6 +45,7 @@ import okhttp3.ResponseBody;
 import retrofit2.HttpException;
 
 import static android.app.Activity.RESULT_OK;
+import static com.provisionlab.snoutscan.activities.DogDetailActivity.DOG_DATA;
 import static com.provisionlab.snoutscan.activities.LoginActivity.TOKEN;
 import static com.provisionlab.snoutscan.activities.SignupActivity.PROFILE_ID;
 
@@ -51,10 +53,11 @@ import static com.provisionlab.snoutscan.activities.SignupActivity.PROFILE_ID;
  * Created by superlight on 10/31/2017 AD.
  */
 
-public class ProfileFragment extends Fragment {
+public class ProfileFragment extends Fragment implements ProfileDogListAdapter.OnDogClickListener {
 
     private static final String TAG = ProfileFragment.class.getSimpleName();
     private static final int REQUEST_CODE = 1002;
+    public static final int DELETE_RESULT_CODE = 1003;
 
     private ProfileDogListAdapter adapter;
     private CompositeDisposable compositeDisposable;
@@ -108,8 +111,12 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
-            getDogs();
+        if (resultCode == RESULT_OK) {
+            switch (requestCode) {
+                case REQUEST_CODE:
+                case DELETE_RESULT_CODE:
+                    getDogs();
+            }
         }
     }
 
@@ -185,6 +192,7 @@ public class ProfileFragment extends Fragment {
             LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
             mRecyclerView.setLayoutManager(linearLayoutManager);
             mRecyclerView.setAdapter(adapter);
+            adapter.setListener(this);
         }
     }
 
@@ -208,5 +216,12 @@ public class ProfileFragment extends Fragment {
         super.onDestroyView();
 
         compositeDisposable.clear();
+    }
+
+    @Override
+    public void onClick(DogItem dogItem) {
+        Intent intent = new Intent(getActivity(), DogDetailActivity.class);
+        intent.putExtra(DOG_DATA, dogItem);
+        startActivityForResult(intent, DELETE_RESULT_CODE);
     }
 }
