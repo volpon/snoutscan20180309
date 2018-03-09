@@ -15,6 +15,8 @@ import com.provisionlab.snoutscan.models.DogItem;
 import com.provisionlab.snoutscan.utilities.Utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -26,12 +28,11 @@ import butterknife.ButterKnife;
 public class ProfileDogListAdapter extends RecyclerView.Adapter<ProfileDogListAdapter.ViewHolder> {
 
     private Context context;
-    private final ArrayList<DogItem> dogsItems;
+    private List<DogItem> dogsItems = new ArrayList<>();
     private OnDogClickListener onClickListener;
 
-    public ProfileDogListAdapter(Context context, ArrayList<DogItem> dogsItems) {
+    public ProfileDogListAdapter(Context context) {
         this.context = context;
-        this.dogsItems = dogsItems;
     }
 
     @Override
@@ -85,7 +86,7 @@ public class ProfileDogListAdapter extends RecyclerView.Adapter<ProfileDogListAd
             });
 
             Glide.with(dogImageView.getContext())
-                    .load(Utils.getUrl(dogItem))
+                    .load(Utils.getUrl(dogItem.getDogId()))
                     .skipMemoryCache(true)
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .into(dogImageView);
@@ -96,6 +97,11 @@ public class ProfileDogListAdapter extends RecyclerView.Adapter<ProfileDogListAd
         onClickListener = listener;
     }
 
+    public void setItems(List<DogItem> items) {
+        dogsItems = items;
+        Collections.reverse(items);
+        notifyDataSetChanged();
+    }
 
     public interface OnDogClickListener {
         void onClick(DogItem dogItem);

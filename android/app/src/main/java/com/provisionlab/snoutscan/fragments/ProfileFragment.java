@@ -32,7 +32,6 @@ import com.provisionlab.snoutscan.utilities.SharedPrefsUtil;
 import com.provisionlab.snoutscan.utilities.Utils;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
@@ -45,7 +44,7 @@ import okhttp3.ResponseBody;
 import retrofit2.HttpException;
 
 import static android.app.Activity.RESULT_OK;
-import static com.provisionlab.snoutscan.activities.DogDetailActivity.DOG_DATA;
+import static com.provisionlab.snoutscan.activities.DogDetailActivity.DOG_ID;
 import static com.provisionlab.snoutscan.activities.LoginActivity.TOKEN;
 import static com.provisionlab.snoutscan.activities.SignupActivity.PROFILE_ID;
 
@@ -93,6 +92,11 @@ public class ProfileFragment extends Fragment implements ProfileDogListAdapter.O
 
         compositeDisposable = new CompositeDisposable();
         getProfileData();
+        adapter = new ProfileDogListAdapter(getActivity());
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
+        mRecyclerView.setLayoutManager(linearLayoutManager);
+        mRecyclerView.setAdapter(adapter);
+        adapter.setListener(this);
         getDogs();
     }
 
@@ -114,8 +118,12 @@ public class ProfileFragment extends Fragment implements ProfileDogListAdapter.O
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
                 case REQUEST_CODE:
-                case DELETE_RESULT_CODE:
                     getDogs();
+                    break;
+                case DELETE_RESULT_CODE:
+                    Log.d(TAG, "Delete");
+                    getDogs();
+                    break;
             }
         }
     }
@@ -188,11 +196,7 @@ public class ProfileFragment extends Fragment implements ProfileDogListAdapter.O
         Log.d(TAG, "Dogs " + dogs);
 
         if (dogs != null && dogs.size() > 0) {
-            adapter = new ProfileDogListAdapter(getActivity(), (ArrayList<DogItem>) dogs);
-            LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
-            mRecyclerView.setLayoutManager(linearLayoutManager);
-            mRecyclerView.setAdapter(adapter);
-            adapter.setListener(this);
+            adapter.setItems(dogs);
         }
     }
 
@@ -221,7 +225,7 @@ public class ProfileFragment extends Fragment implements ProfileDogListAdapter.O
     @Override
     public void onClick(DogItem dogItem) {
         Intent intent = new Intent(getActivity(), DogDetailActivity.class);
-        intent.putExtra(DOG_DATA, dogItem);
+        intent.putExtra(DOG_ID, dogItem.getDogId());
         startActivityForResult(intent, DELETE_RESULT_CODE);
     }
 }

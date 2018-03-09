@@ -62,8 +62,8 @@ public class Utils {
         }
     }
 
-    public static String getUrl(DogItem dogItem) {
-        String url = "https://" + AppConstants.SERVER_URL + "/friend/" + dogItem.getDogId() + "/photo";
+    public static String getUrl(int dogID) {
+        String url = "https://" + AppConstants.SERVER_URL + "/friend/" + dogID + "/photo";
         Log.d(TAG, "Photo " + url);
         return url;
     }

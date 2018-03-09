@@ -29,7 +29,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.gson.Gson;
 import com.provisionlab.snoutscan.R;
-import com.provisionlab.snoutscan.fragments.ProfileFragment;
 import com.provisionlab.snoutscan.models.DogItem;
 import com.provisionlab.snoutscan.models.Error;
 import com.provisionlab.snoutscan.models.Image;
@@ -69,7 +68,7 @@ import static com.provisionlab.snoutscan.utilities.AppConstants.JWT;
 
 public class DogDetailActivity extends AppCompatActivity {
 
-    public static final String DOG_DATA = "dog_data";
+    public static final String DOG_ID = "dog_id";
     private static final String TAG = DogDetailActivity.class.getSimpleName();
     static final int SELECT_FILE = 1;
     static final int REQUEST_CAMERA = 0;
@@ -100,7 +99,7 @@ public class DogDetailActivity extends AppCompatActivity {
     @BindView(R.id.contact_by_messaging)
     RelativeLayout contactByMessagingLayout;
 
-    private DogItem dog;
+    private int dogID;
     private String mimeType;
     private String base64Image;
     private ApiService apiService;
@@ -140,20 +139,8 @@ public class DogDetailActivity extends AppCompatActivity {
 //        });
 
         if (getIntent() != null && getIntent().getExtras() != null) {
-            dog = (DogItem) getIntent().getSerializableExtra(DOG_DATA);
-            Log.d(TAG, "Dog detail " + dog);
-
-            status.setText(dog.getName());
-            breed.setText(dog.getBreed());
-            sex.setText(dog.getSex());
-            age.setText(Utils.getAge(dog));
-            location.setText(dog.getLocation());
-
-            Glide.with(this)
-                    .load(Utils.getUrl(dog))
-                    .skipMemoryCache(true)
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
-                    .into(profileImageView);
+            dogID = getIntent().getIntExtra(DOG_ID, -1);
+            Log.d(TAG, "Dog id " + dogID);
         }
     }
 
@@ -200,8 +187,44 @@ public class DogDetailActivity extends AppCompatActivity {
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribeOn(Schedulers.io())
                     .subscribe(this::handleProfileResponse, this::handleProfileError));
+
+            compositeDisposable.add(apiService.getDogInfo(dogID)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeOn(Schedulers.io())
+                    .subscribe(this::handleFetchDataResponse, this::handleFetchDataError));
         } else {
             Toast.makeText(this, getString(R.string.no_internet), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void handleFetchDataResponse(DogItem result) {
+        findViewById(R.id.progress_layout).setVisibility(View.GONE);
+        Log.d(TAG, "Upload photo " + result);
+        status.setText(result.getName());
+        breed.setText(result.getBreed());
+        sex.setText(result.getSex());
+        age.setText(Utils.getAge(result));
+        location.setText(result.getLocation());
+
+        Glide.with(this)
+                .load(Utils.getUrl(result.getDogId()))
+                .skipMemoryCache(true)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .into(profileImageView);
+    }
+
+    private void handleFetchDataError(Throwable t) throws IOException {
+        findViewById(R.id.progress_layout).setVisibility(View.GONE);
+
+        if (t != null) {
+            if (t instanceof HttpException) {
+                ResponseBody responseBody = ((HttpException) t).response().errorBody();
+
+                Toast.makeText(this, "Error: " +
+                        (responseBody != null ? new Gson().fromJson(responseBody.string(), Error.class).getError().getMessage() : null), Toast.LENGTH_LONG).show();
+            } else {
+                Log.d(TAG, "Error " + t.getMessage());
+            }
         }
     }
 
@@ -218,7 +241,7 @@ public class DogDetailActivity extends AppCompatActivity {
 
             compositeDisposable.add(apiService.uploadPhoto(
                     AppConstants.JWT + " " + SharedPrefsUtil.getStringData(this, TOKEN),
-                    dog.getDogId(),
+                    dogID,
                     imageObject)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribeOn(Schedulers.io())
@@ -233,7 +256,7 @@ public class DogDetailActivity extends AppCompatActivity {
         Log.d(TAG, "Upload photo " + result);
         if (result.code() == 204) {
             Glide.with(this)
-                    .load(Utils.getUrl(dog))
+                    .load(Utils.getUrl(dogID))
                     .into(profileImageView);
         }
     }
@@ -399,8 +422,7 @@ public class DogDetailActivity extends AppCompatActivity {
         if (Utils.isConnectedToNetwork(this)) {
 
             compositeDisposable.add(apiService.deleteDog(
-                    JWT + " " + SharedPrefsUtil.getStringData(this, TOKEN),
-                    dog.getDogId())
+                    JWT + " " + SharedPrefsUtil.getStringData(this, TOKEN), dogID)
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribeOn(Schedulers.io())
                     .subscribe(this::handleDeleteDogResponse, this::handleDeleteDogError));
@@ -414,7 +436,7 @@ public class DogDetailActivity extends AppCompatActivity {
         if (result.code() == 204) {
             Log.d(TAG, "Delete dog " + result.message());
             Toast.makeText(this, "Dog deleted", Toast.LENGTH_SHORT).show();
-            setResult(ProfileFragment.DELETE_RESULT_CODE);
+            setResult(RESULT_OK);
             finish();
         }
     }

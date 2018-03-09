@@ -31,8 +31,7 @@ public class Image {
     @Override
     public String toString() {
         return "Image{" +
-                "data='" + data.substring(50) + '\'' +
-                ", type='" + type + '\'' +
+                " type='" + type + '\'' +
                 '}';
     }
 }

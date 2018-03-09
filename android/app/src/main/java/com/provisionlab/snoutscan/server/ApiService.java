@@ -5,6 +5,7 @@ import com.provisionlab.snoutscan.models.DogItem;
 import com.provisionlab.snoutscan.models.Image;
 import com.provisionlab.snoutscan.models.ImageObject;
 import com.provisionlab.snoutscan.models.LoginObject;
+import com.provisionlab.snoutscan.models.MatchResponse;
 import com.provisionlab.snoutscan.models.Profile;
 import com.provisionlab.snoutscan.models.RegisterObject;
 
@@ -77,5 +78,5 @@ public interface ApiService {
 
     @Headers("Content-Type: application/json")
     @POST("api/query_match")
-    Observable<Response<Void>> matchPhoto(@Body ImageObject image);
+    Observable<MatchResponse> matchPhoto(@Body ImageObject image);
 }

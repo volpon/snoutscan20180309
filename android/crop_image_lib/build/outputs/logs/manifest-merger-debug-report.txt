@@ -1,23 +1,23 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /home/evgeniyosetrov/Projects/Snoutscan/android/crop_image_lib/src/main/AndroidManifest.xml:1:1-51
-INJECTED from /home/evgeniyosetrov/Projects/Snoutscan/android/crop_image_lib/src/main/AndroidManifest.xml:1:1-51
-INJECTED from /home/evgeniyosetrov/Projects/Snoutscan/android/crop_image_lib/src/main/AndroidManifest.xml:1:1-51
+ADDED from E:\AndroidProjects\Snoutscan\android\crop_image_lib\src\main\AndroidManifest.xml:1:1-51
+INJECTED from E:\AndroidProjects\Snoutscan\android\crop_image_lib\src\main\AndroidManifest.xml:1:1-51
+INJECTED from E:\AndroidProjects\Snoutscan\android\crop_image_lib\src\main\AndroidManifest.xml:1:1-51
 	package
-		ADDED from /home/evgeniyosetrov/Projects/Snoutscan/android/crop_image_lib/src/main/AndroidManifest.xml:1:11-48
-		INJECTED from /home/evgeniyosetrov/Projects/Snoutscan/android/crop_image_lib/src/main/AndroidManifest.xml
-		INJECTED from /home/evgeniyosetrov/Projects/Snoutscan/android/crop_image_lib/src/main/AndroidManifest.xml
+		ADDED from E:\AndroidProjects\Snoutscan\android\crop_image_lib\src\main\AndroidManifest.xml:1:11-48
+		INJECTED from E:\AndroidProjects\Snoutscan\android\crop_image_lib\src\main\AndroidManifest.xml
+		INJECTED from E:\AndroidProjects\Snoutscan\android\crop_image_lib\src\main\AndroidManifest.xml
 uses-sdk
-INJECTED from /home/evgeniyosetrov/Projects/Snoutscan/android/crop_image_lib/src/main/AndroidManifest.xml reason: use-sdk injection requested
-INJECTED from /home/evgeniyosetrov/Projects/Snoutscan/android/crop_image_lib/src/main/AndroidManifest.xml
-INJECTED from /home/evgeniyosetrov/Projects/Snoutscan/android/crop_image_lib/src/main/AndroidManifest.xml
-INJECTED from /home/evgeniyosetrov/Projects/Snoutscan/android/crop_image_lib/src/main/AndroidManifest.xml
-INJECTED from /home/evgeniyosetrov/Projects/Snoutscan/android/crop_image_lib/src/main/AndroidManifest.xml
+INJECTED from E:\AndroidProjects\Snoutscan\android\crop_image_lib\src\main\AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from E:\AndroidProjects\Snoutscan\android\crop_image_lib\src\main\AndroidManifest.xml
+INJECTED from E:\AndroidProjects\Snoutscan\android\crop_image_lib\src\main\AndroidManifest.xml
+INJECTED from E:\AndroidProjects\Snoutscan\android\crop_image_lib\src\main\AndroidManifest.xml
+INJECTED from E:\AndroidProjects\Snoutscan\android\crop_image_lib\src\main\AndroidManifest.xml
 	android:targetSdkVersion
-		INJECTED from /home/evgeniyosetrov/Projects/Snoutscan/android/crop_image_lib/src/main/AndroidManifest.xml
-		ADDED from /home/evgeniyosetrov/Projects/Snoutscan/android/crop_image_lib/src/main/AndroidManifest.xml
-		INJECTED from /home/evgeniyosetrov/Projects/Snoutscan/android/crop_image_lib/src/main/AndroidManifest.xml
+		INJECTED from E:\AndroidProjects\Snoutscan\android\crop_image_lib\src\main\AndroidManifest.xml
+		ADDED from E:\AndroidProjects\Snoutscan\android\crop_image_lib\src\main\AndroidManifest.xml
+		INJECTED from E:\AndroidProjects\Snoutscan\android\crop_image_lib\src\main\AndroidManifest.xml
 	android:minSdkVersion
-		INJECTED from /home/evgeniyosetrov/Projects/Snoutscan/android/crop_image_lib/src/main/AndroidManifest.xml
-		ADDED from /home/evgeniyosetrov/Projects/Snoutscan/android/crop_image_lib/src/main/AndroidManifest.xml
-		INJECTED from /home/evgeniyosetrov/Projects/Snoutscan/android/crop_image_lib/src/main/AndroidManifest.xml
+		INJECTED from E:\AndroidProjects\Snoutscan\android\crop_image_lib\src\main\AndroidManifest.xml
+		ADDED from E:\AndroidProjects\Snoutscan\android\crop_image_lib\src\main\AndroidManifest.xml
+		INJECTED from E:\AndroidProjects\Snoutscan\android\crop_image_lib\src\main\AndroidManifest.xml

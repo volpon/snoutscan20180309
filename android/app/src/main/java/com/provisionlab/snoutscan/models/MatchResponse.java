@@ -8,7 +8,7 @@ public class MatchResponse {
 
     private String status;
     private int profile;
-    private int percent;
+    private double percent;
 
     public MatchResponse() {
     }
@@ -29,11 +29,11 @@ public class MatchResponse {
         this.profile = profile;
     }
 
-    public int getPercent() {
+    public double getPercent() {
         return percent;
     }
 
-    public void setPercent(int percent) {
+    public void setPercent(double percent) {
         this.percent = percent;
     }
 

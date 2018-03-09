@@ -1,6 +1,8 @@
 package com.provisionlab.snoutscan.activities;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.hardware.Camera;
@@ -13,9 +15,11 @@ import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
 import android.util.Log;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,6 +28,7 @@ import com.provisionlab.snoutscan.R;
 import com.provisionlab.snoutscan.models.Error;
 import com.provisionlab.snoutscan.models.Image;
 import com.provisionlab.snoutscan.models.ImageObject;
+import com.provisionlab.snoutscan.models.MatchResponse;
 import com.provisionlab.snoutscan.server.ApiService;
 import com.provisionlab.snoutscan.server.RetrofitApi;
 import com.provisionlab.snoutscan.utilities.Utils;
@@ -33,6 +38,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Calendar;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -42,7 +48,9 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import okhttp3.ResponseBody;
 import retrofit2.HttpException;
-import retrofit2.Response;
+
+import static com.provisionlab.snoutscan.activities.DogDetailActivity.DOG_ID;
+import static com.provisionlab.snoutscan.fragments.ProfileFragment.DELETE_RESULT_CODE;
 
 /**
  * Created by superlight on 10/31/2017 AD.
@@ -65,6 +73,7 @@ public class ScanActivity extends AppCompatActivity {
     private String mimeType;
     private String base64Image;
     private Disposable disposable;
+    private int currentCameraId = Camera.CameraInfo.CAMERA_FACING_BACK;
 
     @BindView(R.id.surface)
     SurfaceView preview;
@@ -88,7 +97,6 @@ public class ScanActivity extends AppCompatActivity {
                 .getDefaultDisplay().getWidth(), getWindow().getWindowManager()
                 .getDefaultDisplay().getHeight());
     }
-
 
     @Override
     public void onResume() {
@@ -161,6 +169,7 @@ public class ScanActivity extends AppCompatActivity {
 
 
     Camera.PictureCallback photoCallback = new Camera.PictureCallback() {
+
         public void onPictureTaken(final byte[] data, final Camera camera) {
             dialog = ProgressDialog.show(ScanActivity.this, "", "Saving Photo");
             new Thread() {
@@ -168,7 +177,7 @@ public class ScanActivity extends AppCompatActivity {
                     try {
                         Thread.sleep(1000);
                     } catch (Exception ex) {
-
+                        Log.e(TAG, "Error " + ex.getMessage());
                     }
                     onPictureTake(data);
                 }
@@ -211,9 +220,8 @@ public class ScanActivity extends AppCompatActivity {
         String date = fromInt(c.get(Calendar.MONTH)) + fromInt(c.get(Calendar.DAY_OF_MONTH)) + fromInt(c.get(Calendar.YEAR)) +
                 fromInt(c.get(Calendar.HOUR_OF_DAY)) + fromInt(c.get(Calendar.MINUTE)) + fromInt(c.get(Calendar.SECOND));
         imageFileName = new File(imageFileFolder, date.toString() + ".jpg");
-        Uri uri = Uri.parse(imageFileName.toString());
-        Log.d(TAG, "Uri " + uri);
-        mimeType = getContentResolver().getType(uri);
+        mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(imageFileName.getPath()));
+        Log.d(TAG, "MimeType " + mimeType);
 
         try {
             out = new FileOutputStream(imageFileName);
@@ -246,14 +254,46 @@ public class ScanActivity extends AppCompatActivity {
         msConn.connect();
     }
 
-    @OnClick({R.id.btn_shatter, R.id.btn_back, R.id.btn_sound})
+    @OnClick({R.id.btn_shatter, R.id.btn_flash, R.id.btn_switch, R.id.btn_sound})
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btn_shatter:
                 onBack();
                 break;
-            case R.id.btn_back:
-                finish();
+            case R.id.btn_flash:
+                Camera.Parameters parameters = camera.getParameters();
+
+                //Check Whether device supports AutoFlash, If you YES then set AutoFlash
+                List<String> flashModes = parameters.getSupportedFlashModes();
+                if (flashModes.contains(android.hardware.Camera.Parameters.FLASH_MODE_AUTO)) {
+                    parameters.setFlashMode(Camera.Parameters.FLASH_MODE_AUTO);
+                }
+                camera.setParameters(parameters);
+                camera.startPreview();
+                break;
+            case R.id.btn_switch:
+                if (inPreview) {
+                    camera.stopPreview();
+                }
+                //NB: if you don't release the current camera before switching, you app will crash
+                camera.release();
+
+
+                //swap the id of the camera to be used
+                if (currentCameraId == Camera.CameraInfo.CAMERA_FACING_BACK) {
+                    currentCameraId = Camera.CameraInfo.CAMERA_FACING_FRONT;
+                } else {
+                    currentCameraId = Camera.CameraInfo.CAMERA_FACING_BACK;
+                }
+                camera = Camera.open(currentCameraId);
+
+                setCameraDisplayOrientation(this, currentCameraId, camera);
+                try {
+                    camera.setPreviewDisplay(previewHolder);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                camera.startPreview();
                 break;
             case R.id.btn_sound:
                 if (!isClicked) {
@@ -270,13 +310,38 @@ public class ScanActivity extends AppCompatActivity {
         }
     }
 
-//    @Override
-//    public boolean onKeyDown(int keyCode, KeyEvent event) {
-//        if (keyCode == KeyEvent.KEYCODE_MENU && event.getRepeatCount() == 0) {
-//            onBack();
-//        }
-//        return super.onKeyDown(keyCode, event);
-//    }
+    public static void setCameraDisplayOrientation(Activity activity,
+                                                   int cameraId, android.hardware.Camera camera) {
+        android.hardware.Camera.CameraInfo info =
+                new android.hardware.Camera.CameraInfo();
+        android.hardware.Camera.getCameraInfo(cameraId, info);
+        int rotation = activity.getWindowManager().getDefaultDisplay()
+                .getRotation();
+        int degrees = 0;
+        switch (rotation) {
+            case Surface.ROTATION_0:
+                degrees = 0;
+                break;
+            case Surface.ROTATION_90:
+                degrees = 90;
+                break;
+            case Surface.ROTATION_180:
+                degrees = 180;
+                break;
+            case Surface.ROTATION_270:
+                degrees = 270;
+                break;
+        }
+
+        int result;
+        if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+            result = (info.orientation + degrees) % 360;
+            result = (360 - result) % 360;  // compensate the mirror
+        } else {  // back-facing
+            result = (info.orientation - degrees + 360) % 360;
+        }
+        camera.setDisplayOrientation(result);
+    }
 
     public void onBack() {
         Log.d(TAG, "onBack: yes");
@@ -294,7 +359,7 @@ public class ScanActivity extends AppCompatActivity {
             image.setType(mimeType);
             ImageObject imageObject = new ImageObject(image);
 
-            Log.d(TAG, "Image " + image);
+            Log.d(TAG, "Image " + new Gson().toJson(imageObject));
 
             disposable = apiService.matchPhoto(
                     imageObject)
@@ -306,14 +371,13 @@ public class ScanActivity extends AppCompatActivity {
         }
     }
 
-    private void handleUploadResponse(Response<Void> result) {
+    private void handleUploadResponse(MatchResponse result) throws IOException {
         findViewById(R.id.progress_layout).setVisibility(View.GONE);
         Log.d(TAG, "Upload photo " + result);
-        if (result.code() == 200) {
-            Log.d(TAG, "Upload result response " + result.body().toString());
-        } else {
-            Log.d(TAG, "Error result response " + result.body().toString());
-        }
+
+        Intent intent = new Intent(this, DogDetailActivity.class);
+        intent.putExtra(DOG_ID, result.getProfile());
+        startActivityForResult(intent, DELETE_RESULT_CODE);
         finish();
     }
 
