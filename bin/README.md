@@ -32,6 +32,8 @@ Before you can run or deploy the app, you will need to do the following:
     mysql> create database YOUR_DATABASE;
     mysql> create user 'YOUR_USER'@'%' identified by 'PASSWORD';
     mysql> grant all on YOUR_DATABASE.* to 'YOUR_USER'@'%';
+    
+    Note:  This is currently automated in the "create_db.sh" script.  You can just run that instead.
 
 1. Set the connection string environment variable. This allows the app to connect to your Cloud SQL instance through the proxy:
 
