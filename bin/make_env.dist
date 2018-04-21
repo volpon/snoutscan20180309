@@ -1,15 +1,30 @@
 #This file contains any variables for the Makefile that might be different from machine to machine.
 
+#Namespace
 NS ?= ss
+
+#What version of the container to be working on:
 VERSION ?= latest
 
 IMAGE_NAME ?= snoutscanbackend
 CONTAINER_NAME ?= snoutscanbackend
 CONTAINER_INSTANCE ?= default
 
-#This forwards the 8080 port on the docker container to 8080 locally.  
-PORTS ?= -p 8080:8080
+CONTAINER_PORT ?= 8080
+HOST_PORT ?= 8080
+
+#This forwards the CONTAINER_PORT so it's accessible at HOST_PORT
+PORTS ?= -p $(HOST_PORT):$(CONTAINER_PORT)
 
 #--net=host  is what allows the docker container to access mysql on my local box.  
 # It won't be used in production.
 ENV ?= --net=host --env=SQLALCHEMY_DATABASE_URI=mysql+pymysql://andromodon:worivrinVosk@127.0.0.1/snoutScan
+
+#What command to run with the 'make run' command:
+RUN_CMD ?= gunicorn main:app -b :$(CONTAINER_PORT)
+
+#Alternatively you could use this command to add ssl:
+#RUN_CMD ?= gunicorn main:app -D -b :443 --certfile=ssl_cert/cert.crt --keyfile=ssl_cert/cert.key
+
+#What command to use for 'make benchmark'
+BENCHMARK_CMD ?= python3 ./cli/snoutScan.py

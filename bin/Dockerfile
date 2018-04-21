@@ -20,9 +20,3 @@ ADD . /app/
 
 # #For creating the tables:
 # CMD python create_tables.py
-
-#For running the site:
-CMD gunicorn main:app -b :$PORT
-#CMD gunicorn main:app -D -b :443 --certfile=ssl_cert/cert.crt --keyfile=ssl_cert/cert.key
-
-# [END dockerfile]

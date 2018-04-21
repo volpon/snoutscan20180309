@@ -19,8 +19,10 @@ shell: .build
 	docker run --rm --name $(CONTAINER_NAME)-$(CONTAINER_INSTANCE) -i -t $(PORTS) $(VOLUMES) $(ENV) $(NS)/$(IMAGE_NAME):$(VERSION) /bin/bash
 
 run: .build
-	echo "SQLALCHEMY_DATABASE_URI=$(SQLALCHEMY_DATABASE_URI)"
-	docker run --rm -it --name $(CONTAINER_NAME)-$(CONTAINER_INSTANCE) $(PORTS) $(VOLUMES) $(ENV) $(NS)/$(IMAGE_NAME):$(VERSION)
+	docker run --rm -it --name $(CONTAINER_NAME)-$(CONTAINER_INSTANCE) $(PORTS) $(VOLUMES) $(ENV) $(NS)/$(IMAGE_NAME):$(VERSION) $(RUN_CMD)
+
+benchmark: .build
+	docker run --rm -it --name $(CONTAINER_NAME)-$(CONTAINER_INSTANCE) $(VOLUMES) $(NS)/$(IMAGE_NAME):$(VERSION) $(BENCHMARK_CMD)
 
 start: .build
 	docker run -d --name $(CONTAINER_NAME)-$(CONTAINER_INSTANCE) $(PORTS) $(VOLUMES) $(ENV) $(NS)/$(IMAGE_NAME):$(VERSION)
@@ -35,3 +37,4 @@ release: .build
 	make push -e VERSION=$(VERSION)
 	
 default: run
+
