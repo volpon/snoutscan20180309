@@ -18,8 +18,5 @@ RUN pip install -r requirements.txt
 #Adds the current directory into the docker container as the /app directory:
 ADD . /app/
 
-#Add our data as well:
-ADD ./data /data
-
 # #For creating the tables:
 # CMD python create_tables.py
