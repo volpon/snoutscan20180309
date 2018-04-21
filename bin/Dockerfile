@@ -14,6 +14,8 @@ ENV VIRTUAL_ENV /env
 ENV PATH /env/bin:$PATH
 ADD requirements.txt /app/
 RUN pip install -r requirements.txt
+
+#Adds the current directory into the docker container as the /app directory:
 ADD . /app/
 
 # #For creating the tables:

@@ -246,13 +246,23 @@ class MatchFragment(object):
         return MatchResult(name, outputImg, percent);
 
 def find_best_match(image_data, image_type, friends):
+    '''
+    This function finds the best match for image_data among a collection of friends, where
+    each friend represents a photo of a dog, with accompanying metadata.
+    
+    Inputs:
+        image_data  - the image data, either as an array of bytes or as a base64 encoded string.
+        image_type  - Not currently used.
+        friends     - A collection of Friend() objects representing the pictures the given image
+                      could match to.
+    '''
 
     if image_data is None:
         return None, None
 
     matcher = ImageMatcher(ImageFeatures.from_image(image_data))
 
-    best_per = 0
+    best_match_score = 0
     best_id = 0
 
     for friend in friends:
@@ -264,13 +274,15 @@ def find_best_match(image_data, image_type, friends):
         
         image2 = ImageFeatures(photo.features)
 
-        per = matcher.match(image2)
+        match_score = matcher.match(image2)
 
-        if per and per > best_per:
-            best_per = per
+        #Find the largest per in the group.
+        if match_score and match_score > best_match_score:
+            best_match_score = match_score
             best_id = friend.id
 
-    if best_per > 50:
-        return best_id, best_per
+    #Only return a result if we have at least a match score of 50:
+    if best_match_score > 50:
+        return best_id, best_match_score
 
     return None, None
