@@ -1,0 +1,15 @@
+#This file contains any variables for the Makefile that might be different from machine to machine.
+
+NS ?= ss
+VERSION ?= latest
+
+IMAGE_NAME ?= snoutscanbackend
+CONTAINER_NAME ?= snoutscanbackend
+CONTAINER_INSTANCE ?= default
+
+#This forwards the 8080 port on the docker container to 8080 locally.  
+PORTS ?= -p 8080:8080
+
+#--net=host  is what allows the docker container to access mysql on my local box.  
+# It won't be used in production.
+ENV ?= --net=host --env=SQLALCHEMY_DATABASE_URI=mysql+pymysql://andromodon:worivrinVosk@127.0.0.1/snoutScan

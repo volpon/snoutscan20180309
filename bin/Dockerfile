@@ -12,10 +12,6 @@ RUN virtualenv /env -p python3.5
 # source /env/bin/activate.
 ENV VIRTUAL_ENV /env
 ENV PATH /env/bin:$PATH
-#ENV CLOUDSQL_CONNECTION_NAME snout-cloud:us-central1:snoutscandb
-#ENV CLOUDSQL_USER app
-#ENV CLOUDSQL_PASSWORD Pbn6u8Ew1xAiCJh7
-ENV SQLALCHEMY_DATABASE_URI mysql+pymysql://andromodon:worivrinVosk@127.0.0.1/snoutScan
 ADD requirements.txt /app/
 RUN pip install -r requirements.txt
 ADD . /app/
