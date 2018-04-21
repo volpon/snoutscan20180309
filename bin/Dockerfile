@@ -15,12 +15,15 @@ ENV PATH /env/bin:$PATH
 #ENV CLOUDSQL_CONNECTION_NAME snout-cloud:us-central1:snoutscandb
 #ENV CLOUDSQL_USER app
 #ENV CLOUDSQL_PASSWORD Pbn6u8Ew1xAiCJh7
-ENV SQLALCHEMY_DATABASE_URI mysql+pymysql://root:Pbn6u8Ew1xAiCJh7@/snoutscan?unix_socket=/cloudsql/snout-cloud:us-central1:snoutscandb
-
+ENV SQLALCHEMY_DATABASE_URI mysql+pymysql://andromodon:worivrinVosk@127.0.0.1/snoutScan
 ADD requirements.txt /app/
 RUN pip install -r requirements.txt
 ADD . /app/
 
+# #For creating the tables:
+# CMD python create_tables.py
+
+#For running the site:
 CMD gunicorn main:app -b :$PORT
 #CMD gunicorn main:app -D -b :443 --certfile=ssl_cert/cert.crt --keyfile=ssl_cert/cert.key
 
