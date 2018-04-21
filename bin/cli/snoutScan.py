@@ -6,11 +6,7 @@ from TicToc import TT
 import sys
 import os
 
-##Prevent tensorflow warnings from showing:
-#os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
-
-
-def Fun():
+def Fun(friendDirectories):
     '''
     This function ....
     
@@ -27,9 +23,9 @@ def Fun():
     Outputs:
         The predictions are written to stdout.
     '''
-    
+        
     with TT('Hello World'):
-        pass
+        print(friendDirectories)
             
 #If this is called as a program and not imported:
 if __name__=="__main__":
@@ -37,5 +33,5 @@ if __name__=="__main__":
     args=ArgsParse()
     
     with TT('Running Fun'):
-        Fun()
+        Fun(args.friendDirectories)
     

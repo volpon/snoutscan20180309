@@ -7,7 +7,10 @@ SHELL := /bin/bash
 #All variables that change between different developers or envirinments should be in this file,
 # which shouldn't be checked into the git repository.
 include make_env
-	
+
+#Always do the build step, since this is what bundles the new code with the container.
+.PHONY: .build
+
 #Format:  the target name, then a file whose modified date represents the last time we ran this:
 build .build : Dockerfile requirements.txt 
 	docker build -t $(NS)/$(IMAGE_NAME):$(VERSION) -f Dockerfile . && touch .build

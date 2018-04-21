@@ -27,4 +27,4 @@ RUN_CMD ?= gunicorn main:app -b :$(CONTAINER_PORT)
 #RUN_CMD ?= gunicorn main:app -D -b :443 --certfile=ssl_cert/cert.crt --keyfile=ssl_cert/cert.key
 
 #What command to use for 'make benchmark'
-BENCHMARK_CMD ?= python3 ./cli/snoutScan.py
+BENCHMARK_CMD ?= python3 ./cli/snoutScan.py ./data/0
