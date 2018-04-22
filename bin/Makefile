@@ -12,7 +12,7 @@ include make_env
 .PHONY: .build
 
 #Format:  the target name, then a file whose modified date represents the last time we ran this:
-build .build : Dockerfile requirements.txt 
+build .build : Dockerfile requirements.txt make_env Makefile
 	docker build -t $(NS)/$(IMAGE_NAME):$(VERSION) -f Dockerfile . && touch .build
 
 push:
@@ -25,7 +25,11 @@ run: .build
 	docker run --rm -it --name $(CONTAINER_NAME)-$(CONTAINER_INSTANCE) $(PORTS) $(VOLUMES) $(ENV) $(NS)/$(IMAGE_NAME):$(VERSION) $(RUN_CMD)
 
 benchmark: .build
-	docker run --rm -it --name $(CONTAINER_NAME)-$(CONTAINER_INSTANCE) $(VOLUMES) $(NS)/$(IMAGE_NAME):$(VERSION) $(BENCHMARK_CMD)
+	docker run --rm -it --name $(CONTAINER_NAME)-$(CONTAINER_INSTANCE) $(VOLUMES) $(BENCHMARK_ENV) $(ENV) $(NS)/$(IMAGE_NAME):$(VERSION) $(BENCHMARK_CMD)
+
+#Starts a pdb session running the benchmark:
+benchmarkPdb: .build
+	docker run --rm -it --name $(CONTAINER_NAME)-$(CONTAINER_INSTANCE) $(VOLUMES) $(BENCHMARK_ENV) $(ENV) $(NS)/$(IMAGE_NAME):$(VERSION) $(BENCHMARK_PDB_CMD)
 
 start: .build
 	docker run -d --name $(CONTAINER_NAME)-$(CONTAINER_INSTANCE) $(PORTS) $(VOLUMES) $(ENV) $(NS)/$(IMAGE_NAME):$(VERSION)

@@ -299,7 +299,7 @@ def api_query_match():
 
     #image_data = bytes(image_data, "utf-8")
 
-    friend_id, per = find_best_match(image_data, image_type, friends = Friend.query.all())
+    friend_id, per, best_index = find_best_match(image_data, image_type, friends = Friend.query.all())
 
     if friend_id is None:
         return jsonify({'status': 'not found'}), 200

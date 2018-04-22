@@ -262,10 +262,17 @@ def find_best_match(image_data, image_type, friends):
 
     matcher = ImageMatcher(ImageFeatures.from_image(image_data))
 
-    best_match_score = 0
-    best_id = 0
+    best_match_score = -float('Inf')
+    
+    #The databse id of our best match:
+    best_db_id = 0
+    #The list index of our best friend:
+    best_index=None
 
-    for friend in friends:
+    for index in range(len(friends)):
+        
+        #Get this friend:
+        friend=friends[index]
 
         photo = friend.photo
 
@@ -279,10 +286,11 @@ def find_best_match(image_data, image_type, friends):
         #Find the largest per in the group.
         if match_score and match_score > best_match_score:
             best_match_score = match_score
-            best_id = friend.id
+            best_db_id = friend.id
+            best_index = index
 
-    #Only return a result if we have at least a match score of 50:
-    if best_match_score > 50:
-        return best_id, best_match_score
+    ##Only return a result if we have at least a match score of 50:
+    #if best_match_score > 50:
+    return best_db_id, best_match_score, best_index
 
-    return None, None
+    #return None, None

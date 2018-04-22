@@ -28,3 +28,9 @@ RUN_CMD ?= gunicorn main:app -b :$(CONTAINER_PORT)
 
 #What command to use for 'make benchmark'
 BENCHMARK_CMD ?= python3 ./cli/snoutScan.py ./data/0
+
+#The pdb version:
+BENCHMARK_PDB_CMD ?= python3 -m pdb ./cli/snoutScan.py ./data/0
+
+#Some special flags that allow us to connect to the host's x-server from inside the container:
+#BENCHMARK_ENV ?= --env="DISPLAY" --env="QT_X11_NO_MITSHM=1" --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" 
