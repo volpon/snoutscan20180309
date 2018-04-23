@@ -14,6 +14,7 @@ import numpy as np
 import sys
 import cv2
 import os
+import pandas as pd
 
 def SSMatchAll(friendDirectories):
     '''
@@ -28,12 +29,13 @@ def SSMatchAll(friendDirectories):
     Outputs:
     
         dogNames               - A list of unique dog names, corresponding to each of the rows and
-                                 collumns of the confusionMatrix.
+                                 collumns of the confusionMatrixData.
     
-        confusionMatrix        - A confusion matrix, with each position (i,j) saying how many 
+        confusionMatrixData        - A confusion matrix, with each position (i,j) saying how many 
                                  images that were of friendDirectories[i], were recognized as being 
                                  of friend friendDirectories[j] instead. 
-                                 (Numpy array, of size (numDogNames x numDogNames))
+                                 (Pandas array, of size (numDogNames x numDogNames), with the 
+                                 dog names as row and column labels)
     '''
     
     #Our list of friends:
@@ -46,39 +48,40 @@ def SSMatchAll(friendDirectories):
     # Load our images, as one friend per image:
     ###########
     
-    #For each directory:
-    for friendDir in friendDirectories:
-        #Extract the dog name:
-        dogName=os.path.basename(friendDir)
-        
-        #Add our dogName
-        dogNamesOD[dogName]=None
+    with TT('Loading images'):
+        #For each directory:
+        for friendDir in friendDirectories:
+            #Extract the dog name:
+            dogName=os.path.basename(friendDir)
+            
+            #Add our dogName
+            dogNamesOD[dogName]=None
 
-        with TT('Loading images for %s' % dogName):
-            #Get the files in that directory:
-            (root, dirs, files)= next(os.walk(friendDir))
-            
-            assert len(files)>1, 'Must have at least 2 pictures of every dog.'
-            
-            #For each file in the directory:
-            for thisFile in files:
-                with TT('Loading %s' % thisFile):
-                    
-                    imgFilePath=os.path.join(root,thisFile)
-                    
-                    #Load image.
-                    image=cv2.imread(imgFilePath)
-                    
-                    ##Show the image (requires a display connection, which is complicated in docker)
-                    #cv2.imshow('image', image)
-                    #cv2.waitKey(0)
-                    #cv2.destroyAllWindows()
-                    
-                    #Create a Friend object from it with the dog name connected to it.
-                    friend=FriendMake(dogName, imgFilePath, image)
-                    
-                    #Add it to a list of friends.
-                    friends.append(friend)
+            with TT('Loading images for %s' % dogName):
+                #Get the files in that directory:
+                (root, dirs, files)= next(os.walk(friendDir))
+                
+                assert len(files)>1, 'Must have at least 2 pictures of every dog.'
+                
+                #For each file in the directory:
+                for thisFile in files:
+                    with TT('Loading %s' % thisFile):
+                        
+                        imgFilePath=os.path.join(root,thisFile)
+                        
+                        #Load image.
+                        image=cv2.imread(imgFilePath)
+                        
+                        ##Show the image (requires a display connection, which is complicated in docker)
+                        #cv2.imshow('image', image)
+                        #cv2.waitKey(0)
+                        #cv2.destroyAllWindows()
+                        
+                        #Create a Friend object from it with the dog name connected to it.
+                        friend=FriendMake(dogName, imgFilePath, image)
+                        
+                        #Add it to a list of friends.
+                        friends.append(friend)
     
     numFriends=len(friends)
     
@@ -87,8 +90,8 @@ def SSMatchAll(friendDirectories):
     
     numDogNames=len(dogNames)
     
-    # Initialize our confusionMatrix:
-    confusionMatrix=np.zeros((numDogNames, numDogNames))
+    # Initialize our confusionMatrixData:
+    confusionMatrixData=np.zeros((numDogNames, numDogNames))
     
     with TT('Matching'):
         #For each friend:
@@ -106,7 +109,6 @@ def SSMatchAll(friendDirectories):
                 #remove this one friend:
                 del friendIdsNotThisOne[friendNum]
                 del friendsNotThisOne[friendNum]
-                
                 
                 friendImgBinary,friendImgType=friend.photo.get_binary()
                 
@@ -126,9 +128,14 @@ def SSMatchAll(friendDirectories):
                 matchedDogNameIndex=dogNames.index(matchedDogName)
                 
                 #Increment that position in the confusion matrix:
-                confusionMatrix[actualDogNameIndex][matchedDogNameIndex]+=1
-                
-    return dogNames, confusionMatrix
+                confusionMatrixData[actualDogNameIndex][matchedDogNameIndex]+=1
+    
+    #Make a pandas array that bundles the dog names and confusion matrix together for display:
+    
+    confusionMatrix=pd.DataFrame(data=confusionMatrixData, index=dogNames, columns=dogNames,
+                                 dtype=int)
+    
+    return confusionMatrix
         
             
 #If this is called as a program and not imported:
@@ -136,8 +143,18 @@ if __name__=="__main__":
     #Parse our command line options into a dictionary.
     args=ArgsParse()
     
+    #Set some pandas options that let us print better:
+    pd.set_option('display.height', 10000)
+    pd.set_option('display.max_rows', 5000)
+    pd.set_option('display.max_columns', 5000)
+    pd.set_option('display.width', 10000)
+    
     with TT('Running SSMatchAll'):
         confusionMatrix=SSMatchAll(args.friendDirectories)
-        
+    
+    print('Confusion Matrix:')
+    print('=================')
+    print('')
+    print('Actual:  Matched with:')
     print(confusionMatrix)
     

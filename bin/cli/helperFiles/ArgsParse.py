@@ -26,5 +26,7 @@ def ArgsParse():
     
     #The list of directories with friend images in them:
     args.friendDirectories=LeafDirsInTreeFind(args.dauDataTreeRoot)
+    
+    assert len(args.friendDirectories) >1, 'Not enough leaf directories found in dauDataTreeRoot.'
         
     return args
