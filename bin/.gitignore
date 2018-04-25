@@ -1,5 +1,6 @@
 /env/
-make_env
+/make_env
 
 /.build
 /data
+/next.txt
