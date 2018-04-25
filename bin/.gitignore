@@ -1,2 +1,5 @@
 /env/
 make_env
+
+/.build
+/data

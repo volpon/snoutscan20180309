@@ -7,6 +7,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),".."));
 from main.api.matcher import find_best_match
 from collections import OrderedDict
 from FriendMake import FriendMake
+from ImgDisplay import ImgDisplay
 from ArgsParse import ArgsParse
 from TicToc import TT
 from copy import copy
@@ -72,10 +73,8 @@ def SSMatchAll(friendDirectories):
                         #Load image.
                         image=cv2.imread(imgFilePath)
                         
-                        ##Show the image (requires a display connection, which is complicated in docker)
-                        #cv2.imshow('image', image)
-                        #cv2.waitKey(0)
-                        #cv2.destroyAllWindows()
+                        #Show the image (requires a display connection, which is complicated in docker)
+                        ImgDisplay(imgFilePath, image)
                         
                         #Create a Friend object from it with the dog name connected to it.
                         friend=FriendMake(dogName, imgFilePath, image)
