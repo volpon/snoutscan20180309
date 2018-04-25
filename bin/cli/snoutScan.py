@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/.condaUser/.anaconda3/envs/snoutScan/bin/python3 
 import sys,os; sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"helperFiles"));
 
 #Also add up a diretory:
@@ -92,7 +92,7 @@ def SSMatchAll(friendDirectories):
     
     # Initialize our confusionMatrixData:
     confusionMatrixData=np.zeros((numDogNames, numDogNames))
-    
+        
     with TT('Matching'):
         #For each friend:
         for friendNum in range(numFriends):

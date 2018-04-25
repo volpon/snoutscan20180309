@@ -21,7 +21,7 @@ PORTS ?= -p $(HOST_PORT):$(CONTAINER_PORT)
 #--net=host  is what allows the docker container to access mysql on my local box.  
 # It won't be used in production.
 #This adds a persistent /persist directory:
-ENV ?= --net=host --volume='persist:/persist:rw' --env=SQLALCHEMY_DATABASE_URI=mysql+pymysql://andromodon:worivrinVosk@127.0.0.1/snoutScan
+ENV ?= --net=host --volume='snoutScanPersist:/.snoutScanPersist:rw' --env=SQLALCHEMY_DATABASE_URI=mysql+pymysql://andromodon:worivrinVosk@127.0.0.1/snoutScan
 
 #What command to run with the 'make run' command:
 RUN_CMD ?= gunicorn main:app -b :$(CONTAINER_PORT)
@@ -30,7 +30,7 @@ RUN_CMD ?= gunicorn main:app -b :$(CONTAINER_PORT)
 #RUN_CMD ?= gunicorn main:app -D -b :443 --certfile=ssl_cert/cert.crt --keyfile=ssl_cert/cert.key
 
 #What data directory to run the benchmark on
-BENCHMKAR_DATA ?= ./data/0med
+BENCHMKAR_DATA ?= ./data/0small
 
 #What command to use for 'make benchmark'
 BENCHMARK_CMD ?= python3 ./cli/snoutScan.py $(BENCHMKAR_DATA)

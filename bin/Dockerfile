@@ -15,6 +15,10 @@ ENV PATH /env/bin:$PATH
 ADD requirements.txt /app/
 RUN pip install -r requirements.txt
 
+#This adds a symbolic link that allows us to point to project files using a common
+# path if run with docker or conda.
+RUN ln -s /home/vmagent /.condaUser
+
 #Adds the current directory into the docker container as the /app directory:
 ADD . /app/
 
