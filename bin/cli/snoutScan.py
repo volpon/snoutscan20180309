@@ -73,14 +73,18 @@ def SSMatchAll(friendDirectories):
                         #Load image.
                         image=cv2.imread(imgFilePath)
                         
-                        #Show the image (requires a display connection, which is complicated in docker)
-                        ImgDisplay(imgFilePath, image)
+                        ##Show the image (requires a display connection, which is complicated in docker)
+                        #cv2.imshow(imgFilePath, image)
                         
                         #Create a Friend object from it with the dog name connected to it.
                         friend=FriendMake(dogName, imgFilePath, image)
                         
                         #Add it to a list of friends.
                         friends.append(friend)
+    
+    ##Press any key to exit.
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()    
     
     numFriends=len(friends)
     

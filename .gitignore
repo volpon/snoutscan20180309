@@ -3,6 +3,8 @@
 
 /data
 
+*.kate-swp
+
 # User-specific files
 *.suo
 *.user

@@ -3,6 +3,7 @@ import numpy as np
 import base64
 import json
 import io
+import sys
 
 def image_from_base64(data, type = None):
     return image_from_binary(base64.b64decode(data), type)
@@ -36,7 +37,7 @@ class ImageFeatures(object):
         detector = cv2.BRISK_create()
 
         # Initiate BRIEF extractor
-        descriptorExtractor = cv2.xfeatures2d.BriefDescriptorExtractor_create()
+        descriptorExtractor = cv2.xthisFriendFeaturesd.BriefDescriptorExtractor_create()
 
         keypoints = detector.detect(image, None)
         keypoints, descriptors = descriptorExtractor.compute(image, keypoints)
@@ -71,16 +72,16 @@ class ImageMatcher(object):
         self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
         pass
 
-    def match(self, image2: ImageFeatures):
+    def match(self, thisFriendFeatures: ImageFeatures):
         """
         @return percent
         """
 
-        if image2 is None or image2.descriptors is None:
+        if thisFriendFeatures is None or thisFriendFeatures.descriptors is None:
             return None
 
         # Match image descriptors
-        matches = self.matcher.match(self.image.descriptors, image2.descriptors);
+        matches = self.matcher.match(self.image.descriptors, thisFriendFeatures.descriptors);
         if len(matches) == 0:
             return 0
         
@@ -127,14 +128,14 @@ class MatchFragment(object):
     def __init__(self):
         pass
 
-    def compare(self, image1, image2):
+    def compare(self, image1, thisFriendFeatures):
 
         # Initiate BRISK detector
         detector = cv2.BRISK_create()
         #detector = cv2.FeatureDetector_create("BRISK")
 
         # Initiate BRIEF extractor
-        descriptorExtractor = cv2.xfeatures2d.BriefDescriptorExtractor_create()
+        descriptorExtractor = cv2.xthisFriendFeaturesd.BriefDescriptorExtractor_create()
         #descriptorExtractor = cv2.DescriptorExtractor_create("BRIEF")
 
         # Create BFMatcher object
@@ -146,9 +147,9 @@ class MatchFragment(object):
         #keypoints1, descriptors1 = detector.detectAndCompute(image1, None)
 
         # second image
-        keypoints2 = detector.detect(image2, None)
-        keypoints2, descriptors2 = descriptorExtractor.compute(image2, keypoints2)
-        #keypoints2, descriptors2 = detector.detectAndCompute(image2, None)
+        keypoints2 = detector.detect(thisFriendFeatures, None)
+        keypoints2, descriptors2 = descriptorExtractor.compute(thisFriendFeatures, keypoints2)
+        #keypoints2, descriptors2 = detector.detectAndCompute(thisFriendFeatures, None)
 
         # Match image descriptors
         matches = matcher.match(descriptors1, descriptors2);
@@ -183,7 +184,7 @@ class MatchFragment(object):
         #detector = cv2.FeatureDetector_create("BRISK")
 
         # Initiate BRIEF extractor
-        descriptorExtractor = cv2.xfeatures2d.BriefDescriptorExtractor_create()
+        descriptorExtractor = cv2.xthisFriendFeaturesd.BriefDescriptorExtractor_create()
         #descriptorExtractor = cv2.DescriptorExtractor_create("BRIEF")
 
         # Create BFMatcher object
@@ -251,7 +252,8 @@ def find_best_match(image_data, image_type, friends):
     each friend represents a photo of a dog, with accompanying metadata.
     
     Inputs:
-        image_data  - the image data, either as an array of bytes or as a base64 encoded string.
+        image_data  - the subject image data, either as an array of bytes or as a base64 encoded 
+                      string.
         image_type  - Not currently used.
         friends     - A collection of Friend() objects representing the pictures the given image
                       could match to.
@@ -260,28 +262,38 @@ def find_best_match(image_data, image_type, friends):
     if image_data is None:
         return None, None
 
+    #Make a matcher object using our subject image features:
     matcher = ImageMatcher(ImageFeatures.from_image(image_data))
 
     best_match_score = -float('Inf')
     
     #The databse id of our best match:
     best_db_id = 0
+    
     #The list index of our best friend:
     best_index=None
 
+    #####
+    ##Loop through all of our friends and find the one that has the highest matcher.match score:
+    #####
     for index in range(len(friends)):
         
         #Get this friend:
         friend=friends[index]
 
+        #Get the friend's photo:
         photo = friend.photo
 
         if photo.features is None:
+            print('Warning: Skipping a friend without features, %s.' % friend.name, file=sys.stderr);
             continue
         
-        image2 = ImageFeatures(photo.features)
+        #Get our features
+        thisFriendFeatures = ImageFeatures(photo.features)
 
-        match_score = matcher.match(image2)
+        #Using our subject-image based matcher, calculate how well it matches with this specific 
+        # friend image.
+        match_score = matcher.match(thisFriendFeatures)
 
         #Find the largest per in the group.
         if match_score and match_score > best_match_score:
