@@ -17,7 +17,7 @@ import cv2
 import os
 import pandas as pd
 
-def SSMatchAll(friendDirectories):
+def SSMatchAll(friendDirectories, displayImages=True):
     '''
     This function matches each of the friend images with each of the other friend images and 
     
@@ -26,6 +26,8 @@ def SSMatchAll(friendDirectories):
         friendDirectories      - A list of strings giving paths to the directories that hold our
                                 images of each dog we want to analyze.  The directory names
                                 are the names of the dogs.
+        
+        displayImages          - Says if we should display images for debugging purposes.
                                           
     Outputs:
     
@@ -73,8 +75,9 @@ def SSMatchAll(friendDirectories):
                         #Load image.
                         image=cv2.imread(imgFilePath)
                         
-                        ##Show the image (requires a display connection, which is complicated in docker)
-                        #cv2.imshow(imgFilePath, image)
+                        #if displayImages:
+                            ##Show the image (requires a display connection, which is complicated in docker)
+                            #cv2.imshow(imgFilePath, image)
                         
                         #Create a Friend object from it with the dog name connected to it.
                         friend=FriendMake(dogName, imgFilePath, image)
@@ -82,9 +85,10 @@ def SSMatchAll(friendDirectories):
                         #Add it to a list of friends.
                         friends.append(friend)
     
-    ##Press any key to exit.
-    #cv2.waitKey(0)
-    #cv2.destroyAllWindows()    
+    #if displayImages:
+        ##Press any key to exit.
+        #cv2.waitKey(0)
+        #cv2.destroyAllWindows()    
     
     numFriends=len(friends)
     
@@ -117,7 +121,7 @@ def SSMatchAll(friendDirectories):
                 
                 #Find the other friend that matches this friend best:
                 best_db_id, best_match_score, best_index= \
-                    find_best_match(friendImgBinary, friendImgType, friendsNotThisOne)
+                    find_best_match(friendImgBinary, friendImgType,friendsNotThisOne, displayImages)
                 
                 #Translate the id since we deleted one:
                 actualBestId=friendIdsNotThisOne[best_index]
@@ -153,7 +157,7 @@ if __name__=="__main__":
     pd.set_option('display.width', 10000)
     
     with TT('Running SSMatchAll'):
-        confusionMatrix=SSMatchAll(args.friendDirectories)
+        confusionMatrix=SSMatchAll(args.friendDirectories, False)
     
     print('Confusion Matrix:')
     print('=================')
