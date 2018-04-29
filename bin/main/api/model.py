@@ -232,7 +232,7 @@ class Photo(db.Model):
     features = db.Column(MEDIUMBLOB)
 
     def __init__(self):
-        pass
+        pass 
 
     def set_base64(self, data, type):
 
@@ -249,7 +249,7 @@ class Photo(db.Model):
         self.type = type
 
         fs = ImageFeatures.from_image(self.data)
-        self.features = fs.encode()
+        self.features = fs.encode() 
 
     def get_base64(self):
 
@@ -259,4 +259,7 @@ class Photo(db.Model):
         return str(base64.b64encode(self.data), "utf-8"), self.type
 
     def get_binary(self):
+        '''
+        Gets the image in binary form, and it's type.
+        '''
         return self.data, self.type
