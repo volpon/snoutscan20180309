@@ -16,13 +16,14 @@ def image_from_binary(data, type = None):
 class ImageFeatures(object):
 
     def __init__(self, features = None):
-
+        
         if isinstance(features, bytes):
             self.decode(features)
         else:
             self.descriptors = None
 
         pass
+
 
     @classmethod
     def from_image(cls, image):
@@ -46,6 +47,7 @@ class ImageFeatures(object):
         x.descriptors = descriptors
         x.keypoints = keypoints
         return x
+
 
     def encode(self):
 
@@ -79,7 +81,7 @@ class ImageMatcher(object):
                                       subjectImgFeatures was created.
         '''
 
-        assert not displayImages or subjectImg,\
+        assert not displayImages or subjectImg is not None,\
             'Need to specify an subjectImg if dispalyImages=True.'
 
         self.subjectImgFeatures = subjectImgFeatures
@@ -106,14 +108,16 @@ class ImageMatcher(object):
             return None
 
         # Match subjectImgFeatures descriptors
-        matches = self.matcher.match(self.subjectImgFeatures.descriptors, friendFeatures.descriptors);
+        #Note: This is calling BFMatcher.match, not ImageMatcher.match:
+        matches = self.matcher.match(self.subjectImgFeatures.descriptors, friendFeatures.descriptors,
+                                     );
         if len(matches) == 0:
             return 0
         
         #Display our matches:
         if self.displayImages:
-            cv2.drawMatches(self.subjectImg, self.subjectImgFeatures, friendImage, friendFeatures,
-                            matches)
+            outImg = cv2.drawMatches(self.subjectImg, self.subjectImgFeatures.keypoints, friendImage, 
+                            friendFeatures, matches, None )
         
         # quick calculation of the max and min distances between keypoints
 
@@ -153,128 +157,129 @@ class MatchResult(object):
         cv2.imwrite(path, self.image)
 
 
-class MatchFragment(object):
+#class MatchFragment(object):
     
-    def __init__(self):
-        pass
+    #def __init__(self):
+        #pass
 
-    def compare(self, image1, friendFeatures):
+    #def compare(self, image1, friendFeatures):
 
-        # Initiate BRISK detector
-        detector = cv2.BRISK_create()
-        #detector = cv2.FeatureDetector_create("BRISK")
+        ## Initiate BRISK detector
+        #detector = cv2.BRISK_create()
+        ##detector = cv2.FeatureDetector_create("BRISK")
 
-        # Initiate BRIEF extractor
-        descriptorExtractor = cv2.xfeatures2d.BriefDescriptorExtractor_create()
-        #descriptorExtractor = cv2.DescriptorExtractor_create("BRIEF")
+        ## Initiate BRIEF extractor
+        #descriptorExtractor = cv2.xfeatures2d.BriefDescriptorExtractor_create()
+        ##descriptorExtractor = cv2.DescriptorExtractor_create("BRIEF")
 
-        # Create BFMatcher object
-        matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+        ## Create BFMatcher object
+        #matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
-        # first image
-        keypoints1 = detector.detect(image1, None)
-        keypoints1, descriptors1 = descriptorExtractor.compute(image1, keypoints1)
-        #keypoints1, descriptors1 = detector.detectAndCompute(image1, None)
+        ## first image
+        #keypoints1 = detector.detect(image1, None)
+        #keypoints1, descriptors1 = descriptorExtractor.compute(image1, keypoints1)
+        ##keypoints1, descriptors1 = detector.detectAndCompute(image1, None)
 
-        # second image
-        keypoints2 = detector.detect(friendFeatures, None)
-        keypoints2, descriptors2 = descriptorExtractor.compute(friendFeatures, keypoints2)
-        #keypoints2, descriptors2 = detector.detectAndCompute(friendFeatures, None)
+        ## second image
+        #keypoints2 = detector.detect(friendFeatures, None)
+        #keypoints2, descriptors2 = descriptorExtractor.compute(friendFeatures, keypoints2)
+        ##keypoints2, descriptors2 = detector.detectAndCompute(friendFeatures, None)
 
-        # Match image descriptors
-        matches = matcher.match(descriptors1, descriptors2);
+        ## Match image descriptors
+        #matches = matcher.match(descriptors1, descriptors2);
         
-        # quick calculation of the max and min distances between keypoints
+        ## quick calculation of the max and min distances between keypoints
 
-        max_dist = 0;
-        min_dist = 100;
+        #max_dist = 0;
+        #min_dist = 100;
 
-        for m in matches:
-            if m.distance < min_dist:
-                min_dist = m.distance
-            if m.distance > max_dist:
-                max_dist = m.distance
+        #for m in matches:
+            #if m.distance < min_dist:
+                #min_dist = m.distance
+            #if m.distance > max_dist:
+                #max_dist = m.distance
 
-        # calculate good matches
+        ## calculate good matches
 
-        good_matches = []
-        for m in matches:
-            if m.distance <= 3 * min_dist:
-                good_matches.append(m)
+        #good_matches = []
+        #for m in matches:
+            #if m.distance <= 3 * min_dist:
+                #good_matches.append(m)
 
-        # show user percentage of match
-        percent = (100 * len(good_matches)) / len(matches);
+        ## show user percentage of match
+        #percent = (100 * len(good_matches)) / len(matches);
 
-        return percent;
+        #return percent;
 
-    def compareTwoImages(self, name: str, path1: str, path2: str):
+    #def compareTwoImages(self, name: str, path1: str, path2: str):
 
-        # Initiate BRISK detector
-        detector = cv2.BRISK_create()
-        #detector = cv2.FeatureDetector_create("BRISK")
+        ## Initiate BRISK detector
+        #detector = cv2.BRISK_create()
+        ##detector = cv2.FeatureDetector_create("BRISK")
 
-        # Initiate BRIEF extractor
-        descriptorExtractor = cv2.xfeatures2d.BriefDescriptorExtractor_create()
-        #descriptorExtractor = cv2.DescriptorExtractor_create("BRIEF")
+        ## Initiate BRIEF extractor
+        #descriptorExtractor = cv2.xfeatures2d.BriefDescriptorExtractor_create()
+        ##descriptorExtractor = cv2.DescriptorExtractor_create("BRIEF")
 
-        # Create BFMatcher object
-        matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+        ## Create BFMatcher object
+        #matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
-        # first image
-        img1 = cv2.imread(path1,0)
+        ## first image
+        #img1 = cv2.imread(path1,0)
 
-        keypoints1 = detector.detect(img1, None)
-        keypoints1, descriptors1 = descriptorExtractor.compute(img1, keypoints1)
-        #keypoints1, descriptors1 = detector.detectAndCompute(img1, None)
+        #keypoints1 = detector.detect(img1, None)
+        #keypoints1, descriptors1 = descriptorExtractor.compute(img1, keypoints1)
+        ##keypoints1, descriptors1 = detector.detectAndCompute(img1, None)
 
-        # second image
-        img2 = cv2.imread(path2,0)
+        ## second image
+        #img2 = cv2.imread(path2,0)
 
-        keypoints2 = detector.detect(img2, None)
-        keypoints2, descriptors2 = descriptorExtractor.compute(img2, keypoints2)
-        #keypoints2, descriptors2 = detector.detectAndCompute(img2, None)
+        #keypoints2 = detector.detect(img2, None)
+        #keypoints2, descriptors2 = descriptorExtractor.compute(img2, keypoints2)
+        ##keypoints2, descriptors2 = detector.detectAndCompute(img2, None)
 
-        # Match image descriptors
-        matches = matcher.match(descriptors1, descriptors2);
-        if len(matches) == 0:
-            return None
+        ## Match image descriptors
+        #matches = matcher.match(descriptors1, descriptors2);
+        #if len(matches) == 0:
+            #return None
         
-        # Feature and connection colors
-        RED = (255, 0, 0)
-        GREEN = (0, 255, 0)
+        ## Feature and connection colors
+        #RED = (255, 0, 0)
+        #GREEN = (0, 255, 0)
 
-        # the output and drawing functions are primarily for testing purposes.
+        ## the output and drawing functions are primarily for testing purposes.
 
-        # draw the matches --
-        #
-        # helps to visualize what connections the matcher is making while I
-        # improve the algorithm. this will not necessarily be included in a
-        # consumer-facing release.
+        ## draw the matches --
+        ##
+        ## helps to visualize what connections the matcher is making while I
+        ## improve the algorithm. this will not necessarily be included in a
+        ## consumer-facing release.
 
-        outputImg = cv2.drawMatches(img1, keypoints1, img2, keypoints2, matches, None, GREEN, RED, None, cv2.DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS)
+        #outputImg = cv2.drawMatches(img1, keypoints1, img2, keypoints2, matches, None, \
+                    #GREEN, RED, None, cv2.DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS)
 
-        # quick calculation of the max and min distances between keypoints
+        ## quick calculation of the max and min distances between keypoints
 
-        max_dist = 0;
-        min_dist = 100;
+        #max_dist = 0;
+        #min_dist = 100;
 
-        for m in matches:
-            if m.distance < min_dist:
-                min_dist = m.distance
-            if m.distance > max_dist:
-                max_dist = m.distance
+        #for m in matches:
+            #if m.distance < min_dist:
+                #min_dist = m.distance
+            #if m.distance > max_dist:
+                #max_dist = m.distance
 
-        # calculate good matches
+        ## calculate good matches
 
-        good_matches = []
-        for m in matches:
-            if m.distance <= 3 * min_dist:
-                good_matches.append(m)
+        #good_matches = []
+        #for m in matches:
+            #if m.distance <= 3 * min_dist:
+                #good_matches.append(m)
 
-        # show user percentage of match
-        percent = (100 * len(good_matches)) / len(matches);
+        ## show user percentage of match
+        #percent = (100 * len(good_matches)) / len(matches);
 
-        return MatchResult(name, outputImg, percent);
+        #return MatchResult(name, outputImg, percent);
 
 def find_best_match(image_data, image_type, friends, displayImages=False):
     '''
@@ -311,19 +316,20 @@ def find_best_match(image_data, image_type, friends, displayImages=False):
         #Get this friend:
         friend=friends[index]
 
-        #Get the friend's photo:
-        photo = friend.photo
-
-        if photo.features is None:
+        #Make sure our friend photo has features:
+        if friend.photo.features is None:
             print('Warning: Skipping a friend without features, %s.' % friend.name, file=sys.stderr);
             continue
         
         #Get our features
-        friendFeatures = ImageFeatures(photo.features)
+        friendFeatures = ImageFeatures(friend.photo.features)
+        
+        #Get our friend image:
+        friendImgBinary,friendImgType=friend.photo.get_binary()
 
         #Using our subject-image based matcher, calculate how well it matches with this specific 
         # friend image.
-        match_score = matcher.match(friendFeatures)
+        match_score = matcher.match(friendFeatures, friendImgBinary)
 
         #Find the largest per in the group.
         if match_score and match_score > best_match_score:
