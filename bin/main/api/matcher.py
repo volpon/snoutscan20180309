@@ -129,6 +129,13 @@ class ImageMatcher(object):
         if self.displayImages:
             outImg = cv2.drawMatches(self.subjectImg, self.subjectFeatureKeypoints, friendImage, 
                                      friendFeatureKeypoints, matches, None )
+            
+            cv2.imshow('Matches', outImg)
+            
+            #Press any key to exit.
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()    
+
         
         # quick calculation of the max and min distances between keypoints
 
