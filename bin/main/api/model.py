@@ -1,11 +1,9 @@
 import os
-import datetime
 import base64
 
 is_heroku = 'DATABASE_URL' in os.environ.keys()
 is_postgres = is_heroku
 
-import sqlalchemy
 from sqlalchemy.orm import relationship
 from flask_sqlalchemy import SQLAlchemy
 
@@ -229,7 +227,15 @@ class Photo(db.Model):
 
     data = db.Column(MEDIUMBLOB)
     type = db.Column(db.String(46))
-    features = db.Column(MEDIUMBLOB)
+
+    #Don't store the keypoints in the databsae.  They're difficult to serialize and currently 
+    #only used for visualization/debugging:    
+    featureKeypoints=None
+    featureDescriptors=None
+    
+    #Feature descriptors, in encoded format:
+    featureDescriptorsEncoded = db.Column(MEDIUMBLOB)
+    
 
     def __init__(self):
         pass 
@@ -241,15 +247,18 @@ class Photo(db.Model):
         else:
             self.data = None
             self.type = None
-            self.features = None
+            self.featureDescriptors = None
+            self.featureDescriptorsEncoded = None
 
     def set_binary(self, data, type):
 
         self.data = data
         self.type = type
+        
+        fs=ImageFeatures()
 
-        fs = ImageFeatures.from_image(self.data)
-        self.features = fs.encode() 
+        (self.featureKeypoints, self.featureDescriptors) = fs.from_image(self.data)
+        self.featureDescriptorsEncoded = fs.encode() 
 
     def get_base64(self):
 

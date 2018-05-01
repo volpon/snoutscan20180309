@@ -1,6 +1,6 @@
 /env/
 /make_env
-
+/.spyproject/
 /.build
 /data
 /next.txt

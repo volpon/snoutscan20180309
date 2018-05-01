@@ -7,7 +7,6 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),".."));
 from main.api.matcher import find_best_match
 from collections import OrderedDict
 from FriendMake import FriendMake
-from ImgDisplay import ImgDisplay
 from ArgsParse import ArgsParse
 from TicToc import TT
 from copy import copy
