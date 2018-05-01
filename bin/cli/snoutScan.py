@@ -158,11 +158,23 @@ if __name__=="__main__":
     pd.set_option('display.width', 10000)
     
     with TT('Running SSMatchAll'):
-        confusionMatrix=SSMatchAll(args.friendDirectories, True)
+        confusionMatrix=SSMatchAll(args.friendDirectories, False)
+        
+    numDogNames,_=confusionMatrix.shape
     
     print('Confusion Matrix:')
     print('=================')
     print('')
     print('Actual:  Matched with:')
     print(confusionMatrix)
+    
+    #Sum the diagonal
+    numCorrect=np.trace(confusionMatrix)
+    numTried=np.sum(np.sum(confusionMatrix))
+    
+    percentCorrect=numCorrect/numTried
+    
+    print('\n')
+    print('Proportion of subject images correctly matched: %0.2f' % percentCorrect)
+    
     
