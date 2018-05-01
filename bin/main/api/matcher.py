@@ -77,6 +77,9 @@ class ImageMatcher(object):
     
     '''
 
+    #Anything with a matching distance less than this is considered a "good match".
+    matchDistanceThreshold=20
+    
     def __init__(self, subjectFeatureKeypoints, subjectFeatureDescriptors, 
                  displayImages=False, subjectImg=None):
         '''
@@ -129,24 +132,24 @@ class ImageMatcher(object):
             return 0
         
         
-        print('\n      Found %i matches' % len(matches), file=sys.stderr);
+        #print('\n      Found %i matches' % len(matches), file=sys.stderr);
                
         # quick calculation of the max and min distances between keypoints
 
-        #Calculate the minimum and maximum distances:
-        max_dist = -float('Inf');
-        min_dist = float('Inf');
-
-        for m in matches:
-            if m.distance < min_dist:
-                min_dist = m.distance
-            if m.distance > max_dist:
-                max_dist = m.distance
+#        #Calculate the minimum and maximum distances:
+#        max_dist = -float('Inf');
+#        min_dist = float('Inf');
+#
+#        for m in matches:
+#            if m.distance < min_dist:
+#                min_dist = m.distance
+#            if m.distance > max_dist:
+#                max_dist = m.distance
 
         # calculate good matches those that are at least 3* the minimum distance:
         good_matches = []
         for m in matches:
-            if m.distance <= 3 * min_dist:
+            if m.distance < self.matchDistanceThreshold:
                 good_matches.append(m)
                 
         print('      Found %i good_matches' % len(good_matches), file=sys.stderr);
