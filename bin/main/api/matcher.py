@@ -118,33 +118,24 @@ class ImageMatcher(object):
         if friendFeatureDescriptors is None:
             return None
 
-        # Match subjectFeatureDescriptors descriptors
-        #Note: This is calling BFMatcher.match, not ImageMatcher.match:
+        # For each of the subject image features, find the closest feature descriptor in the 
+        #friend image:
         matches = self.featureMatcher.match(self.subjectFeatureDescriptors, 
                                             friendFeatureDescriptors,
                                             );
+                                            
+                                            
         if len(matches) == 0:
             return 0
         
-        #Display our matches:
-        if self.displayImages:
-            outImg = cv2.drawMatches(self.subjectImg, self.subjectFeatureKeypoints, friendImage, 
-                                     friendFeatureKeypoints, matches, None )
-            
-            #Write to disk in case we need to communicate with someone else:
-            cv2.imwrite(os.path.expanduser('/tmp/matches.png'), outImg)
-            
-            cv2.imshow('Matches', outImg)
-            
-            #Press any key to exit.
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()    
-
         
+        print('\n      Found %i matches' % len(matches), file=sys.stderr);
+               
         # quick calculation of the max and min distances between keypoints
 
-        max_dist = 0;
-        min_dist = 100;
+        #Calculate the minimum and maximum distances:
+        max_dist = -float('Inf');
+        min_dist = float('Inf');
 
         for m in matches:
             if m.distance < min_dist:
@@ -152,15 +143,31 @@ class ImageMatcher(object):
             if m.distance > max_dist:
                 max_dist = m.distance
 
-        # calculate good matches
-
+        # calculate good matches those that are at least 3* the minimum distance:
         good_matches = []
         for m in matches:
             if m.distance <= 3 * min_dist:
                 good_matches.append(m)
+                
+        print('      Found %i good_matches' % len(good_matches), file=sys.stderr);
+
 
         # show user percentage of match
         percent = (100 * len(good_matches)) / len(matches);
+        
+        #Display our good_matches:
+        if self.displayImages:
+            outImg = cv2.drawMatches(self.subjectImg, self.subjectFeatureKeypoints, friendImage, 
+                                     friendFeatureKeypoints, good_matches, None )
+            
+            #Write to disk in case we need to communicate with someone else:
+            cv2.imwrite(os.path.expanduser('/tmp/good_matches.png'), outImg)
+            
+            cv2.imshow('good_matches', outImg)
+            
+            #Press any key to exit.
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()   
 
         return percent;
 
