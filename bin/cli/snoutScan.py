@@ -1,5 +1,6 @@
 #!/.condaUser/.anaconda3/envs/snoutScan/bin/python3 
-import sys,os; sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"helperFiles"));
+import sys,os; sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                            "helperFiles"));
 
 #Also add up a diretory:
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),".."));
@@ -75,7 +76,8 @@ def SSMatchAll(friendDirectories, displayImages=True):
                         image=cv2.imread(imgFilePath)
                         
                         #if displayImages:
-                            ##Show the image (requires a display connection, which is complicated in docker)
+                            ##Show the image (requires a display connection, which is complicated
+                            # in docker)
                             #cv2.imshow(imgFilePath, image)
                         
                         #Create a Friend object from it with the dog name connected to it.

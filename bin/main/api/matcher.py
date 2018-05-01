@@ -1,10 +1,11 @@
-import cv2
 import numpy as np
+import pickle
 import base64
 import json
-import io
 import sys
-import pickle
+import cv2
+import io
+import os
 
 def image_from_base64(data, type = None):
     return image_from_binary(base64.b64decode(data), type)
@@ -130,6 +131,9 @@ class ImageMatcher(object):
             outImg = cv2.drawMatches(self.subjectImg, self.subjectFeatureKeypoints, friendImage, 
                                      friendFeatureKeypoints, matches, None )
             
+            #Write to disk in case we need to communicate with someone else:
+            cv2.imwrite(os.path.expanduser('/tmp/matches.png'), outImg)
+            
             cv2.imshow('Matches', outImg)
             
             #Press any key to exit.
@@ -218,7 +222,8 @@ def find_best_match(image_data, image_type, friends, displayImages=False):
 
         #Make sure our friend photo has features:
         if friend.photo.featureDescriptors is None:
-            print('Warning: Skipping a friend without features, %s.' % friend.name, file=sys.stderr);
+            print('Warning: Skipping a friend without features, %s.' % friend.name, 
+                  file=sys.stderr);
             continue
         
         #Get our features
