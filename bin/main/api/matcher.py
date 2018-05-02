@@ -138,21 +138,19 @@ class ImageMatcher(object):
         # For each of the subject image features, find the closest feature descriptor in the 
         #friend image:
         matches = self.featureMatcher.knnMatch(self.subjectFeatureDescriptors, 
-                                            friendFeatureDescriptors,k=1
+                                            friendFeatureDescriptors,k=2
                                             );
                                     
-#        
-#        matches = flann.knnMatch(des1,des2,k=2)
-                                            
-                                            
         if len(matches) == 0:
             return 0
         
-        # calculate good matches those that are at least 3* the minimum distance:
-        good_matches = []
-        for m in matches:
-            if m[0].distance < self.matchDistanceThreshold:
-                good_matches.append(m[0])
+        good_matches=[]
+        # Check to make sure that the best match is at least 2x as close as the second best
+        # match, and only use those:
+        for (bestMatch,secondBestMatch) in matches:
+            if (    bestMatch.distance < 0.7*secondBestMatch.distance \
+                    and bestMatch.distance<self.matchDistanceThreshold):
+                good_matches.append(bestMatch);
                 
         print('      Found %i good_matches' % len(good_matches), file=sys.stderr);
 
@@ -160,33 +158,6 @@ class ImageMatcher(object):
         # show user percentage of match
         percent = (100 * len(good_matches)) / len(matches);
         
-        
-                
-        # =============================================================================
-        #         
-        
-  
-#        
-#        # Need to draw only good matches, so create a mask
-#        matchesMask = [[0,0] for i in xrange(len(matches))]
-#        
-#        # ratio test as per Lowe's paper
-#        for i,(m,n) in enumerate(matches):
-#            if m.distance < 0.5*n.distance:
-#                matchesMask[i]=[1,0]
-#        
-#        draw_params = dict(matchColor = (0,255,0),
-#                           singlePointColor = (255,0,0),
-#                           matchesMask = matchesMask,
-#                           flags = 0)
-#        
-#        img3 = cv2.drawMatchesKnn(img1,kp1,img2,kp2,matches,None,**draw_params)
-#        
-                
-                
-        # =============================================================================
-        
-
         
         #Display our good_matches:
         if self.displayImages:
