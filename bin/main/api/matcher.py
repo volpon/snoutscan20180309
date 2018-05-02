@@ -101,8 +101,21 @@ class ImageMatcher(object):
         self.displayImages = displayImages
         self.subjectImg=subjectImg
 
-        # Create BFMatcher object
-        self.featureMatcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+#        # Create BFMatcher object
+#        self.featureMatcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+        
+        # FLANN parameters
+        
+        #A constant that means to use the Locally sensitive hashing distance metric:
+        FLANN_INDEX_LSH = 6
+        indexParams= dict(algorithm = FLANN_INDEX_LSH,
+                           table_number = 6, # 12
+                           key_size = 12,     # 20
+                           multi_probe_level = 1) #2
+        searchParams = dict(checks=50)   # or pass empty dictionary
+
+        #index_params,search_params
+        self.featureMatcher = cv2.FlannBasedMatcher(indexParams,searchParams)
 
     def match(self, friendFeatureKeypoints, friendFeatureDescriptors, friendImage=None):
         '''
@@ -124,17 +137,10 @@ class ImageMatcher(object):
 
         # For each of the subject image features, find the closest feature descriptor in the 
         #friend image:
-        matches = self.featureMatcher.match(self.subjectFeatureDescriptors, 
-                                            friendFeatureDescriptors,
+        matches = self.featureMatcher.knnMatch(self.subjectFeatureDescriptors, 
+                                            friendFeatureDescriptors,k=1
                                             );
-                                     
-        
-#        # FLANN parameters
-#        FLANN_INDEX_KDTREE = 0
-#        index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
-#        search_params = dict(checks=50)   # or pass empty dictionary
-#        
-#        flann = cv2.FlannBasedMatcher(index_params,search_params)
+                                    
 #        
 #        matches = flann.knnMatch(des1,des2,k=2)
                                             
@@ -145,8 +151,8 @@ class ImageMatcher(object):
         # calculate good matches those that are at least 3* the minimum distance:
         good_matches = []
         for m in matches:
-            if m.distance < self.matchDistanceThreshold:
-                good_matches.append(m)
+            if m[0].distance < self.matchDistanceThreshold:
+                good_matches.append(m[0])
                 
         print('      Found %i good_matches' % len(good_matches), file=sys.stderr);
 
