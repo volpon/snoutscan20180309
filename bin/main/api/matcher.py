@@ -78,7 +78,7 @@ class ImageMatcher(object):
     '''
 
     #Anything with a matching distance less than this is considered a "good match".
-    matchDistanceThreshold=35
+    matchDistanceThreshold=40
     
     def __init__(self, subjectFeatureKeypoints, subjectFeatureDescriptors, 
                  displayImages=False, subjectImg=None):
