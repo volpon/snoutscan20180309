@@ -40,7 +40,7 @@ class ImageFeatures(object):
         detector = cv2.BRISK_create()
 
         # Initiate BRIEF extractor
-        descriptorExtractor = cv2.xfeatures2d.BriefDescriptorExtractor_create()
+        descriptorExtractor = cv2.ORB_create()
 
         keypoints = detector.detect(image, None)
         keypoints, self.descriptors = descriptorExtractor.compute(image, keypoints)
@@ -78,7 +78,7 @@ class ImageMatcher(object):
     '''
 
     #Anything with a matching distance less than this is considered a "good match".
-    matchDistanceThreshold=20
+    matchDistanceThreshold=35
     
     def __init__(self, subjectFeatureKeypoints, subjectFeatureDescriptors, 
                  displayImages=False, subjectImg=None):
@@ -120,32 +120,28 @@ class ImageMatcher(object):
 
         if friendFeatureDescriptors is None:
             return None
+        
 
         # For each of the subject image features, find the closest feature descriptor in the 
         #friend image:
         matches = self.featureMatcher.match(self.subjectFeatureDescriptors, 
                                             friendFeatureDescriptors,
                                             );
+                                     
+        
+#        # FLANN parameters
+#        FLANN_INDEX_KDTREE = 0
+#        index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+#        search_params = dict(checks=50)   # or pass empty dictionary
+#        
+#        flann = cv2.FlannBasedMatcher(index_params,search_params)
+#        
+#        matches = flann.knnMatch(des1,des2,k=2)
                                             
                                             
         if len(matches) == 0:
             return 0
         
-        
-        #print('\n      Found %i matches' % len(matches), file=sys.stderr);
-               
-        # quick calculation of the max and min distances between keypoints
-
-#        #Calculate the minimum and maximum distances:
-#        max_dist = -float('Inf');
-#        min_dist = float('Inf');
-#
-#        for m in matches:
-#            if m.distance < min_dist:
-#                min_dist = m.distance
-#            if m.distance > max_dist:
-#                max_dist = m.distance
-
         # calculate good matches those that are at least 3* the minimum distance:
         good_matches = []
         for m in matches:
@@ -157,6 +153,34 @@ class ImageMatcher(object):
 
         # show user percentage of match
         percent = (100 * len(good_matches)) / len(matches);
+        
+        
+                
+        # =============================================================================
+        #         
+        
+  
+#        
+#        # Need to draw only good matches, so create a mask
+#        matchesMask = [[0,0] for i in xrange(len(matches))]
+#        
+#        # ratio test as per Lowe's paper
+#        for i,(m,n) in enumerate(matches):
+#            if m.distance < 0.5*n.distance:
+#                matchesMask[i]=[1,0]
+#        
+#        draw_params = dict(matchColor = (0,255,0),
+#                           singlePointColor = (255,0,0),
+#                           matchesMask = matchesMask,
+#                           flags = 0)
+#        
+#        img3 = cv2.drawMatchesKnn(img1,kp1,img2,kp2,matches,None,**draw_params)
+#        
+                
+                
+        # =============================================================================
+        
+
         
         #Display our good_matches:
         if self.displayImages:
