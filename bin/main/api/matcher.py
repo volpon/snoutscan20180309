@@ -77,8 +77,13 @@ class ImageMatcher(object):
     
     '''
 
-    #Anything with a matching distance less than this is considered a "good match".
+    #Anything with a matching distance less than this is considered a candidate for a  "good match".
     matchDistanceThreshold=40
+    
+    #This is the ratio of the best match distance to second best match distance that also defines
+    # what a "good match" is.  Any best matches that have a distance ratio less than this and also
+    #have a distance less than matchDistanceThreshold are considered good matches:
+    bestToSecondBestDistRatio=.7
     
     def __init__(self, subjectFeatureKeypoints, subjectFeatureDescriptors, 
                  displayImages=False, subjectImg=None):
@@ -145,10 +150,22 @@ class ImageMatcher(object):
             return 0
         
         good_matches=[]
-        # Check to make sure that the best match is at least 2x as close as the second best
+        # Check to make sure that the best match is at least 1/.7 as close as the second best
         # match, and only use those:
-        for (bestMatch,secondBestMatch) in matches:
-            if (    bestMatch.distance < 0.7*secondBestMatch.distance \
+        
+        for matchPair in matches:
+            
+            if len(matchPair) ==2:
+                #Divvy them out:
+                (bestMatch,secondBestMatch) =matchPair
+            elif len(matchPair) ==1:
+                #Then we only had one match - assume it's good.
+                (bestMatch,)=matchPair
+                good_matches.append(bestMatch);
+                continue
+            
+            #Do the ratio test:
+            if (    bestMatch.distance < self.bestToSecondBestDistRatio*secondBestMatch.distance \
                     and bestMatch.distance<self.matchDistanceThreshold):
                 good_matches.append(bestMatch);
                 
@@ -156,8 +173,7 @@ class ImageMatcher(object):
 
 
         # show user percentage of match
-        percent = (100 * len(good_matches)) / len(matches);
-        
+        percent = (100 * len(good_matches)) / len(matches);        
         
         #Display our good_matches:
         if self.displayImages:
