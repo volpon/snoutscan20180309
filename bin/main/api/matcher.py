@@ -163,6 +163,10 @@ class ImageMatcher(object):
                 (bestMatch,)=matchPair
                 good_matches.append(bestMatch);
                 continue
+            elif len(matchPair)==0:
+                continue
+            else:
+                assert 0, 'Should not be getting this number of matches back: %i' % len(matchPair) 
             
             #Do the ratio test:
             if (    bestMatch.distance < self.bestToSecondBestDistRatio*secondBestMatch.distance \
