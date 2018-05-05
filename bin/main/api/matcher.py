@@ -139,11 +139,15 @@ class ImageMatcher(object):
         if friendFeatureDescriptors is None:
             return None
         
-
+        self.featureMatcher.clear()
+        
+        self.featureMatcher.add(friendFeatureDescriptors)
+        
+        self.featureMatcher.train()
+        
         # For each of the subject image features, find the closest feature descriptor in the 
         #friend image:
-        matches = self.featureMatcher.knnMatch(self.subjectFeatureDescriptors, 
-                                            friendFeatureDescriptors,k=2
+        matches = self.featureMatcher.knnMatch(self.subjectFeatureDescriptors,k=2
                                             );
                                     
         if len(matches) == 0:
