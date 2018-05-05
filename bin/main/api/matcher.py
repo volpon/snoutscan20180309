@@ -261,7 +261,7 @@ def find_best_matches(image_data, image_type, friends, num_best_friends):
     (matchedQueryTrainIds, matchDist) = matcher.match(subjectFeatureDescriptors)
     
     ##TODO:  convert matchedQueryTrainIds to which friends actually matched and how good the 
-    #match was
+    #match was, best_indices, best_scores, sorted by score.
         
     #Return our list of best indicies to friends[] and their corresponding best scores:
     return best_indices, best_scores
