@@ -85,32 +85,18 @@ class ImageMatcher(object):
     #have a distance less than matchDistanceThreshold are considered good matches:
     bestToSecondBestDistRatio=.7
     
-    def __init__(self, subjectFeatureKeypoints, subjectFeatureDescriptors, 
-                 displayImages=False, subjectImg=None):
+    def __init__(self, friendFeatureDescriptors):
         '''
         Inputs:
-            subjectFeatureKeypoints
-                                    - The feature keypoints for the subject subjectImg.
-            subjectFeatureDescriptors
-                                    - The feature descriptors for the subject subjectImg.
-            displayImages           - Says if we should display subjectImgs for debugging purposes.
-            subjectImg              - If displayImages==True, then this is the subjectImg from which
-                                      subjectFeatureDescriptors was created.
+            friendFeatureDescriptors    - The feature descriptors for all the friends, concatenated
+                                          together.
+
+        Side-effects:
+            self.FeatureMatcher is created and the friendFeatureDescriptors are added to it and 
+                indexed.                                       
         '''
-
-        assert not displayImages or subjectImg is not None,\
-            'Need to specify an subjectImg if dispalyImages=True.'
-
-        self.subjectFeatureDescriptors = subjectFeatureDescriptors
-        self.subjectFeatureKeypoints = subjectFeatureKeypoints
-        self.displayImages = displayImages
-        self.subjectImg=subjectImg
-
-#        # Create BFMatcher object
-#        self.featureMatcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-        
-        # FLANN parameters
-        
+      
+        # FLANN parameters:
         #A constant that means to use the Locally sensitive hashing distance metric:
         FLANN_INDEX_LSH = 6
         indexParams= dict(algorithm = FLANN_INDEX_LSH,
@@ -121,33 +107,34 @@ class ImageMatcher(object):
 
         #index_params,search_params
         self.featureMatcher = cv2.FlannBasedMatcher(indexParams,searchParams)
-
-    def match(self, friendFeatureKeypoints, friendFeatureDescriptors, friendImage=None):
+        
+        self.featureMatcher.clear()
+        
+        #Add the stuff we want to index:
+        self.featureMatcher.add(friendFeatureDescriptors)
+        
+        import pdb; pdb.set_trace()
+        
+        #Train the tree:
+        self.featureMatcher.train()
+                
+    def match(self, subjectFeatureDescriptors):
         '''
         This function matches the given subject subjectImg with a given friend subjectImg based on 
         the features in friendFeatureDescriptors.
         
         Inputs:
-            friendFeatureKeypoints      - The feature keypoints for this friend.            
-            friendFeatureDescriptors    - The feature descriptors for this friend.
-            friendImage                 - The numpy array representing the subjectImg, for display 
-                                          if displayImages=True
-        
+            subjectFeatureDescriptors
+                                    - The feature descriptors for the subject subjectImg.        
         @return percent
         '''
-
-        if friendFeatureDescriptors is None:
-            return None
         
-
         # For each of the subject image features, find the closest feature descriptor in the 
         #friend image:
-        matches = self.featureMatcher.knnMatch(self.subjectFeatureDescriptors, 
-                                            friendFeatureDescriptors,k=2
-                                            );
-                                    
-        if len(matches) == 0:
-            return 0
+        #Arguments: queryDescriptors, k)
+        #Find the top two matches in the whole training dataset for each descriptor in 
+        #subjectFeatureDescriptors, and return them as rows of a list of lists:
+        matches = self.featureMatcher.knnMatch( subjectFeatureDescriptors, k=2 );
         
         good_matches=[]
         # Check to make sure that the best match is at least 1/.7 as close as the second best
@@ -160,8 +147,7 @@ class ImageMatcher(object):
                 (bestMatch,secondBestMatch) =matchPair
             elif len(matchPair) ==1:
                 #Then we only had one match - assume it's good.
-                (bestMatch,)=matchPair
-                good_matches.append(bestMatch);
+                good_matches.append(matchPair[0]);
                 continue
             elif len(matchPair)==0:
                 continue
@@ -175,26 +161,16 @@ class ImageMatcher(object):
                 
         print('      Found %i good_matches' % len(good_matches), file=sys.stderr);
 
-
-        # show user percentage of match
-        percent = (100 * len(good_matches)) / len(matches);        
+        ######
+        #Convert to a list of matching indicies so that what calls this doesn't need to know about 
+        # the DMatch  datatype.
         
-        #Display our good_matches:
-        if self.displayImages:
-            outImg = cv2.drawMatches(self.subjectImg, self.subjectFeatureKeypoints, friendImage, 
-                                     friendFeatureKeypoints, good_matches, None )
-            
-            #Write to disk in case we need to communicate with someone else:
-            cv2.imwrite(os.path.expanduser('/tmp/good_matches.png'), outImg)
-            
-            cv2.imshow('good_matches', outImg)
-            
-            #Press any key to exit.
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()   
-
-        return percent;
-
+        matchedQueryTrainIds=np.array([ (m.queryIdx, m.trainIdx) for m in good_matches])
+        
+        #The distance metric for each match:
+        matchDist=np.array([ m.distance for m in good_matches])
+              
+        return (matchedQueryTrainIds, matchDist)
 
 class MatchResult(object):
 
@@ -210,19 +186,24 @@ class MatchResult(object):
         cv2.imwrite(path, self.image)
 
 
-def find_best_match(image_data, image_type, friends, displayImages=False):
+def find_best_matches(image_data, image_type, friends, num_best_friends):
     '''
-    This function finds the best match for image_data among a collection of friends, where
-    each friend represents a photo of a dog, with accompanying metadata.
+    This function finds the <num_best_friends> best matches for image_data among a collection of 
+    friends, where each friend represents a photo of a dog, with accompanying metadata.
     
     Inputs:
         image_data      - the subject image data, in numpy format.
         image_type      - Not currently used.
         friends         - A collection of Friend() objects representing the pictures the given image
                           could match to.
-        displayImages   - Says if we should display images for debugging purposes.
+        num_best_friends- n in the sentence "Find the n best matching friends"   
+                              
+    Outputs:
+        best_indicies   - A list of indicies to the the num_best_friends closest matching friends.
+                          Sorted in decending order by quality matric.
+        match_scores    - The quality metric for each best friend, sorted in descending order.
     '''
-
+    
     if image_data is None:
         return None, None
 
@@ -231,20 +212,14 @@ def find_best_match(image_data, image_type, friends, displayImages=False):
     #Make our features and keypoints.
     subjectFeatureKeypoints, subjectFeatureDescriptors=subjectFeatures.from_image(image_data)
     
-    #Make a matcher object using our subject image features:
-    matcher = ImageMatcher(subjectFeatureKeypoints, subjectFeatureDescriptors, displayImages, 
-                           image_data)
-
-    best_match_score = -float('Inf')
+    #For each feature, this is the friend id it came from (index to friends):
+    friendIdsList=[]
     
-    #The databse id of our best match:
-    best_db_id = 0
-    
-    #The list index of our best friend:
-    best_index=None
-
+    #The descriptors for this feature:
+    friendDescriptorsList=[]
+        
     #####
-    ##Loop through all of our friends and find the one that has the highest matcher.match score:
+    ##Loop through all of our friends and combine the feature data:
     #####
     for index in range(len(friends)):
         
@@ -261,22 +236,51 @@ def find_best_match(image_data, image_type, friends, displayImages=False):
         friendFeatureKeypoints=friend.photo.featureKeypoints
         friendFeatureDescriptors=friend.photo.featureDescriptors
         
-        #Get our friend image:
-        friendImgBinary,friendImgType=friend.photo.get_binary()
+        numFeatures=len(friendFeatureDescriptors)
+        
+        assert numFeatures == len(friendFeatureKeypoints), \
+            'The number of keypoints and descriptors should be equal.'
+        
+        #Add our indices to the list:
+        friendIdsList.append(np.full(numFeatures,index))
+        
+        #Add our descriptors to the list:
+        friendDescriptorsList.append(friendFeatureDescriptors)
+        
+        break
+        
+    #Combine the lists together to make one array for the whole list of friends:
+    friendIds=np.concatenate(friendIdsList)
+    friendDescriptors=np.concatenate(friendDescriptorsList)
+        
+    #Make a matcher object using our subject image features:
+    matcher = ImageMatcher(friendDescriptors)    
 
-        #Using our subject-image based matcher, calculate how well it matches with this specific 
-        # friend image.
-        match_score = matcher.match(friendFeatureKeypoints, friendFeatureDescriptors,
-                                    friendImgBinary)
+    #Using our subject-image based matcher, calculate how well it matches with this specific 
+    # friend image.
+    (matchedQueryTrainIds, matchDist) = matcher.match(subjectFeatureDescriptors)
+    
+    ##TODO:  convert matchedQueryTrainIds to which friends actually matched and how good the 
+    #match was
+        
+    #Return our list of best indicies to friends[] and their corresponding best scores:
+    return best_indices, best_scores
+    
+    
+def find_best_match(image_data, image_type, friends):
+    '''
+    This function finds the best match for image_data among a collection of friends, where
+    each friend represents a photo of a dog, with accompanying metadata.
+    
+    See find_best_matches for a definition of the inputs and outputs.
+    '''
 
-        #Find the largest per in the group.
-        if match_score and match_score > best_match_score:
-            best_match_score = match_score
-            best_db_id = friend.id
-            best_index = index
+    #Find our best match:
+    best_indices, match_scores=find_best_matches(image_data, image_type, friends, 1)
 
-    ##Only return a result if we have at least a match score of 50:
-    #if best_match_score > 50:
-    return best_db_id, best_match_score, best_index
-
-    #return None, None
+    #Get our info for the bet matching friend:
+    best_index=best_indices[0]
+    best_score=best_scores[0]
+    best_db_id=friends[best_index].id
+    
+    return best_db_id, best_score, best_index

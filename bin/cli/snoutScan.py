@@ -143,7 +143,7 @@ def SSMatchAll(friendDirectories, displayImages=True):
                 
                 #Find the other friend that matches this friend best:
                 best_db_id, best_match_score, best_index= \
-                    find_best_match(friendImgBinary, friendImgType,friendsNotThisOne, displayImages)
+                    find_best_match(friendImgBinary, friendImgType,friendsNotThisOne)
                 
                 #Translate the id since we deleted one:
                 actualBestId=friendIdsNotThisOne[best_index]
