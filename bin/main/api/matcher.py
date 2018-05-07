@@ -106,9 +106,6 @@ class ImageMatcher(object):
         self.displayImages = displayImages
         self.subjectImg=subjectImg
 
-#        # Create BFMatcher object
-#        self.featureMatcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-        
         # FLANN parameters
         
         #A constant that means to use the Locally sensitive hashing distance metric:
@@ -133,7 +130,7 @@ class ImageMatcher(object):
             friendImage                 - The numpy array representing the subjectImg, for display 
                                           if displayImages=True
         
-        @return percent
+        @return match_score
         '''
 
         if friendFeatureDescriptors is None:
@@ -176,8 +173,8 @@ class ImageMatcher(object):
         print('      Found %i good_matches' % len(good_matches), file=sys.stderr);
 
 
-        # show user percentage of match
-        percent = (100 * len(good_matches)) / len(matches);        
+        # show user the number of good matches that there are:
+        match_score = len(good_matches)
         
         #Display our good_matches:
         if self.displayImages:
@@ -193,16 +190,16 @@ class ImageMatcher(object):
             cv2.waitKey(0)
             cv2.destroyAllWindows()   
 
-        return percent;
+        return match_score;
 
 
 class MatchResult(object):
 
-    def __init__(self, name, image, percent):
+    def __init__(self, name, image, match_score):
 
         self.name = name
         self.image = image
-        self.percent = percent
+        self.match_score = match_score
 
 
     def saveImage(self, path):
