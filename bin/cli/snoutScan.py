@@ -179,7 +179,7 @@ if __name__=="__main__":
     pd.set_option('display.width', 10000)
     
     with TT('Running SSMatchAll'):
-        confusionMatrix=SSMatchAll(args.friendDirectories, True)
+        confusionMatrix=SSMatchAll(args.friendDirectories, False)
         
     numDogNames,_=confusionMatrix.shape
     
