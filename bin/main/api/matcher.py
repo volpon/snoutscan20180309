@@ -134,7 +134,7 @@ class ImageMatcher(object):
         #Add the stuff we want to index:
         self.featureMatcher.add(friendFeatureDescriptors)
         
-        import pdb; pdb.set_trace()
+#        import pdb; pdb.set_trace()
         
         #Train the tree:
         self.featureMatcher.train()
@@ -283,6 +283,11 @@ def find_best_matches(image_data, image_type, friends, num_best_friends):
     
     ##TODO:  convert matchedQueryTrainIds to which friends actually matched and how good the 
     #match was, best_indices, best_scores, sorted by score.
+    
+    
+    ##TEMPORARY:
+    best_indices=[1]
+    best_scores=[5]
         
     #Return our list of best indicies to friends[] and their corresponding best scores:
     return best_indices, best_scores
@@ -301,7 +306,7 @@ def find_best_match(image_data, image_type, friends):
 
     #Get our info for the bet matching friend:
     best_index=best_indices[0]
-    best_score=best_scores[0]
+    best_score=match_scores[0]
     best_db_id=friends[best_index].id
     
     return best_db_id, best_score, best_index
