@@ -48,7 +48,7 @@ class ImageFeatures(object):
         
         #The size of the patch to used in each layer to create the ORB descriptor.  This 
         #size on the smaller pyramid layers will cover more of the original image area.
-        patchSize=63
+        patchSize=31
 
         if (isinstance(image, str)):
             image = image_from_base64(bytes(image, "utf-8"))
