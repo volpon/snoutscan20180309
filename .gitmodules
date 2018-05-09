@@ -1,3 +1,0 @@
-[submodule "bin/lib/flann"]
-	path = bin/lib/flann
-	url = ssh://github-andyDoucette/mariusmuja/flann.git
