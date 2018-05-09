@@ -29,6 +29,26 @@ class ImageFeatures(object):
         '''
         Creates features with both keypoints and descriptors.
         '''
+        
+        #How many features to create, maximum:
+        numFeaturesMax=500
+        
+        #How much to decimate iamges between levels
+        scaleFactor=1.2
+        
+        #Number of pyramid levels.
+        nLevels=8
+        
+        #The size of the border where the features are not detected.  
+        #Should roughly match patchSize.
+        edgeThreshold=31
+        
+        #THe definition of cv::ORB::HARRIS_SCORE as of v 3.4.0
+        HARRIS_SCORE=0
+        
+        #The size of the patch to used in each layer to create the ORB descriptor.  This 
+        #size on the smaller pyramid layers will cover more of the original image area.
+        patchSize=31
 
         if (isinstance(image, str)):
             image = image_from_base64(bytes(image, "utf-8"))
@@ -39,8 +59,9 @@ class ImageFeatures(object):
         # Initiate BRISK detector
         detector = cv2.BRISK_create()
 
-        # Initiate BRIEF extractor
-        descriptorExtractor = cv2.ORB_create()
+        # Initiate ORB extractor
+        descriptorExtractor = cv2.ORB_create(numFeaturesMax, scaleFactor, nLevels,
+                                             edgeThreshold, 0, 2,  HARRIS_SCORE, patchSize)
 
         keypoints = detector.detect(image, None)
         keypoints, self.descriptors = descriptorExtractor.compute(image, keypoints)
