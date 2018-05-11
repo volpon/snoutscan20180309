@@ -7,6 +7,20 @@ import cv2
 import io
 import os
 
+
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
+#A search of nearest neighbor search implementations brings me to these pages:
+#https://www.benfrederickson.com/approximate-nearest-neighbours-for-recommender-systems/
+#https://erikbern.com/2015/07/04/benchmark-of-approximate-nearest-neighbor-libraries.html
+#They recommend hnsw from nmslib as the best performant.  I'll try that:
+# https://github.com/nmslib/nmslib/tree/master/python_bindings
+#  docs: https://nmslib.github.io/nmslib/api.html#nmslib-intindex
+#  The manual here:
+#    https://pdfs.semanticscholar.org/d9d8/744fa1c527780739a843fd825b669a372a24.pdf
+import nmslib
+
 def image_from_base64(data, type = None):
     return image_from_binary(base64.b64decode(data), type)
 
@@ -116,28 +130,71 @@ class ImageMatcher(object):
             self.FeatureMatcher is created and the friendFeatureDescriptors are added to it and 
                 indexed.                                       
         '''
-      
-        # FLANN parameters:
-        #A constant that means to use the Locally sensitive hashing distance metric:
-        FLANN_INDEX_LSH = 6
-        indexParams= dict(algorithm = FLANN_INDEX_LSH,
-                           table_number = 6, # 12
-                           key_size = 12,     # 20
-                           multi_probe_level = 1) #2
-        searchParams = dict(checks=50)   # or pass empty dictionary
-
-        #index_params,search_params
-        self.featureMatcher = cv2.FlannBasedMatcher(indexParams,searchParams)
+#      
+#        # FLANN parameters:
+#        #A constant that means to use the Locally sensitive hashing distance metric:
+#        FLANN_INDEX_LSH = 6
+#        indexParams= dict(algorithm = FLANN_INDEX_LSH,
+#                           table_number = 6, # 12
+#                           key_size = 12,     # 20
+#                           multi_probe_level = 1) #2
+#        searchParams = dict(checks=50)   # or pass empty dictionary
+#
+#        #index_params,search_params
+#        self.featureMatcher = cv2.FlannBasedMatcher(indexParams,searchParams)
+#        
+#        self.featureMatcher.clear()
+#        
+#        #Add the stuff we want to index:
+#        self.featureMatcher.add(friendFeatureDescriptors)
         
-        self.featureMatcher.clear()
+#                #Train the tree:
+#        self.featureMatcher.train()
         
-        #Add the stuff we want to index:
-        self.featureMatcher.add(friendFeatureDescriptors)
         
-#        import pdb; pdb.set_trace()
+        #Create a hnsw index using hamming distance, and an integer index, saying that we're 
+        # interpreting the descriptors as an array of uint8s that essentially make one big long
+        # binary string:
+        self.featureMatcher = nmslib.init(method='hnsw', space='bit_hamming', 
+                                          data_type=nmslib.DataType.DENSE_UINT8_VECTOR,
+                                          dtype=nmslib.DistType.INT)
         
-        #Train the tree:
-        self.featureMatcher.train()
+        
+#        space_name='l2sqr_sift'
+#        self.featureMatcher= nmslib.init(method='hnsw', 
+#                                        space='l2sqr_sift', 
+#                                        data_type=nmslib.DataType.DENSE_UINT8_VECTOR, 
+#                                        dtype=nmslib.DistType.INT)
+#        #Add our datapoints:
+#        self.featureMatcher.addDataPointBatch(friendFeatureDescriptors)
+#        
+#        
+#        #index_time_params is not well documented.  The best thing I could do was find where they 
+#        #are loaded in the cpp files:
+#        # https://github.com/nmslib/nmslib/search?utf8=%E2%9C%93&q=GetParamOptional&type=
+#        
+#        M = 15
+#        efC = 100
+#        num_threads = 4
+#
+#        index_time_params = {'M': M, 
+#                             'indexThreadQty': num_threads, 
+#                             'efConstruction': efC, 
+#                             'post' : 0,
+#                             'skip_optimized_index' : 1 # using non-optimized index!
+#                             }
+#        
+#        
+#        #Create the index:
+#        self.featureMatcher.createIndex({'post': 2}, print_progress=True)
+#
+#        
+#        # Setting query-time parameters (equally undocumented)
+#        efS = 100
+#        query_time_params = {'efSearch': efS}
+#        self.featureMatcher.setQueryTimeParams(query_time_params)
+        
+        sys.exit()
                 
     def match(self, subjectFeatureDescriptors):
         '''
