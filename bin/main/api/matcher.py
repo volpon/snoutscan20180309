@@ -131,20 +131,29 @@ class ImageMatcher(object):
 
         numFriendFeatures,numDimensions=friendFeatureDescriptors.shape
         
-        #This is approximate number of features we put in each cell.  Decreasing this 
-        #increases the number of cells and slows down indexing, but speeds up searching:
-
-        friendFeaturesPerCell=200
+#        #This is approximate number of features we put in each cell.  Decreasing this 
+#        #increases the number of cells and slows down indexing, but speeds up searching:
+#
+#        friendFeaturesPerCell=200
+#        
+#        #This is the number of cells that we split the dataset between:
+#        nCells=int(round(numFriendFeatures/friendFeaturesPerCell))
+#        
+#        #This is the fraction of cells we search when we're searching the dataset:
+#        #Increase this to get more accuracy at the expense of speed:
+#        #Setting this to 1 will give the same answer as brute force search:
+#        fractCellsToProbe=.001
+#        
+#        numCellsToProbe=int(round(fractCellsToProbe*float(nCells)))
         
         #This is the number of cells that we split the dataset between:
-        nCells=int(round(numFriendFeatures/friendFeaturesPerCell))
+        #More will increase the lookup speedup at the expense of additional indexing time:
+        #Also, if we don't have much data this can't be very large.
+        nCells=500
         
-        #This is the fraction of cells we search when we're searching the dataset:
-        #Increase this to get more accuracy at the expense of speed:
-        #Setting this to 1 will give the same answer as brute force search:
-        fractCellsToProbe=.001
-        
-        numCellsToProbe=int(round(fractCellsToProbe*float(nCells)))
+        #This is the number of cells we probe at a time for nearest-neighbor search.  More will
+        #give more accurate results at the expense of a linear increase in lookup time:
+        numCellsToProbe=1
         
         print("      nCells: %i, numCellsToProbe: %i" % (nCells, numCellsToProbe))
         
