@@ -94,8 +94,6 @@ def SSMatchAll(friendDirectories, displayImages=True):
                         with TT('Image is now %s' % str(imgGrayResized.shape)):
                             pass
 
-
-                        
                         #if displayImages:
                             ##Show the image (requires a display connection, which is complicated
                             # in docker)

@@ -133,18 +133,22 @@ class ImageMatcher(object):
         #Increase this to get more search speed at the expense of indexing speed
         nCells=100
         
-        #This is the number of cells we search when we're searching the dataset:
+        #This is the fraction of cells we search when we're searching the dataset:
         #Increase this to get more accuracy at the expense of speed:
-        #Setting this to nCells will give the same answer as brute force search:
-        numCellsToProbe=10
+        #Setting this to 1 will give the same answer as brute force search:
+        fractCellsToProbe=.1
+        
+        numCellsToProbe=int(round(fractCellsToProbe*nCells))
         
         numDimensions=friendFeatureDescriptors.shape[1]
         
         #Make our quantizer - this divvies out descriptors to different "cells" to speed lookup:
-        quantizer = faiss.IndexFlatL2(numDimensions)
+        #We need to keep the quantizer around so that the faiss library can still reference it in 
+        #C++ land or else we'll get a sigfault!
+        self.quantizer = faiss.IndexFlatL2(numDimensions)
         
         #Initialize the index:
-        self.featureMatcher = faiss.IndexIVFFlat(quantizer, numDimensions, nCells, faiss.METRIC_L2)
+        self.featureMatcher = faiss.IndexIVFFlat(self.quantizer, numDimensions, nCells, faiss.METRIC_L2)
         
         #Train our index using the data, so it can do an efficient job at adding it later:
         #(Techically, we just need to train on a set that has a similar distribution as what we'll 
@@ -160,9 +164,7 @@ class ImageMatcher(object):
         self.featureMatcher.nprobe=numCellsToProbe
         
         print('      Total num features in  index: ', self.featureMatcher.ntotal)
-                                        
-        sys.exit()
-                
+                                                        
     def match(self, subjectFeatureDescriptors):
         '''
         This function matches the given subject subjectImg with a given friend subjectImg based on 
@@ -174,48 +176,42 @@ class ImageMatcher(object):
         @return percent
         '''
         
+        #How many subject features we have:
+        nSubFeatures=subjectFeatureDescriptors.shape[0]
+        
         # For each of the subject image features, find the closest feature descriptor in the 
         #friend image:
         #Arguments: queryDescriptors, k)
         #Find the top two matches in the whole training dataset for each descriptor in 
-        #subjectFeatureDescriptors, and return them as rows of a list of lists:
-        matches = self.featureMatcher.search( subjectFeatureDescriptors, 2 );
+        #subjectFeatureDescriptors:
+        #Return them as a (numSubjectFeatures x k) matrix of distances and ids, 
+        # with rows sorted in increasing distance
+        distances,ids = self.featureMatcher.search( subjectFeatureDescriptors, 2 );
         
-        good_matches=[]
+        #The subject feature id and friends feature ids of "good matches"
+        matchedQueryTrainIds=[]
+        #Their corresponding distance:
+        matchDist=[]
+        
         # Check to make sure that the best match is at least 1/.7 as close as the second best
         # match, and only use those:
-        
-        for matchPair in matches:
+        for i in range(nSubFeatures):
+            bestMatchDist=distances[i,0]
+            secondBestDist=distances[i,1]
             
-            if len(matchPair) ==2:
-                #Divvy them out:
-                (bestMatch,secondBestMatch) =matchPair
-            elif len(matchPair) ==1:
-                #Then we only had one match - assume it's good.
-                good_matches.append(matchPair[0]);
-                continue
-            elif len(matchPair)==0:
-                continue
-            else:
-                assert 0, 'Should not be getting this number of matches back: %i' % len(matchPair) 
-            
-            #Do the ratio test:
-            if (    bestMatch.distance < self.bestToSecondBestDistRatio*secondBestMatch.distance \
-                    and bestMatch.distance<self.matchDistanceThreshold):
-                good_matches.append(bestMatch);
-                
-        print('      Found %i good_matches' % len(good_matches), file=sys.stderr);
+            bestMatchId=ids[i,0]
 
-        ######
-        #Convert to a list of matching indicies so that what calls this doesn't need to know about 
-        # the DMatch  datatype.
-        
-        matchedQueryTrainIds=np.array([ (m.queryIdx, m.trainIdx) for m in good_matches])
-        
-        #The distance metric for each match:
-        matchDist=np.array([ m.distance for m in good_matches])
-              
-        return (matchedQueryTrainIds, matchDist)
+            #Do the ratio test:
+            if (    bestMatchDist < self.bestToSecondBestDistRatio*secondBestDist \
+                    and bestMatchDist<self.matchDistanceThreshold):
+                
+                #Then, add the subject feature and friend feature to our "best matches" lists:
+                matchedQueryTrainIds.append((i,bestMatchId));
+                matchDist.append(bestMatchDist)
+                
+        print('      Found %i good_matches' % len(matchDist), file=sys.stderr);
+
+        return (np.array(matchedQueryTrainIds), np.array(matchDist))
 
 class MatchResult(object):
 
@@ -245,7 +241,7 @@ def find_best_matches(image_data, image_type, friends, num_best_friends):
                               
     Outputs:
         best_indicies   - A list of indicies to the the num_best_friends closest matching friends.
-                          Sorted in decending order by quality matric.
+                          Sorted in decending order by quality metric.
         match_scores    - The quality metric for each best friend, sorted in descending order.
     '''
     
@@ -291,12 +287,13 @@ def find_best_matches(image_data, image_type, friends, num_best_friends):
         
         #Add our descriptors to the list:
         friendDescriptorsList.append(friendFeatureDescriptors)
-        
-        break
-        
+                
     #Combine the lists together to make one array for the whole list of friends:
     friendIds=np.concatenate(friendIdsList)
     friendDescriptors=np.concatenate(friendDescriptorsList)
+    
+    assert len(friendIds) == len(friendDescriptors) \
+           and len(friendIds) == friendDescriptors.shape[0], 'These should be the same.'
         
     #Make a matcher object using our subject image features:
     matcher = ImageMatcher(friendDescriptors)    
@@ -308,13 +305,22 @@ def find_best_matches(image_data, image_type, friends, num_best_friends):
     ##TODO:  convert matchedQueryTrainIds to which friends actually matched and how good the 
     #match was, best_indices, best_scores, sorted by score.
     
+    #These are the friendIds of the best match feature of each subject feature:
+    friendIdsOfBestMatch=friendIds[matchedQueryTrainIds[:,1]]
     
-    ##TEMPORARY:
-    best_indices=[1]
-    best_scores=[5]
-        
+    #This is the unique set of friendIds represented in this set, and the number of features 
+    #matches that correspond to that friend:
+    [friendIdsMatched, numMatches]=np.unique(friendIdsOfBestMatch, return_counts=True)
+    
+    #Return a list of indicies saying how we would sort numMatches in desceending order:
+    howToSort=np.flip(np.argsort(numMatches),0)
+    
+    #Sort them in descending order by numMatches:
+    friendIdsSorted=friendIdsMatched[howToSort]
+    numMatchesSorted=numMatches[howToSort]
+    
     #Return our list of best indicies to friends[] and their corresponding best scores:
-    return best_indices, best_scores
+    return friendIdsSorted, numMatchesSorted
     
     
 def find_best_match(image_data, image_type, friends):
