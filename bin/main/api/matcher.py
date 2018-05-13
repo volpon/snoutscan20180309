@@ -7,19 +7,14 @@ import cv2
 import io
 import os
 
-
-import logging
-logging.basicConfig(level=logging.DEBUG)
-
-#A search of nearest neighbor search implementations brings me to these pages:
+#A search of nearest neighbor search implementations brings me to this page:
 #https://www.benfrederickson.com/approximate-nearest-neighbours-for-recommender-systems/
-#https://erikbern.com/2015/07/04/benchmark-of-approximate-nearest-neighbor-libraries.html
-#They recommend hnsw from nmslib as the best performant.  I'll try that:
-# https://github.com/nmslib/nmslib/tree/master/python_bindings
-#  docs: https://nmslib.github.io/nmslib/api.html#nmslib-intindex
-#  The manual here:
-#    https://pdfs.semanticscholar.org/d9d8/744fa1c527780739a843fd825b669a372a24.pdf
-import nmslib
+#They recommend hnsw from nmslib as the best performant, but it's poorly documented and the 
+#bit_hamming search didn't seem to be compatible with any datatypes or formats.
+
+#Faiss is created and used by facebook, and is the second fastest/accurate one available according 
+#to that benchmark
+import faiss
 
 def image_from_base64(data, type = None):
     return image_from_binary(base64.b64decode(data), type)
@@ -76,10 +71,13 @@ class ImageFeatures(object):
         # Initiate ORB extractor
         descriptorExtractor = cv2.ORB_create(numFeaturesMax, scaleFactor, nLevels,
                                              edgeThreshold, 0, 2,  HARRIS_SCORE, patchSize)
-
+        
         keypoints = detector.detect(image, None)
-        keypoints, self.descriptors = descriptorExtractor.compute(image, keypoints)
+        keypoints, descriptorsAsBytes= descriptorExtractor.compute(image, keypoints)
               
+        #Convert the byte representation to an array of bits:      
+        self.descriptors=np.unpackbits(descriptorsAsBytes, axis=1).astype('float32')
+        
         return (keypoints, self.descriptors)
 
 
@@ -131,53 +129,38 @@ class ImageMatcher(object):
                 indexed.                                       
         '''     
         
-        #Based on the closest example available:
-        #https://github.com/nmslib/nmslib/blob/master/python_bindings/notebooks/search_sift_uint8.ipynb
+        #This is the number of cells that we split the dataset between:
+        #Increase this to get more search speed at the expense of indexing speed
+        nCells=100
         
-        #Create a hnsw index using hamming distance, and an integer index, saying that we're 
-        # interpreting the descriptors as an array of uint8s that essentially make one big long
-        # binary string:
+        #This is the number of cells we search when we're searching the dataset:
+        #Increase this to get more accuracy at the expense of speed:
+        #Setting this to nCells will give the same answer as brute force search:
+        numCellsToProbe=10
         
-        #TODO:  Learn how to use bit_hamming, (and hopefully DataType.DENSE_UINT8_VECTOR),
-        # which should be much faster than l1 on a float space, and more memory efficient.
-        #self.featureMatcher = nmslib.init(method='hnsw', space='bit_hamming', 
-                                          #data_type=nmslib.DataType.DENSE_UINT8_VECTOR,
-                                          #dtype=nmslib.DistType.INT)
-                                          
-        self.featureMatcher = nmslib.init(method='hnsw', space='l2sqr_sift', 
-                                          data_type=nmslib.DataType.DENSE_UINT8_VECTOR,
-                                          dtype=nmslib.DistType.INT)
+        numDimensions=friendFeatureDescriptors.shape[1]
         
+        #Make our quantizer - this divvies out descriptors to different "cells" to speed lookup:
+        quantizer = faiss.IndexFlatL2(numDimensions)
         
-        #Add our datapoints:
-        self.featureMatcher.addDataPointBatch(friendFeatureDescriptors)
-
-
-        #index_time_params is not well documented.  The best thing I could do was find where they 
-        #are loaded in the cpp files:
-        # https://github.com/nmslib/nmslib/search?utf8=%E2%9C%93&q=GetParamOptional&type=
-
-        M = 15
-        efC = 100
-        num_threads = 4
-
-        index_time_params = {'M': M, 
-                            'indexThreadQty': num_threads, 
-                            'efConstruction': efC, 
-                            'post' : 0,
-                            'skip_optimized_index' : 1 # using non-optimized index!
-                            }
-#        
-#        
-#        #Create the index:
-#        self.featureMatcher.createIndex({'post': 2}, print_progress=True)
-#
-#        
-#        # Setting query-time parameters (equally undocumented)
-#        efS = 100
-#        query_time_params = {'efSearch': efS}
-#        self.featureMatcher.setQueryTimeParams(query_time_params)
+        #Initialize the index:
+        self.featureMatcher = faiss.IndexIVFFlat(quantizer, numDimensions, nCells, faiss.METRIC_L2)
         
+        #Train our index using the data, so it can do an efficient job at adding it later:
+        #(Techically, we just need to train on a set that has a similar distribution as what we'll 
+        #be adding later, not the exact same data)
+        assert not self.featureMatcher.is_trained
+        self.featureMatcher.train(friendFeatureDescriptors)
+        assert self.featureMatcher.is_trained
+        
+        #Add our data:
+        self.featureMatcher.add(friendFeatureDescriptors)
+        
+        #Adjust the number of cells we'll use to search:
+        self.featureMatcher.nprobe=numCellsToProbe
+        
+        print('      Total num features in  index: ', self.featureMatcher.ntotal)
+                                        
         sys.exit()
                 
     def match(self, subjectFeatureDescriptors):
@@ -196,7 +179,7 @@ class ImageMatcher(object):
         #Arguments: queryDescriptors, k)
         #Find the top two matches in the whole training dataset for each descriptor in 
         #subjectFeatureDescriptors, and return them as rows of a list of lists:
-        matches = self.featureMatcher.knnMatch( subjectFeatureDescriptors, k=2 );
+        matches = self.featureMatcher.search( subjectFeatureDescriptors, 2 );
         
         good_matches=[]
         # Check to make sure that the best match is at least 1/.7 as close as the second best
