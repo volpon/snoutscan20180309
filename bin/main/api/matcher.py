@@ -129,60 +129,44 @@ class ImageMatcher(object):
         Side-effects:
             self.FeatureMatcher is created and the friendFeatureDescriptors are added to it and 
                 indexed.                                       
-        '''
-#      
-#        # FLANN parameters:
-#        #A constant that means to use the Locally sensitive hashing distance metric:
-#        FLANN_INDEX_LSH = 6
-#        indexParams= dict(algorithm = FLANN_INDEX_LSH,
-#                           table_number = 6, # 12
-#                           key_size = 12,     # 20
-#                           multi_probe_level = 1) #2
-#        searchParams = dict(checks=50)   # or pass empty dictionary
-#
-#        #index_params,search_params
-#        self.featureMatcher = cv2.FlannBasedMatcher(indexParams,searchParams)
-#        
-#        self.featureMatcher.clear()
-#        
-#        #Add the stuff we want to index:
-#        self.featureMatcher.add(friendFeatureDescriptors)
+        '''     
         
-#                #Train the tree:
-#        self.featureMatcher.train()
-        
+        #Based on the closest example available:
+        #https://github.com/nmslib/nmslib/blob/master/python_bindings/notebooks/search_sift_uint8.ipynb
         
         #Create a hnsw index using hamming distance, and an integer index, saying that we're 
         # interpreting the descriptors as an array of uint8s that essentially make one big long
         # binary string:
-        self.featureMatcher = nmslib.init(method='hnsw', space='bit_hamming', 
+        
+        #TODO:  Learn how to use bit_hamming, (and hopefully DataType.DENSE_UINT8_VECTOR),
+        # which should be much faster than l1 on a float space, and more memory efficient.
+        #self.featureMatcher = nmslib.init(method='hnsw', space='bit_hamming', 
+                                          #data_type=nmslib.DataType.DENSE_UINT8_VECTOR,
+                                          #dtype=nmslib.DistType.INT)
+                                          
+        self.featureMatcher = nmslib.init(method='hnsw', space='l2sqr_sift', 
                                           data_type=nmslib.DataType.DENSE_UINT8_VECTOR,
                                           dtype=nmslib.DistType.INT)
         
         
-#        space_name='l2sqr_sift'
-#        self.featureMatcher= nmslib.init(method='hnsw', 
-#                                        space='l2sqr_sift', 
-#                                        data_type=nmslib.DataType.DENSE_UINT8_VECTOR, 
-#                                        dtype=nmslib.DistType.INT)
-#        #Add our datapoints:
-#        self.featureMatcher.addDataPointBatch(friendFeatureDescriptors)
-#        
-#        
-#        #index_time_params is not well documented.  The best thing I could do was find where they 
-#        #are loaded in the cpp files:
-#        # https://github.com/nmslib/nmslib/search?utf8=%E2%9C%93&q=GetParamOptional&type=
-#        
-#        M = 15
-#        efC = 100
-#        num_threads = 4
-#
-#        index_time_params = {'M': M, 
-#                             'indexThreadQty': num_threads, 
-#                             'efConstruction': efC, 
-#                             'post' : 0,
-#                             'skip_optimized_index' : 1 # using non-optimized index!
-#                             }
+        #Add our datapoints:
+        self.featureMatcher.addDataPointBatch(friendFeatureDescriptors)
+
+
+        #index_time_params is not well documented.  The best thing I could do was find where they 
+        #are loaded in the cpp files:
+        # https://github.com/nmslib/nmslib/search?utf8=%E2%9C%93&q=GetParamOptional&type=
+
+        M = 15
+        efC = 100
+        num_threads = 4
+
+        index_time_params = {'M': M, 
+                            'indexThreadQty': num_threads, 
+                            'efConstruction': efC, 
+                            'post' : 0,
+                            'skip_optimized_index' : 1 # using non-optimized index!
+                            }
 #        
 #        
 #        #Create the index:

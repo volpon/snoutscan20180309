@@ -1,4 +1,4 @@
-#!/.condaUser/.anaconda3/envs/snoutScan/bin/python3 
+#!/.condaUser/.anaconda3/envs/snoutScan/bin/ipython3 
 import sys,os; sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                             "helperFiles"));
 
