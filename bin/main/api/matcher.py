@@ -128,19 +128,25 @@ class ImageMatcher(object):
             self.FeatureMatcher is created and the friendFeatureDescriptors are added to it and 
                 indexed.                                       
         '''     
+
+        numFriendFeatures,numDimensions=friendFeatureDescriptors.shape
+        
+        #This is approximate number of features we put in each cell.  Decreasing this 
+        #increases the number of cells and slows down indexing, but speeds up searching:
+
+        friendFeaturesPerCell=200
         
         #This is the number of cells that we split the dataset between:
-        #Increase this to get more search speed at the expense of indexing speed
-        nCells=100
+        nCells=int(round(numFriendFeatures/friendFeaturesPerCell))
         
         #This is the fraction of cells we search when we're searching the dataset:
         #Increase this to get more accuracy at the expense of speed:
         #Setting this to 1 will give the same answer as brute force search:
-        fractCellsToProbe=.1
+        fractCellsToProbe=.001
         
-        numCellsToProbe=int(round(fractCellsToProbe*nCells))
+        numCellsToProbe=int(round(fractCellsToProbe*float(nCells)))
         
-        numDimensions=friendFeatureDescriptors.shape[1]
+        print("      nCells: %i, numCellsToProbe: %i" % (nCells, numCellsToProbe))
         
         #Make our quantizer - this divvies out descriptors to different "cells" to speed lookup:
         #We need to keep the quantizer around so that the faiss library can still reference it in 
@@ -318,6 +324,10 @@ def find_best_matches(image_data, image_type, friends, num_best_friends):
     #Sort them in descending order by numMatches:
     friendIdsSorted=friendIdsMatched[howToSort]
     numMatchesSorted=numMatches[howToSort]
+
+
+    ##TODO:  This would be a good place to display some info about what's matching and what isn't
+    # but we would need the friend names and maybe file names for that to make sense.
     
     #Return our list of best indicies to friends[] and their corresponding best scores:
     return friendIdsSorted, numMatchesSorted
