@@ -235,7 +235,6 @@ class Photo(db.Model):
     
     #Feature descriptors, in encoded format:
     featureDescriptorsEncoded = db.Column(MEDIUMBLOB)
-    
 
     def __init__(self):
         pass 
@@ -258,7 +257,9 @@ class Photo(db.Model):
         fs=ImageFeatures()
 
         (self.featureKeypoints, self.featureDescriptors) = fs.from_image(self.data)
+        
         self.featureDescriptorsEncoded = fs.encode() 
+     
 
     def get_base64(self):
 

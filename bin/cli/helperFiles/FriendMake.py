@@ -22,7 +22,7 @@ def FriendMake(friendName, imgFilePath, image):
     #Make it so we don't save this in the database.
     make_transient(photo)
     
-    #Add the image data:
+    #Add the image data and compute descriptors:
     photo.set_binary(image,'myType')
     
     #Make a profile:

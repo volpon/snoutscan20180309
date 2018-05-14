@@ -204,29 +204,39 @@ class ImageMatcher(object):
         distances,ids = self.featureMatcher.search( subjectFeatureDescriptors, 2 );
         
         #The subject feature id and friends feature ids of "good matches"
-        matchedQueryTrainIds=[]
+        matchedQueryTrainIdList=[]
         #Their corresponding distance:
-        matchDist=[]
+        matchDistList=[]
         
         # Check to make sure that the best match is at least 1/.7 as close as the second best
         # match, and only use those:
         for i in range(nSubFeatures):
-            bestMatchDist=distances[i,0]
+            bestMatchDistList=distances[i,0]
             secondBestDist=distances[i,1]
             
             bestMatchId=ids[i,0]
 
             #Do the ratio test:
-            if (    bestMatchDist < self.bestToSecondBestDistRatio*secondBestDist \
-                    and bestMatchDist<self.matchDistanceThreshold):
+            if (    bestMatchDistList < self.bestToSecondBestDistRatio*secondBestDist \
+                    and bestMatchDistList<self.matchDistanceThreshold):
                 
                 #Then, add the subject feature and friend feature to our "best matches" lists:
-                matchedQueryTrainIds.append((i,bestMatchId));
-                matchDist.append(bestMatchDist)
+                matchedQueryTrainIdList.append((i,bestMatchId));
+                matchDistList.append(bestMatchDistList)
                 
-        print('      Found %i good_matches' % len(matchDist), file=sys.stderr);
+        print('      Found %i good_matches' % len(matchDistList), file=sys.stderr);
 
-        return (np.array(matchedQueryTrainIds), np.array(matchDist))
+        #A special case for when there aren't any matches:
+        if len(matchedQueryTrainIdList)==0:
+            matchedQueryTrainIds=np.zeros((0,2), dtype='int')
+            matchDist=np.zeros((0), dtype='float32')
+        else:
+            #Just convert the lists to np arrays:
+            matchedQueryTrainIds=np.array(matchedQueryTrainIdList)
+            matchDist=np.array(matchDistList)
+            
+            
+        return (matchedQueryTrainIds, matchDist)
 
 class MatchResult(object):
 
@@ -333,7 +343,6 @@ def find_best_matches(image_data, image_type, friends, num_best_friends):
     #Sort them in descending order by numMatches:
     friendIdsSorted=friendIdsMatched[howToSort]
     numMatchesSorted=numMatches[howToSort]
-
 
     ##TODO:  This would be a good place to display some info about what's matching and what isn't
     # but we would need the friend names and maybe file names for that to make sense.
