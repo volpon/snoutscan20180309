@@ -343,12 +343,17 @@ def find_best_matches(image_data, image_type, friends, num_best_friends):
     #Return a list of indicies saying how we would sort numMatches in desceending order:
     howToSort=np.flip(np.argsort(numMatches),0)
     
-    #Sort them in descending order by numMatches:
-    friendIdsSorted=friendIdsMatched[howToSort]
-    numMatchesSorted=numMatches[howToSort]
-
     ##TODO:  This would be a good place to display some info about what's matching and what isn't
     # but we would need the friend names and maybe file names for that to make sense.
+    
+    #Make sure we return at least one as "best", even if it's a sucky one with 0 confidence:    
+    if len(howToSort) == 0:
+        friendIdsSorted=[np.random.choice(np.unique(friendIds))]
+        numMatchesSorted=[0]
+    else:
+        #Sort them in descending order by numMatches:
+        friendIdsSorted=friendIdsMatched[howToSort]
+        numMatchesSorted=numMatches[howToSort]
     
     #Return our list of best indicies to friends[] and their corresponding best scores:
     return friendIdsSorted, numMatchesSorted
