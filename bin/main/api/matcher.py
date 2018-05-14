@@ -73,10 +73,7 @@ class ImageFeatures(object):
                                              edgeThreshold, 0, 2,  HARRIS_SCORE, patchSize)
         
         keypoints = detector.detect(image, None)
-        keypoints, descriptorsAsBytes= descriptorExtractor.compute(image, keypoints)
-              
-        #Convert the byte representation to an array of bits:      
-        self.descriptors=np.unpackbits(descriptorsAsBytes, axis=1).astype('float32')
+        keypoints, self.descriptors= descriptorExtractor.compute(image, keypoints)
         
         return (keypoints, self.descriptors)
 
@@ -276,7 +273,10 @@ def find_best_matches(image_data, image_type, friends, num_best_friends):
     subjectFeatures=ImageFeatures()
     
     #Make our features and keypoints.
-    subjectFeatureKeypoints, subjectFeatureDescriptors=subjectFeatures.from_image(image_data)
+    subjectFeatureKeypoints, subjectFeatureDescriptorsBytes=subjectFeatures.from_image(image_data)
+    
+    #Unpack the bytes now that we're about to use them:
+    subjectFeatureDescriptors=np.unpackbits(subjectFeatureDescriptorsBytes, axis=1).astype('float32')
     
     #For each feature, this is the friend id it came from (index to friends):
     friendIdsList=[]
@@ -315,7 +315,10 @@ def find_best_matches(image_data, image_type, friends, num_best_friends):
                 
     #Combine the lists together to make one array for the whole list of friends:
     friendIds=np.concatenate(friendIdsList)
-    friendDescriptors=np.concatenate(friendDescriptorsList)
+    friendDescriptorsBytes=np.concatenate(friendDescriptorsList)
+    
+    #Convert the byte representation to an array of bits:      
+    friendDescriptors=np.unpackbits(friendDescriptorsBytes, axis=1).astype('float32')
     
     assert len(friendIds) == len(friendDescriptors) \
            and len(friendIds) == friendDescriptors.shape[0], 'These should be the same.'
