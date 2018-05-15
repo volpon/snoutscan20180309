@@ -93,11 +93,6 @@ def SSMatchAll(friendDirectories, displayImages=True):
                         
                         with TT('Image is now %s' % str(imgGrayResized.shape)):
                             pass
-
-                        #if displayImages:
-                            ##Show the image (requires a display connection, which is complicated
-                            # in docker)
-                            #cv2.imshow(imgFilePath, image)
                         
                         #Create a Friend object from it with the dog name connected to it.
                         friend=FriendMake(dogName, imgFilePath, imgGrayResized)
@@ -105,11 +100,7 @@ def SSMatchAll(friendDirectories, displayImages=True):
                         #Add it to a list of friends.
                         friends.append(friend)
     
-    #if displayImages:
-        ##Press any key to exit.
-        #cv2.waitKey(0)
-        #cv2.destroyAllWindows()    
-    
+   
     numFriends=len(friends)
     
     #Get a list of our dogNames:
