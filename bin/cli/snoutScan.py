@@ -118,35 +118,26 @@ def SSMatchAll(friendDirectories, displayImages=True):
             friend=friends[friendNum]
             with TT('Finding matches for %s' % friend.breed):
                 
-                #Get a list of our ids:
-                friendIdsNotThisOne=list(range(numFriends))
-                
-                #Make a copy of our friends
-                friendsNotThisOne=copy(friends)
-                
-                #remove this one friend:
-                del friendIdsNotThisOne[friendNum]
-                del friendsNotThisOne[friendNum]
+                #This is a list of friendIds to not consider as a candidate for "best friend" - 
+                #basically, exclude the current image so we don't match to it:
+                fIdsExcluded=[friendNum]
                 
                 friendImgBinary,friendImgType=friend.photo.get_binary()
                 
                 #Find the other friend that matches this friend best:
                 best_db_id, best_match_score, best_index= \
-                    find_best_match(friendImgBinary, friendImgType,friendsNotThisOne)
-                
-                #Translate the id since we deleted one:
-                actualBestId=friendIdsNotThisOne[best_index]
+                    find_best_match(friendImgBinary, friendImgType,friends, fIdsExcluded)
                 
                 #Get our names:
-                actualDogName=friend.name
-                matchedDogName=friends[actualBestId].name
+                dogName=friend.name
+                matchedDogName=friends[best_index].name
                 
                 #Convert them to indicies to dogNames:
-                actualDogNameIndex=dogNames.index(actualDogName)
+                dogNameIndex=dogNames.index(dogName)
                 matchedDogNameIndex=dogNames.index(matchedDogName)
                 
                 #Increment that position in the confusion matrix:
-                confusionMatrixData[actualDogNameIndex][matchedDogNameIndex]+=1
+                confusionMatrixData[dogNameIndex][matchedDogNameIndex]+=1
     
     #Make a pandas array that bundles the dog names and confusion matrix together for display:
     

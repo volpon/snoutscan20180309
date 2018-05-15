@@ -177,16 +177,22 @@ class ImageMatcher(object):
         
         print('      Total num features in  index: ', self.featureMatcher.ntotal)
                                                         
-    def match(self, subjectFeatureDescriptors):
+    def match(self, subjectFeatureDescriptors, excludeFeatureMask):
         '''
         This function matches the given subject subjectImg with a given friend subjectImg based on 
         the features in friendFeatureDescriptors.
         
         Inputs:
             subjectFeatureDescriptors
-                                    - The feature descriptors for the subject subjectImg.        
+                                    - The feature descriptors for the subject subjectImg. 
+            excludeFeatureMask      - A binary mask of the same length as the number of friend 
+                                      features that we have saying if each feature should be 
+                                      excluded from being considered a match.
+
         @return percent
         '''
+        
+        numBestFeaturesToFind=40;
         
         #How many subject features we have:
         nSubFeatures=subjectFeatureDescriptors.shape[0]
@@ -194,32 +200,53 @@ class ImageMatcher(object):
         # For each of the subject image features, find the closest feature descriptor in the 
         #friend image:
         #Arguments: queryDescriptors, k)
-        #Find the top two matches in the whole training dataset for each descriptor in 
-        #subjectFeatureDescriptors:
         #Return them as a (numSubjectFeatures x k) matrix of distances and ids, 
         # with rows sorted in increasing distance
-        distances,ids = self.featureMatcher.search( subjectFeatureDescriptors, 2 );
+        distances,ids =self.featureMatcher.search(subjectFeatureDescriptors, numBestFeaturesToFind);
+        
+        #Convert excludeFeatureMask to a array of Ids to exclude:
+        excludeFriendFeatureIds=np.where(excludeFeatureMask)[0]
         
         #The subject feature id and friends feature ids of "good matches"
         matchedQueryTrainIdList=[]
         #Their corresponding distance:
         matchDistList=[]
         
-        # Check to make sure that the best match is at least 1/.7 as close as the second best
-        # match, and only use those:
+        # Check to make sure that the best match is at least 1/self.bestToSecondBestDistRatio
+        # as close as the second best match, and only use those:
         for i in range(nSubFeatures):
-            bestMatchDistList=distances[i,0]
-            secondBestDist=distances[i,1]
             
-            bestMatchId=ids[i,0]
+            #Iterate over our subject matches and find the first one that isn't in 
+            # excludeFriendFeatureIds, and call it bestFriendMatchId
+            for bestFriendMatchId in range(numBestFeaturesToFind-1):
+                subjectFeatureId=ids[i,bestFriendMatchId]
+                
+                #Break when we have the first one not excluded:
+                if subjectFeatureId not in excludeFriendFeatureIds:
+                    break
+            
+            #Search for the second best subject id that isn't in our excludeFeatureFriendsId:
+            for secondBestFriendMatchId in range(bestFriendMatchId+1,numBestFeaturesToFind):
+                subjectFeatureId=ids[i,secondBestFriendMatchId]
+                #Break when we have the first one not excluded:
+                if subjectFeatureId not in excludeFriendFeatureIds:
+                    break
+                
+                assert secondBestFriendMatchId != numBestFeaturesToFind-1, \
+                    'All matching subject features are excluded. Increase numBestFeaturesToFind.'
+            
+            #Get what we need from the results:
+            bestSubFeatMatchId=ids[i,bestFriendMatchId]
+            bestMatchDist=distances[i,bestFriendMatchId]
+            secondBestDist=distances[i,secondBestFriendMatchId]
 
             #Do the ratio test:
-            if (    bestMatchDistList < self.bestToSecondBestDistRatio*secondBestDist \
-                    and bestMatchDistList<self.matchDistanceThreshold):
+            if (    bestMatchDist < self.bestToSecondBestDistRatio*secondBestDist \
+                    and bestMatchDist<self.matchDistanceThreshold):
                 
                 #Then, add the subject feature and friend feature to our "best matches" lists:
-                matchedQueryTrainIdList.append((i,bestMatchId));
-                matchDistList.append(bestMatchDistList)
+                matchedQueryTrainIdList.append((i,bestSubFeatMatchId));
+                matchDistList.append(bestMatchDist)
                 
         print('      Found %i good_matches' % len(matchDistList), file=sys.stderr);
 
@@ -249,23 +276,29 @@ class MatchResult(object):
         cv2.imwrite(path, self.image)
 
 
-def find_best_matches(image_data, image_type, friends, num_best_friends):
+def find_best_matches(image_data, image_type, friends, num_best_friends, f_ids_excluded ):
     '''
     This function finds the <num_best_friends> best matches for image_data among a collection of 
-    friends, where each friend represents a photo of a dog, with accompanying metadata.
+    friends (excluding the ones indexed by f_ids_excluded ), where each friend represents 
+    a photo of a dog, with accompanying metadata.
     
     Inputs:
         image_data      - the subject image data, in numpy format.
         image_type      - Not currently used.
         friends         - A collection of Friend() objects representing the pictures the given image
                           could match to.
-        num_best_friends- n in the sentence "Find the n best matching friends"   
+        num_best_friends- n in the sentence "Find the n best matching friends that aren't excluded"
+        f_ids_excluded  - A collection of the friend ids (indicies into friends) to not match with.  
                               
     Outputs:
         best_indicies   - A list of indicies to the the num_best_friends closest matching friends.
                           Sorted in decending order by quality metric.
         match_scores    - The quality metric for each best friend, sorted in descending order.
     '''
+    
+    #Take care of the default:
+    if f_ids_excluded==None:
+        f_ids_excluded=[]
     
     if image_data is None:
         return None, None
@@ -316,7 +349,15 @@ def find_best_matches(image_data, image_type, friends, num_best_friends):
     #Combine the lists together to make one array for the whole list of friends:
     friendIds=np.concatenate(friendIdsList)
     friendDescriptorsBytes=np.concatenate(friendDescriptorsList)
+    #Convert f_ids_excluded to featureIdsExcluded:
     
+    #Initialize a binary mask saying if we should exclude this feature:
+    excludeFeatureMask=np.zeros((len(friendIds)), dtype=bool)
+    
+    for i in f_ids_excluded:
+        #Add any to the mask that have value in friendIds equal to i:
+        excludeFeatureMask=np.bitwise_or(excludeFeatureMask, friendIds==i)
+            
     #Convert the byte representation to an array of bits:      
     friendDescriptors=np.unpackbits(friendDescriptorsBytes, axis=1).astype('float32')
     
@@ -328,7 +369,7 @@ def find_best_matches(image_data, image_type, friends, num_best_friends):
 
     #Using our subject-image based matcher, calculate how well it matches with this specific 
     # friend image.
-    (matchedQueryTrainIds, matchDist) = matcher.match(subjectFeatureDescriptors)
+    (matchedQueryTrainIds, matchDist) = matcher.match(subjectFeatureDescriptors, excludeFeatureMask)
     
     ##TODO:  convert matchedQueryTrainIds to which friends actually matched and how good the 
     #match was, best_indices, best_scores, sorted by score.
@@ -340,7 +381,7 @@ def find_best_matches(image_data, image_type, friends, num_best_friends):
     #matches that correspond to that friend:
     [friendIdsMatched, numMatches]=np.unique(friendIdsOfBestMatch, return_counts=True)
     
-    #Return a list of indicies saying how we would sort numMatches in desceending order:
+    #Return a list of indicies saying how we would sort numMatches in descending order:
     howToSort=np.flip(np.argsort(numMatches),0)
     
     ##TODO:  This would be a good place to display some info about what's matching and what isn't
@@ -359,16 +400,20 @@ def find_best_matches(image_data, image_type, friends, num_best_friends):
     return friendIdsSorted, numMatchesSorted
     
     
-def find_best_match(image_data, image_type, friends):
+def find_best_match(image_data, image_type, friends, f_ids_excluded=None):
     '''
     This function finds the best match for image_data among a collection of friends, where
     each friend represents a photo of a dog, with accompanying metadata.
     
     See find_best_matches for a definition of the inputs and outputs.
     '''
+    
+    #Take care of the default:
+    if f_ids_excluded==None:
+        f_ids_excluded=[]
 
     #Find our best match:
-    best_indices, match_scores=find_best_matches(image_data, image_type, friends, 1)
+    best_indices, match_scores=find_best_matches(image_data, image_type, friends, 1, f_ids_excluded)
 
     #Get our info for the bet matching friend:
     best_index=best_indices[0]
