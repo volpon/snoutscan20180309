@@ -192,6 +192,8 @@ class ImageMatcher(object):
         @return percent
         '''
         
+        #How many of the best friend features to search for in order to get 2 that are not excluded
+        # by excludeFeatureMask:
         numBestFeaturesToFind=40;
         
         #How many subject features we have:
@@ -276,7 +278,8 @@ class MatchResult(object):
         cv2.imwrite(path, self.image)
 
 
-def find_best_matches(image_data, image_type, friends, num_best_friends, f_ids_excluded ):
+def find_best_matches(image_data, image_type, friends, num_best_friends, f_ids_excluded,
+                      matcher=None):
     '''
     This function finds the <num_best_friends> best matches for image_data among a collection of 
     friends (excluding the ones indexed by f_ids_excluded ), where each friend represents 
@@ -288,12 +291,16 @@ def find_best_matches(image_data, image_type, friends, num_best_friends, f_ids_e
         friends         - A collection of Friend() objects representing the pictures the given image
                           could match to.
         num_best_friends- n in the sentence "Find the n best matching friends that aren't excluded"
-        f_ids_excluded  - A collection of the friend ids (indicies into friends) to not match with.  
+        f_ids_excluded  - A collection of the friend ids (indicies into friends) to not match with.
+        matcher         - An optional matcher that is already trained that we can use rather than
+                          retraining one based on friends.
                               
     Outputs:
         best_indicies   - A list of indicies to the the num_best_friends closest matching friends.
                           Sorted in decending order by quality metric.
         match_scores    - The quality metric for each best friend, sorted in descending order.
+        matcher         - a ImageMatcher that is made on the first query and can be reused if 
+                          you want.  If it's given as an input, then it's output unchanged.
     '''
     
     #Take care of the default:
@@ -363,9 +370,12 @@ def find_best_matches(image_data, image_type, friends, num_best_friends, f_ids_e
     
     assert len(friendIds) == len(friendDescriptors) \
            and len(friendIds) == friendDescriptors.shape[0], 'These should be the same.'
-        
-    #Make a matcher object using our subject image features:
-    matcher = ImageMatcher(friendDescriptors)    
+    
+
+    #If we don't already have a matcher, make one from the friendDescriptors:
+    if matcher==None:    
+        #Make a matcher object using our friend image features:
+        matcher = ImageMatcher(friendDescriptors)    
 
     #Using our subject-image based matcher, calculate how well it matches with this specific 
     # friend image.
@@ -397,10 +407,10 @@ def find_best_matches(image_data, image_type, friends, num_best_friends, f_ids_e
         numMatchesSorted=numMatches[howToSort]
     
     #Return our list of best indicies to friends[] and their corresponding best scores:
-    return friendIdsSorted, numMatchesSorted
+    return friendIdsSorted, numMatchesSorted, matcher
     
     
-def find_best_match(image_data, image_type, friends, f_ids_excluded=None):
+def find_best_match(image_data, image_type, friends, f_ids_excluded=None, matcher=None):
     '''
     This function finds the best match for image_data among a collection of friends, where
     each friend represents a photo of a dog, with accompanying metadata.
@@ -413,11 +423,12 @@ def find_best_match(image_data, image_type, friends, f_ids_excluded=None):
         f_ids_excluded=[]
 
     #Find our best match:
-    best_indices, match_scores=find_best_matches(image_data, image_type, friends, 1, f_ids_excluded)
+    best_indices, match_scores, matcher=find_best_matches(image_data, image_type, friends, 1, 
+                                                 f_ids_excluded, matcher)
 
     #Get our info for the bet matching friend:
     best_index=best_indices[0]
     best_score=match_scores[0]
     best_db_id=friends[best_index].id
     
-    return best_db_id, best_score, best_index
+    return best_db_id, best_score, best_index, matcher

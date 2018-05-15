@@ -110,6 +110,9 @@ def SSMatchAll(friendDirectories, displayImages=True):
     
     # Initialize our confusionMatrixData:
     confusionMatrixData=np.zeros((numDogNames, numDogNames))
+    
+    #Initialize our matcher as None so we build it on the first use:
+    matcher=None
         
     with TT('Matching'):
         #For each friend:
@@ -122,11 +125,11 @@ def SSMatchAll(friendDirectories, displayImages=True):
                 #basically, exclude the current image so we don't match to it:
                 fIdsExcluded=[friendNum]
                 
-                friendImgBinary,friendImgType=friend.photo.get_binary()
+                subjectImgBinary,subjectImgType=friend.photo.get_binary()
                 
                 #Find the other friend that matches this friend best:
-                best_db_id, best_match_score, best_index= \
-                    find_best_match(friendImgBinary, friendImgType,friends, fIdsExcluded)
+                best_db_id, best_match_score, best_index, matcher= \
+                    find_best_match(subjectImgBinary, subjectImgType, friends,fIdsExcluded,matcher)
                 
                 #Get our names:
                 dogName=friend.name
