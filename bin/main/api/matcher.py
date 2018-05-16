@@ -150,7 +150,7 @@ class ImageMatcher(object):
         
         #This is the number of cells we probe at a time for nearest-neighbor search.  More will
         #give more accurate results at the expense of a linear increase in lookup time:
-        numCellsToProbe=10
+        numCellsToProbe=1
         
         print("      nCells: %i, numCellsToProbe: %i" % (nCells, numCellsToProbe))
         
