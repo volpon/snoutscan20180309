@@ -132,12 +132,23 @@ def SSMatchAll(friendDirectories, displayImages=True):
                 dogName=friend.name
                 matchedDogName=friends[best_index].name
                 
+                #Get our file names:
+                actualDogFile=friend.breed
+                matchedDogFile=friends[best_index].breed
+                
                 #Convert them to indicies to dogNames:
                 dogNameIndex=dogNames.index(dogName)
                 matchedDogNameIndex=dogNames.index(matchedDogName)
                 
                 #Increment that position in the confusion matrix:
                 confusionMatrixData[dogNameIndex][matchedDogNameIndex]+=1
+                
+                #Print info about this best match:
+                print('        %s:\t%s (%s) => %s (%s)\t: %i' %(
+                               str(dogName == matchedDogName),
+                               actualDogFile, dogName, matchedDogFile, matchedDogName, 
+                               best_match_score), 
+                            file=sys.stderr)
     
     #Make a pandas array that bundles the dog names and confusion matrix together for display:
     
