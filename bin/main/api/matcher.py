@@ -128,54 +128,37 @@ class ImageMatcher(object):
 
         numFriendFeatures,numDimensions=friendFeatureDescriptors.shape
         
-#        #This is approximate number of features we put in each cell.  Decreasing this 
-#        #increases the number of cells and slows down indexing, but speeds up searching:
-#
-#        friendFeaturesPerCell=200
-#        
-#        #This is the number of cells that we split the dataset between:
-#        nCells=int(round(numFriendFeatures/friendFeaturesPerCell))
-#        
-#        #This is the fraction of cells we search when we're searching the dataset:
-#        #Increase this to get more accuracy at the expense of speed:
-#        #Setting this to 1 will give the same answer as brute force search:
-#        fractCellsToProbe=.001
-#        
-#        numCellsToProbe=int(round(fractCellsToProbe*float(nCells)))
+        #Faiss supports a string-based way to define an index.  Let's try that since it simplifies
+        #trying out different options:
+        indexDefinitions=[
+                          "Flat",
+                          "IVF1024,Flat",
+                          "IVF2048,Flat",
+                          "IVF4096,Flat",
+                          "PQ32",
+                          "PCA80,Flat",
+                          "IVF4096,PQ8+16",
+                          "IVF4096,PQ32",
+                          "IMI2x8,PQ32",
+                          "IMI2x8,PQ8+16",
+                          "OPQ16_64,IMI2x8,PQ8+16"]
         
-        #This is the number of cells that we split the dataset between:
-        #More will increase the lookup speedup at the expense of additional indexing time:
-        #Also, if we don't have much data this can't be very large.
-        nCells=500
-        
-        #This is the number of cells we probe at a time for nearest-neighbor search.  More will
-        #give more accurate results at the expense of a linear increase in lookup time:
-        numCellsToProbe=1
-        
-        print("      nCells: %i, numCellsToProbe: %i" % (nCells, numCellsToProbe))
-        
-        #Make our quantizer - this divvies out descriptors to different "cells" to speed lookup:
-        #We need to keep the quantizer around so that the faiss library can still reference it in 
-        #C++ land or else we'll get a sigfault!
-        self.quantizer = faiss.IndexFlatL2(numDimensions)
-        
+        #Which index number from indexDefiitions to use:
+        indexToUse=1
+
         #Initialize the index:
         #self.featureMatcher = faiss.IndexIVFFlat(self.quantizer, numDimensions, nCells, faiss.METRIC_L2)
-        self.featureMatcher = faiss.IndexFlatL2(numDimensions)
+        self.featureMatcher = faiss.index_factory(numDimensions, indexDefinitions[indexToUse])
         
-#        #Train our index using the data, so it can do an efficient job at adding it later:
-#        #(Techically, we just need to train on a set that has a similar distribution as what we'll 
-#        #be adding later, not the exact same data)
+        #Train our index using the data, so it can do an efficient job at adding it later:
+        #(Techically, we just need to train on a set that has a similar distribution as what we'll 
+        #be adding later, not the exact same data)
 #        assert not self.featureMatcher.is_trained
-#        self.featureMatcher.train(friendFeatureDescriptors)
-#        assert self.featureMatcher.is_trained
-#        
+        self.featureMatcher.train(friendFeatureDescriptors)
+        assert self.featureMatcher.is_trained
+
         #Add our data:
         self.featureMatcher.add(friendFeatureDescriptors)
-#        
-#        #Adjust the number of cells we'll use to search:
-#        self.featureMatcher.nprobe=numCellsToProbe
-        
         print('      Total num features in  index: ', self.featureMatcher.ntotal)
                                                         
     def match(self, subjectFeatureDescriptors, excludeFeatureMask):
