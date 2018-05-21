@@ -113,7 +113,7 @@ def SSMatchAll(friendDirectories, displayImages=True):
         
     with TT('Matching'):
         #For each friend:
-        for friendNum in [1]:
+        for friendNum in range(numFriends):
             #Get the friend:
             friend=friends[friendNum]
             with TT('Finding matches for %s' % friend.breed):
