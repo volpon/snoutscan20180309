@@ -115,11 +115,13 @@ class ImageMatcher(object):
     #have a distance less than matchDistanceThreshold are considered good matches:
     bestToSecondBestDistRatio=.7
     
-    def __init__(self, friendFeatureDescriptors):
+    def __init__(self, friendFeatureDescriptors, index_definition=None):
         '''
         Inputs:
             friendFeatureDescriptors    - The feature descriptors for all the friends, concatenated
                                           together.
+            indexDefinition             - A string representing the faiss index setup to use, or ''
+                                          or None to represent "use the default"
 
         Side-effects:
             self.FeatureMatcher is created and the friendFeatureDescriptors are added to it and 
@@ -128,27 +130,13 @@ class ImageMatcher(object):
 
         numFriendFeatures,numDimensions=friendFeatureDescriptors.shape
         
-        #Faiss supports a string-based way to define an index.  Let's try that since it simplifies
-        #trying out different options:
-        indexDefinitions=[
-                          "Flat",
-                          "IVF1024,Flat",
-                          "IVF2048,Flat",
-                          "IVF4096,Flat",
-                          "PQ32",
-                          "PCA80,Flat",
-                          "IVF4096,PQ8+16",
-                          "IVF4096,PQ32",
-                          "IMI2x8,PQ32",
-                          "IMI2x8,PQ8+16",
-                          "OPQ16_64,IMI2x8,PQ8+16"]
+        #If it's not specified, provide a default:
+        if index_definition is None or index_definition == '':
+            index_definition='IVF1024,Flat'
         
-        #Which index number from indexDefiitions to use:
-        indexToUse=1
-
         #Initialize the index:
         #self.featureMatcher = faiss.IndexIVFFlat(self.quantizer, numDimensions, nCells, faiss.METRIC_L2)
-        self.featureMatcher = faiss.index_factory(numDimensions, indexDefinitions[indexToUse])
+        self.featureMatcher = faiss.index_factory(numDimensions, index_definition)
         
         #Train our index using the data, so it can do an efficient job at adding it later:
         #(Techically, we just need to train on a set that has a similar distribution as what we'll 
@@ -159,7 +147,7 @@ class ImageMatcher(object):
 
         #Add our data:
         self.featureMatcher.add(friendFeatureDescriptors)
-        print('      Total num features in  index: ', self.featureMatcher.ntotal)
+        print('      Total num features in  index: ', self.featureMatcher.ntotal, file=sys.stderr)
                                                         
     def match(self, subjectFeatureDescriptors, excludeFeatureMask):
         '''
@@ -263,8 +251,8 @@ class MatchResult(object):
         cv2.imwrite(path, self.image)
 
 
-def find_best_matches(image_data, image_type, friends, num_best_friends, f_ids_excluded,
-                      matcher=None):
+def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_excluded,
+                      index_definition=None, matcher=None):
     '''
     This function finds the <num_best_friends> best matches for image_data among a collection of 
     friends (excluding the ones indexed by f_ids_excluded ), where each friend represents 
@@ -277,6 +265,8 @@ def find_best_matches(image_data, image_type, friends, num_best_friends, f_ids_e
                           could match to.
         num_best_friends- n in the sentence "Find the n best matching friends that aren't excluded"
         f_ids_excluded  - A collection of the friend ids (indicies into friends) to not match with.
+        indexDefinition - A string representing the faiss index setup to use, or ''
+                          or None to represent "use the default"
         matcher         - An optional matcher that is already trained that we can use rather than
                           retraining one based on friends.
                               
@@ -301,7 +291,7 @@ def find_best_matches(image_data, image_type, friends, num_best_friends, f_ids_e
     subjectFeatureKeypoints, subjectFeatureDescriptorsBytes=subjectFeatures.from_image(image_data)
     
     #Unpack the bytes now that we're about to use them:
-    subjectFeatureDescriptors=np.unpackbits(subjectFeatureDescriptorsBytes, axis=1).astype('float32')
+    subjectFeatureDescriptors=np.unpackbits(subjectFeatureDescriptorsBytes,axis=1).astype('float32')
     
     #For each feature, this is the friend id it came from (index to friends):
     friendIdsList=[]
@@ -360,7 +350,7 @@ def find_best_matches(image_data, image_type, friends, num_best_friends, f_ids_e
     #If we don't already have a matcher, make one from the friendDescriptors:
     if matcher==None:    
         #Make a matcher object using our friend image features:
-        matcher = ImageMatcher(friendDescriptors)    
+        matcher = ImageMatcher(friendDescriptors, index_definition)    
 
     #Using our subject-image based matcher, calculate how well it matches with this specific 
     # friend image.
@@ -395,7 +385,7 @@ def find_best_matches(image_data, image_type, friends, num_best_friends, f_ids_e
     return friendIdsSorted, numMatchesSorted, matcher
     
     
-def find_best_match(image_data, image_type, friends, f_ids_excluded=None, matcher=None):
+def find_best_match(image_data, image_type, friends, index_definition=None, f_ids_excluded=None, matcher=None):
     '''
     This function finds the best match for image_data among a collection of friends, where
     each friend represents a photo of a dog, with accompanying metadata.
@@ -404,12 +394,13 @@ def find_best_match(image_data, image_type, friends, f_ids_excluded=None, matche
     '''
     
     #Take care of the default:
-    if f_ids_excluded==None:
+    if f_ids_excluded is None:
         f_ids_excluded=[]
 
     #Find our best match:
-    best_indices, match_scores, matcher=find_best_matches(image_data, image_type, friends, 1, 
-                                                 f_ids_excluded, matcher)
+    best_indices, match_scores, matcher=find_best_matches(image_data, image_type, friends, 
+                                                          1, f_ids_excluded, 
+                                                          index_definition, matcher)
 
     #Get our info for the bet matching friend:
     best_index=best_indices[0]

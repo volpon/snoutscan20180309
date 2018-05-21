@@ -1,4 +1,4 @@
-#!/.condaUser/.anaconda3/envs/snoutScan/bin/ipython3 
+#!/.condaUser/.anaconda3/envs/snoutScan/bin/python3 
 import sys,os; sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                             "helperFiles"));
 
@@ -16,7 +16,7 @@ import cv2
 import os
 import pandas as pd
 
-def SSMatchAll(friendDirectories, displayImages=True):
+def SSMatchAll(friendDirectories, indexDefinition, displayImages=True):
     '''
     This function matches each of the friend images with each of the other friend images and 
     
@@ -25,6 +25,9 @@ def SSMatchAll(friendDirectories, displayImages=True):
         friendDirectories      - A list of strings giving paths to the directories that hold our
                                 images of each dog we want to analyze.  The directory names
                                 are the names of the dogs.
+                                
+        indexDefinition        - A string representing the faiss index setup to use, or ''
+                                 or None to represent "use the default"
         
         displayImages          - Says if we should display images for debugging purposes.
                                           
@@ -128,7 +131,8 @@ def SSMatchAll(friendDirectories, displayImages=True):
                 
                 #Find the other friend that matches this friend best:
                 best_db_id, best_match_score, best_index, matcher= \
-                    find_best_match(subjectImgBinary, subjectImgType, friends,fIdsExcluded,matcher)
+                    find_best_match(subjectImgBinary, subjectImgType, friends, 
+                                    indexDefinition, fIdsExcluded, matcher)
                 
                 #Get our names:
                 dogName=friend.name
@@ -175,7 +179,7 @@ if __name__=="__main__":
     pd.set_option('display.width', 10000)
     
     with TT('Running SSMatchAll'):
-        confusionMatrix=SSMatchAll(args.friendDirectories, False)
+        confusionMatrix=SSMatchAll(args.friendDirectories, args.indexDefinition, False, )
         
     numDogNames,_=confusionMatrix.shape
     

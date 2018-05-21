@@ -21,6 +21,12 @@ def ArgsParse():
                                 with image files for that dog in that directory.
                                 ''')
     
+    parser.add_argument('-i','--indexDefinition', action='store', metavar='indexDefinition',
+                      default='',
+                      help='''A string representing the faiss index defintion. 
+                      If specified, it overrides the default (for benchmarking 
+                      different indicies).''')
+    
     #Get our arguments:
     args=parser.parse_args()
     
