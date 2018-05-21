@@ -10,7 +10,6 @@ from collections import OrderedDict
 from FriendMake import FriendMake
 from ArgsParse import ArgsParse
 from TicToc import TT
-from copy import copy
 import numpy as np
 import sys
 import cv2
@@ -135,12 +134,23 @@ def SSMatchAll(friendDirectories, displayImages=True):
                 dogName=friend.name
                 matchedDogName=friends[best_index].name
                 
+                #Get our file names:
+                actualDogFile=friend.breed
+                matchedDogFile=friends[best_index].breed
+                
                 #Convert them to indicies to dogNames:
                 dogNameIndex=dogNames.index(dogName)
                 matchedDogNameIndex=dogNames.index(matchedDogName)
                 
                 #Increment that position in the confusion matrix:
                 confusionMatrixData[dogNameIndex][matchedDogNameIndex]+=1
+                
+                #Print info about this best match:
+                print('      %s:\t%s (%s) => %s (%s):\t%i' %(
+                               str(dogName == matchedDogName),
+                               actualDogFile, dogName, matchedDogFile, matchedDogName, 
+                               best_match_score), 
+                            file=sys.stderr)
     
     #Make a pandas array that bundles the dog names and confusion matrix together for display:
     
@@ -154,6 +164,9 @@ def SSMatchAll(friendDirectories, displayImages=True):
 if __name__=="__main__":
     #Parse our command line options into a dictionary.
     args=ArgsParse()
+    
+    #Set some numpy options that let us print better:
+    #np.set_printoptions(threshold=np.nan)
     
     #Set some pandas options that let us print better:
     pd.set_option('display.height', 10000)
