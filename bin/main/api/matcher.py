@@ -160,20 +160,21 @@ class ImageMatcher(object):
         self.quantizer = faiss.IndexFlatL2(numDimensions)
         
         #Initialize the index:
-        self.featureMatcher = faiss.IndexIVFFlat(self.quantizer, numDimensions, nCells, faiss.METRIC_L2)
+        #self.featureMatcher = faiss.IndexIVFFlat(self.quantizer, numDimensions, nCells, faiss.METRIC_L2)
+        self.featureMatcher = faiss.IndexFlatL2(numDimensions)
         
-        #Train our index using the data, so it can do an efficient job at adding it later:
-        #(Techically, we just need to train on a set that has a similar distribution as what we'll 
-        #be adding later, not the exact same data)
-        assert not self.featureMatcher.is_trained
-        self.featureMatcher.train(friendFeatureDescriptors)
-        assert self.featureMatcher.is_trained
-        
+#        #Train our index using the data, so it can do an efficient job at adding it later:
+#        #(Techically, we just need to train on a set that has a similar distribution as what we'll 
+#        #be adding later, not the exact same data)
+#        assert not self.featureMatcher.is_trained
+#        self.featureMatcher.train(friendFeatureDescriptors)
+#        assert self.featureMatcher.is_trained
+#        
         #Add our data:
         self.featureMatcher.add(friendFeatureDescriptors)
-        
-        #Adjust the number of cells we'll use to search:
-        self.featureMatcher.nprobe=numCellsToProbe
+#        
+#        #Adjust the number of cells we'll use to search:
+#        self.featureMatcher.nprobe=numCellsToProbe
         
         print('      Total num features in  index: ', self.featureMatcher.ntotal)
                                                         
@@ -248,7 +249,6 @@ class ImageMatcher(object):
                 matchedQueryTrainIdList.append((i,bestSubFeatMatchId));
                 matchDistList.append(bestMatchDist)
                 
-        print('      Found %i good_matches' % len(matchDistList), file=sys.stderr);
 
         #A special case for when there aren't any matches:
         if len(matchedQueryTrainIdList)==0:
@@ -259,6 +259,8 @@ class ImageMatcher(object):
             matchedQueryTrainIds=np.array(matchedQueryTrainIdList)
             matchDist=np.array(matchDistList)
             
+        print('      Found %i good_matches w/ subjectFeatureIds:\n      ' % len(matchDistList), 
+              matchedQueryTrainIds[:,0], file=sys.stderr);
             
         return (matchedQueryTrainIds, matchDist)
 

@@ -144,7 +144,7 @@ def SSMatchAll(friendDirectories, displayImages=True):
                 confusionMatrixData[dogNameIndex][matchedDogNameIndex]+=1
                 
                 #Print info about this best match:
-                print('        %s:\t%s (%s) => %s (%s)\t: %i' %(
+                print('      %s:\t%s (%s) => %s (%s)\t: %i' %(
                                str(dogName == matchedDogName),
                                actualDogFile, dogName, matchedDogFile, matchedDogName, 
                                best_match_score), 
@@ -162,6 +162,9 @@ def SSMatchAll(friendDirectories, displayImages=True):
 if __name__=="__main__":
     #Parse our command line options into a dictionary.
     args=ArgsParse()
+    
+    #Set some numpy options that let us print better:
+    np.set_printoptions(threshold=np.nan)
     
     #Set some pandas options that let us print better:
     pd.set_option('display.height', 10000)
