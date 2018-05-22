@@ -1,15 +1,11 @@
-import os
-from flask import Flask, request, jsonify
-#from flask_jwt import jwt_required
-
-from main import app
 from main.api.auth import jwt_required, current_identity
+from main.api.model import db, Profile, Friend
+from main.api.matcher import find_best_match
+#from flask_jwt import jwt_required
+from flask import request, jsonify
+from main import app
 
-from main.api.matcher import ImageFeatures, find_best_match
 
-from main.api.model import db, Profile, Friend, Photo
-
-import main.api.test
 
 
 def decode_input():
