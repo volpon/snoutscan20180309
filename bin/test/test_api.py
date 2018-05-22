@@ -8,9 +8,13 @@ import logging
 
 ##################################################
 
-#api_url = 'http://localhost:5555'
-api_url = 'https://snout-cloud.appspot.com'
-api_verify_ssl=True
+#For testing the cloud instance:
+#api_url = 'https://snout-cloud.appspot.com'
+#api_verify_ssl=True
+
+#For testing a local instance:
+api_url = 'http://127.0.0.1:8080'
+api_verify_ssl=False
 
 test_email = "test@a.a"
 test_password = "test"
