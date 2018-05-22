@@ -1,26 +1,29 @@
 # [START dockerfile]
 FROM gcr.io/google_appengine/python
 
-# Install the fortunes binary from the debian repositories.
-RUN apt-get update && apt-get install -y fortunes
-RUN apt-get install -y libsm6 libxrender1 libfontconfig1 libXext6
+#Upgrade.  I do this in the Docker container so we can use the cached result before running setup.
+RUN apt-get update -y && apt-get upgrade -y
 
-# Change the -p argument to use Python 2.7 if desired.
-RUN virtualenv /env -p python3.5
+#Install sudo.  I do an update again in case we are using a cached version of the last update.
+RUN apt-get update -y && apt-get install -y sudo
 
-# Set virtualenv environment variables. This is equivalent to running
-# source /env/bin/activate.
-ENV VIRTUAL_ENV /env
-ENV PATH /env/bin:$PATH
-ADD requirements.txt /app/
-RUN pip install -r requirements.txt
+#Add just the setup script so we can still cache the results if that doesn't change:
+COPY setup.sh /app/
+
+RUN echo ''
+RUN echo 'Running setup.sh'
+
+#This is a script that sets up our python environment using anaconda:
+RUN ./setup.sh
 
 #This adds a symbolic link that allows us to point to project files using a common
 # path if run with docker or conda.
 RUN ln -s /home/vmagent /.condaUser
 
-#Adds the current directory into the docker container as the /app directory:
-ADD . /app/
+
+#Adds the current directory into the docker container as the /app directory
+#This is done last so that it doesn't invalidate the setup cache:
+COPY . /app/
 
 # #For creating the tables:
 # CMD python create_tables.py

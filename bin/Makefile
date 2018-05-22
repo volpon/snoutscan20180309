@@ -1,6 +1,6 @@
 #This makefile is a way to document the many docker commands used to run the system.
 #It also is a nice way to manage the dependency that a container must be built before it can be run
-# and that any time requirements.txt or Dockerfile changes it should be re-built.
+# and that any time setup.sh or Dockerfile changes it should be re-built.
 
 SHELL := /bin/bash
 
@@ -12,7 +12,7 @@ include make_env
 .PHONY: .build
 
 #Format:  the target name, then a file whose modified date represents the last time we ran this:
-build .build : Dockerfile requirements.txt make_env Makefile
+build .build : Dockerfile setup.sh make_env Makefile
 	docker build -t $(NS)/$(IMAGE_NAME):$(VERSION) -f Dockerfile . && touch .build
 
 push:

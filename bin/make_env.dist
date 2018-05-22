@@ -27,7 +27,7 @@ ENV ?= --net=host --volume='snoutScanPersist:/.snoutScanPersist:rw' --env=SQLALC
 RUN_CMD ?= gunicorn main:app -b :$(CONTAINER_PORT)
 
 #Alternatively you could use this command to add ssl:
-#RUN_CMD ?= gunicorn main:app -D -b :443 --certfile=ssl_cert/cert.crt --keyfile=ssl_cert/cert.key
+#RUN_CMD ?= gunicorn main:app -D -b :443 --certfile=ssl_fcert/cert.crt --keyfile=ssl_cert/cert.key
 
 #What data directory to run the benchmark on
 BENCHMKAR_DATA ?= ./data/0/small
