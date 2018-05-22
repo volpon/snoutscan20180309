@@ -28,6 +28,7 @@ channels:
   - menpo
   - defaults
 dependencies:
+  - blas=1.0=mkl
   - ca-certificates=2018.03.07=0
   - certifi=2018.4.16=py36_0
   - intel-openmp=2018.0.0=8
@@ -40,8 +41,8 @@ dependencies:
   - mkl_fft=1.0.1=py36h3010b51_0
   - mkl_random=1.0.1=py36h629b387_0
   - ncurses=6.0=h9df7e31_2
-  - numpy=1.14.3=py36h14a74c5_0
-  - numpy-base=1.14.3=py36hdbf6ddf_0
+  - numpy=1.14.3=py36hcd700cb_1
+  - numpy-base=1.14.3=py36h9be14a7_1
   - openssl=1.0.2o=h20670df_0
   - pip=9.0.3=py36_0
   - python=3.6.5=hc3d631a_0
@@ -159,7 +160,6 @@ wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
 bash ./Miniconda3-latest-*.sh -b -u -p "$HOME"/.anaconda3
 
 #Add the anacondaPath/bin to our bashrc:
-
 echo -e '\n#Added by snoutScan setup.sh:\nexport PATH="$HOME/.anaconda3/bin:$PATH"' >> ~/.bashrc
 #Source just the last line of .bashrc - the one we just added:
 source <(tail -n 1 ~/.bashrc)
@@ -170,8 +170,6 @@ source <(tail -n 1 ~/.bashrc)
 
 #dump our environments in the TMP_DIR:
 echo "$snoutScanEnvDef" > ./snoutScanEnvDef.txt
-
-conda --version
 
 #Set up conda snoutScan environment:
 conda env create -f ./snoutScanEnvDef.txt

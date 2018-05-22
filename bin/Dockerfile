@@ -20,7 +20,7 @@ RUN ./setup.sh
 # path if run with docker or conda.
 RUN ln -s /home/vmagent /.condaUser
 
-
+RUN echo 'Copying files to /app'
 #Adds the current directory into the docker container as the /app directory
 #This is done last so that it doesn't invalidate the setup cache:
 COPY . /app/
