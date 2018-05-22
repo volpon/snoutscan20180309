@@ -132,7 +132,7 @@ class ImageMatcher(object):
         
         #If it's not specified, provide a default:
         if index_definition is None or index_definition == '':
-            index_definition='IVF1024,Flat'
+            index_definition='IVF2048,Flat'
         
         #Initialize the index:
         #self.featureMatcher = faiss.IndexIVFFlat(self.quantizer, numDimensions, nCells, faiss.METRIC_L2)
