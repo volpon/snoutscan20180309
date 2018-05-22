@@ -235,6 +235,11 @@ class ImageMatcher(object):
         print('      Found %i good_matches w/ subjectFeatureIds:\n      ' % len(matchDistList), 
               matchedQueryTrainIds[:,0], file=sys.stderr);
             
+        ##TODO:  Further filter this list of potential metches by applying geometric constraints 
+        # using homogrphy estimation:
+        #https://docs.opencv.org/3.4/d9/d0c/group__calib3d.html#ga4abc2ece9fab9398f2e560d53c8c9780
+              
+              
         return (matchedQueryTrainIds, matchDist)
 
 class MatchResult(object):
