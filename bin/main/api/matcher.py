@@ -374,7 +374,7 @@ def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_
     
     #Make sure we return at least one as "best", even if it's a sucky one with 0 confidence:    
     if len(howToSort) == 0:
-        friendIdsSorted=[np.random.choice(np.unique(friendIds))]
+        friendIdsSorted=[0]
         numMatchesSorted=[0]
     else:
         #Sort them in descending order by numMatches:
