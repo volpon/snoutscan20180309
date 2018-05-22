@@ -63,11 +63,13 @@ class ImageFeatures(object):
         patchSize=31
 
         if (isinstance(image, str)):
+            print('image is from a string.  First 100 char:', file=sys.stderr)
+            print(str[0:100], file=sys.stderr)
             image = image_from_base64(bytes(image, "utf-8"))
 
         if (isinstance(image, bytes)):
+            print('image is from bytes.', file=sys.stderr)
             image = image_from_binary(image)
-
 
         #Convert to grayscale:
         imgGray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
