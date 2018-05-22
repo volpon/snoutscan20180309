@@ -36,9 +36,12 @@ class ImageFeatures(object):
 
     def from_image(self, image):
         '''
-        Creates features with both keypoints and descriptors.
+        Creates features with both keypoints and descriptors from an image.
         '''
         
+        #This is the height we resize all images to:
+        imgHeight=int(1000)
+      
         #How many features to create, maximum:
         numFeaturesMax=500
         
@@ -65,6 +68,23 @@ class ImageFeatures(object):
         if (isinstance(image, bytes)):
             image = image_from_binary(image)
 
+
+        #Convert to grayscale:
+        imgGray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        
+        #Get our original dimensions:
+        (origHeight,origWidth)=imgGray.shape
+        
+        #Get the width we need to get the height we want:
+        imgWidth=int(round(imgHeight*origWidth/origHeight))                        
+        
+        #Resize so the height is imgHeight.
+        imgGrayResized = cv2.resize(imgGray, (imgWidth,imgHeight),
+                                    interpolation = cv2.INTER_CUBIC)
+        
+
+  
+
         # Initiate BRISK detector
         detector = cv2.BRISK_create()
 
@@ -72,8 +92,8 @@ class ImageFeatures(object):
         descriptorExtractor = cv2.ORB_create(numFeaturesMax, scaleFactor, nLevels,
                                              edgeThreshold, 0, 2,  HARRIS_SCORE, patchSize)
         
-        keypoints = detector.detect(image, None)
-        keypoints, self.descriptors= descriptorExtractor.compute(image, keypoints)
+        keypoints = detector.detect(imgGrayResized, None)
+        keypoints, self.descriptors= descriptorExtractor.compute(imgGrayResized, keypoints)
         
         return (keypoints, self.descriptors)
 
