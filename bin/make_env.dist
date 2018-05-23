@@ -34,7 +34,7 @@ RUN_CMD ?= /.condaUser/.anaconda3/envs/snoutScan/bin/gunicorn main:app -t 900 -b
 #RUN_CMD ?= /.condaUser/.anaconda3/envs/snoutScan/bin/gunicorn main:app -D -b :443 --certfile=ssl_fcert/cert.crt --keyfile=ssl_cert/cert.key
 
 #What data directory to run the benchmark on
-BENCHMKAR_DATA ?= ../data/0/small
+BENCHMKAR_DATA ?= ../data/1/large
 
 #What command to use for 'make benchmark'
 BENCHMARK_CMD ?= /.condaUser/.anaconda3/envs/snoutScan/bin/python3 ./cli/snoutScan.py $(BENCHMKAR_DATA)
