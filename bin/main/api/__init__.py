@@ -303,3 +303,36 @@ def api_query_match():
         return jsonify({'status': 'not found'}), 200
 
     return jsonify({'status': 'found', 'friend' : friend_id, 'percent' : float(per) }), 200
+
+@app.route('/api/query_matches/<int:max_best_friends>', methods=["POST"])
+def api_query_matches():
+    
+    data = request.get_json()
+
+    if data is None:
+        return jsonify({'error': {'message': 'invalid input'}}), 400
+
+    image = data.get('image', None)
+
+    if image is None:
+        return jsonify({'error': {'message': 'invalid input'}}), 400
+
+    #Enforce a maximum number of matches:
+    if max_best_friends > 100 or max_best_friends < 1:
+        return jsonify({'error': {'message': 'invalid num_matches specified.'}}), 400
+
+    image_data = image.get('data', None)
+    image_type = image.get('type', None)
+
+    #image_data = bytes(image_data, "utf-8")
+    
+    friends = Friend.query.all()
+    
+    friend_ids_sorted, num_matches_sorted, matcher= find_best_matches(image_data, image_type,
+                                                                      friends, max_best_friends)
+
+    if friend_id is None:
+        return jsonify({'status': 'not found'}), 200
+
+    return jsonify({'status': 'found', 'friend' : friend_ids_sorted, 
+                    'percent' : num_matches_sorted.astype(float) }), 200

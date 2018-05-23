@@ -279,7 +279,7 @@ class MatchResult(object):
         cv2.imwrite(path, self.image)
 
 
-def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_excluded,
+def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_excluded=None,
                       index_definition=None, matcher=None):
     '''
     This function finds the <num_best_friends> best matches for image_data among a collection of 
@@ -291,7 +291,8 @@ def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_
         image_type      - Not currently used.
         friends         - A collection of Friend() objects representing the pictures the given image
                           could match to.
-        num_best_friends- n in the sentence "Find the n best matching friends that aren't excluded"
+        max_best_friends- n in the sentence "Find at most n best matching friends that aren't 
+                          excluded"
         f_ids_excluded  - A collection of the friend ids (indicies into friends) to not match with.
         indexDefinition - A string representing the faiss index setup to use, or ''
                           or None to represent "use the default"
@@ -301,7 +302,10 @@ def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_
     Outputs:
         best_indicies   - A list of indicies to the the num_best_friends closest matching friends.
                           Sorted in decending order by quality metric.
-        match_scores    - The quality metric for each best friend, sorted in descending order.
+        pctSubjectFeaturesMatchedToFriend
+                        - The quality metric for each best friend, sorted in descending order.
+                          Specifically, it's the percent of the subject features that are matched
+                          to each friend image.
         matcher         - a ImageMatcher that is made on the first query and can be reused if 
                           you want.  If it's given as an input, then it's output unchanged.
     '''
@@ -322,6 +326,8 @@ def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_
     
     #Unpack the bytes now that we're about to use them:
     subjectFeatureDescriptors=np.unpackbits(subjectFeatureDescriptorsBytes,axis=1).astype('float32')
+    
+    numSubjectFeatures=subjectFeatureDescriptors.shape[0]
     
     #For each feature, this is the friend id it came from (index to friends):
     friendIdsList=[]
@@ -415,9 +421,16 @@ def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_
         #Sort them in descending order by numMatches:
         friendIdsSorted=friendIdsMatched[howToSort]
         numMatchesSorted=numMatches[howToSort]
+        
+    #Convert to a percent:
+    pctSubjectFeaturesMatchedToFriend=numMatchesSorted/numSubjectFeatures
+    
+    #Make sure we only return at most max_best_friends results:
+    friendIdsSorted=friendIdsSorted[:max_best_friends]
+    pctSubjectFeaturesMatchedToFriend=pctSubjectFeaturesMatchedToFriend[:max_best_friends]
     
     #Return our list of best indicies to friends[] and their corresponding best scores:
-    return friendIdsSorted, numMatchesSorted, matcher
+    return friendIdsSorted, pctSubjectFeaturesMatchedToFriend, matcher
     
     
 def find_best_match(image_data, image_type, friends, index_definition=None, f_ids_excluded=None, matcher=None):
@@ -433,13 +446,13 @@ def find_best_match(image_data, image_type, friends, index_definition=None, f_id
         f_ids_excluded=[]
 
     #Find our best match:
-    best_indices, match_scores, matcher=find_best_matches(image_data, image_type, friends, 
-                                                          1, f_ids_excluded, 
-                                                          index_definition, matcher)
+    best_indices, percentMatched, matcher=find_best_matches(image_data, image_type, friends, 
+                                                            1, f_ids_excluded, 
+                                                            index_definition, matcher)
 
     #Get our info for the bet matching friend:
     best_index=best_indices[0]
-    best_score=match_scores[0]
+    percentOfSubjectFeaturesMatched=percentMatched[0]
     best_db_id=friends[best_index].id
     
-    return best_db_id, best_score, best_index, matcher
+    return best_db_id, percentOfSubjectFeaturesMatched, best_index, matcher
