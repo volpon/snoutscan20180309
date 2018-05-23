@@ -49,9 +49,6 @@ def SSMatchAll(friendDirectories, indexDefinition, displayImages=True):
     #We only use the keys, not the values.  This is essentially an OrderedSet
     dogNamesOD=OrderedDict()
     
-    #This is the height we resize all images to:
-    imgHeight=int(1000)
-    
     ###########
     # Load our images, as one friend per image:
     ###########
@@ -80,24 +77,8 @@ def SSMatchAll(friendDirectories, indexDefinition, displayImages=True):
                         #Load image.
                         img=cv2.imread(imgFilePath)
                         
-                        #Convert to grayscale:
-                        imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                        
-                        #Get our original dimensions:
-                        (origHeight,origWidth)=imgGray.shape
-                        
-                        #Get the width we need to get the height we want:
-                        imgWidth=int(round(imgHeight*origWidth/origHeight))                        
-                        
-                        #Resize so the height is imgHeight.
-                        imgGrayResized = cv2.resize(imgGray, (imgWidth,imgHeight),
-                                                    interpolation = cv2.INTER_CUBIC)
-                        
-                        with TT('Image is now %s' % str(imgGrayResized.shape)):
-                            pass
-                        
                         #Create a Friend object from it with the dog name connected to it.
-                        friend=FriendMake(dogName, imgFilePath, imgGrayResized)
+                        friend=FriendMake(dogName, imgFilePath, img)
                         
                         #Add it to a list of friends.
                         friends.append(friend)

@@ -17,11 +17,19 @@ import os
 import faiss
 
 def image_from_base64(data, type = None):
+    '''
+    This function takes base64 encoded version of the binary contents of an image file, converts
+    it to binary, and reads the image file into a numpy array representing the image.
+    '''
     return image_from_binary(base64.b64decode(data), type)
 
 def image_from_binary(data, type = None):
+    '''
+    This function reads the data from an image file and loads it into a grayscale numpy array
+    representing the image.
+    '''
     data = np.array(bytearray(data), dtype=np.uint8)
-    return cv2.imdecode(data, 0)
+    return cv2.imdecode(data, cv2.IMREAD_GRAYSCALE)
 
 
 class ImageFeatures(object):
@@ -34,11 +42,18 @@ class ImageFeatures(object):
         pass
 
 
-    def from_image(self, image):
+    def from_image(self, imageFile):
         '''
-        Creates features with both keypoints and descriptors.
+        Creates features with both keypoints and descriptors from the binary data of an image file.
+        
+        Inputs:
+            imageFile     - Either a binary array of the bytes in the image file or a base64 
+                            encoded version of this.
         '''
         
+        #This is the height we resize all images to:
+        imgHeight=int(1000)
+      
         #How many features to create, maximum:
         numFeaturesMax=500
         
@@ -59,12 +74,27 @@ class ImageFeatures(object):
         #size on the smaller pyramid layers will cover more of the original image area.
         patchSize=31
 
-        if (isinstance(image, str)):
-            image = image_from_base64(bytes(image, "utf-8"))
 
-        if (isinstance(image, bytes)):
-            image = image_from_binary(image)
+        #Decode the image into binary form:
+        if (isinstance(imageFile, str)):
+            imgGray = image_from_base64(bytes(imageFile, "utf-8"))
 
+        if (isinstance(imageFile, bytes)):
+            imgGray = image_from_binary(imageFile)
+
+#        #Convert to grayscale:
+#        imgGray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        
+        #Get our original dimensions:
+        (origHeight,origWidth)=imgGray.shape
+        
+        #Get the width we need to get the height we want:
+        imgWidth=int(round(imgHeight*origWidth/origHeight))                        
+        
+        #Resize so the height is imgHeight.
+        imgGrayResized = cv2.resize(imgGray, (imgWidth,imgHeight),
+                                    interpolation = cv2.INTER_CUBIC)
+        
         # Initiate BRISK detector
         detector = cv2.BRISK_create()
 
@@ -72,9 +102,9 @@ class ImageFeatures(object):
         descriptorExtractor = cv2.ORB_create(numFeaturesMax, scaleFactor, nLevels,
                                              edgeThreshold, 0, 2,  HARRIS_SCORE, patchSize)
         
-        keypoints = detector.detect(image, None)
-        keypoints, self.descriptors= descriptorExtractor.compute(image, keypoints)
-        
+        keypoints = detector.detect(imgGrayResized, None)
+        keypoints, self.descriptors= descriptorExtractor.compute(imgGrayResized, keypoints)
+                
         return (keypoints, self.descriptors)
 
 
@@ -285,6 +315,8 @@ def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_
     if image_data is None:
         return None, None
 
+    assert len(friends) >=1, 'Must have at least one friend to match with.'
+
     subjectFeatures=ImageFeatures()
     
     #Make our features and keypoints.
@@ -306,13 +338,18 @@ def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_
         
         #Get this friend:
         friend=friends[index]
-
-        #Make sure our friend photo has features:
-        if friend.photo.featureDescriptors is None:
-            print('Warning: Skipping a friend without features, %s.' % friend.name, 
-                  file=sys.stderr);
-            continue
         
+        fPhoto=friend.photo
+
+        #If our friend doesn't have featureDescriptors yet, then decode them:
+        if fPhoto.featureDescriptors is None:
+            
+            #Decode our features:
+            fPhoto.set_binary(fPhoto.data, fPhoto.type)
+
+        if fPhoto.featureDescriptors is None:
+            print('Warning:  Found a friend without featureDescriptors!', file=sys.stderr)
+                    
         #Get our features
         friendFeatureKeypoints=friend.photo.featureKeypoints
         friendFeatureDescriptors=friend.photo.featureDescriptors
