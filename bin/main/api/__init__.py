@@ -327,7 +327,7 @@ def api_query_matches(max_best_friends):
     #image_data = bytes(image_data, "utf-8")
     
     friends = Friend.query.all()
-    
+        
     friend_ids_sorted, num_matches_sorted, _, matcher= find_best_matches(image_data, image_type,
                                                                          friends, max_best_friends)
 

@@ -424,7 +424,7 @@ def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_
         
     #Convert to a percent:
     pctSubjectFeaturesMatchedToFriend=numMatchesSorted/numSubjectFeatures
-    
+       
     #Make sure we only return at most max_best_friends results:
     friendIdsSorted=friendIdsSorted[:max_best_friends].tolist()
     pctSubjectFeaturesMatchedToFriend=pctSubjectFeaturesMatchedToFriend[:max_best_friends].tolist()
