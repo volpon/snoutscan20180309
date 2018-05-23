@@ -1,6 +1,6 @@
 from main.api.auth import jwt_required, current_identity
 from main.api.model import db, Profile, Friend
-from main.api.matcher import find_best_match
+from main.api.matcher import find_best_match, find_best_matches
 #from flask_jwt import jwt_required
 from flask import request, jsonify
 from main import app
@@ -305,7 +305,7 @@ def api_query_match():
     return jsonify({'status': 'found', 'friend' : friend_db_id, 'percent' : float(per) }), 200
 
 @app.route('/api/query_matches/<int:max_best_friends>', methods=["POST"])
-def api_query_matches():
+def api_query_matches(max_best_friends):
     
     data = request.get_json()
 
@@ -331,8 +331,8 @@ def api_query_matches():
     friend_ids_sorted, num_matches_sorted, _, matcher= find_best_matches(image_data, image_type,
                                                                          friends, max_best_friends)
 
-    if friend_id is None:
+    if friend_ids_sorted is None or len(friend_ids_sorted) == 0:
         return jsonify({'status': 'not found'}), 200
 
-    return jsonify({'status': 'found', 'friend' : friend_ids_sorted, 
-                    'percent' : num_matches_sorted.astype(float) }), 200
+    return jsonify({'status': 'found', 'friend_ids' : friend_ids_sorted, 
+                    'percents' : num_matches_sorted }), 200

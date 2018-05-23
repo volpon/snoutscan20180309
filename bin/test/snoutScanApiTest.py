@@ -522,26 +522,69 @@ class Test_match(unittest.TestCase):
 
         self.assertEqual(res.get('status'), 'found')
         self.assertEqual(res.get('friend'), self.friend_id2)
+
+
+class Test_matches(unittest.TestCase):
+    
+    def setUp(self):
         
-#    def test_matches(self):
-#        '''
-#        This test tests the api_query_matches endpoint to search for multiple matches.
-#        '''
-#    
-#        image_data, image_type = load_image("snout_0002.jpg")
-#
-#        r = session.post('{0}/api/query_matches/{1}'.format(api_url, 2),
-#            json= {'image': { 'data': image_data, 'type': image_type }},
-#            verify=api_verify_ssl)
-#        
-#        self.assertEqual(r.status_code, 200)
-#
-#        res = r.json()
-#        self.assertTrue(isinstance(res, dict))
-#
-#        self.assertEqual(res.get('status'), 'found')
-#        self.assertEqual(res.get('friend'), self.friend_id2)
-       
+        # create profile
+        _ = do_create(self, test_email, test_password)
+
+        # login
+        self.access_token, self.profile_id = do_auth(test_email, test_password)
+
+        #Add a friend:
+        self.friend_id1 = do_add_friend(self, self.access_token, self.profile_id)
+        do_set_photo(self, self.access_token, self.friend_id1, "snout_0001.jpg")
+
+        #Add one we do not want to match:
+        self.friend_id2 = do_add_friend(self, self.access_token, self.profile_id)
+        do_set_photo(self, self.access_token, self.friend_id2, "snout_0002.jpg")
+        
+        #Add the same friend again.
+        self.friend_id3 = do_add_friend(self, self.access_token, self.profile_id)
+        do_set_photo(self, self.access_token, self.friend_id3, "snout_0001.jpg")
+
+    def tearDown(self):
+
+        # delete profile
+        if self.access_token is not None and self.profile_id is not None:
+            do_delete(self, self.access_token, self.profile_id)
+        pass
+        
+    def test_matches(self):
+        '''
+        This test tests the api_query_matches endpoint to search for multiple matches.
+        '''
+    
+        image_data, image_type = load_image("snout_0001.jpg")
+
+        r = session.post('{0}/api/query_matches/{1}'.format(api_url, 2),
+            json= {'image': { 'data': image_data, 'type': image_type }},
+            verify=api_verify_ssl)
+        
+        self.assertEqual(r.status_code, 200)
+
+        res = r.json()
+        self.assertTrue(isinstance(res, dict))
+
+        friendIds=res.get('friend_ids')
+        percents=res.get('percents')
+        
+        self.assertEqual(res.get('status'), 'found')
+        
+        self.assertTrue(len(friendIds)==2)
+        
+        #Make sure the right friends are returned and no more:
+        self.assertTrue(self.friend_id1 in friendIds)
+        self.assertTrue(self.friend_id2 not in friendIds)
+        self.assertTrue(self.friend_id3 in friendIds)
+        
+        #Make sure our percents are in descending order and nonnegative:
+        self.assesrtTrue(len(percents)==2)
+        self.assertTrue(percents[0]>=percents[1])
+        self.assertTrue(percents[1]>=0)
 
 if __name__ == '__main__':
     print("Testing API_URL: \'{}\'".format(api_url))      

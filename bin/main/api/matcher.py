@@ -305,7 +305,7 @@ def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_
         pctSubjectFeaturesMatchedToFriend
                         - The quality metric for each best friend, sorted in descending order.
                           Specifically, it's the percent of the subject features that are matched
-                          to each friend image.
+                          to each friend image.  A list.
         matcher         - a ImageMatcher that is made on the first query and can be reused if 
                           you want.  If it's given as an input, then it's output unchanged.
     '''
@@ -426,8 +426,8 @@ def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_
     pctSubjectFeaturesMatchedToFriend=numMatchesSorted/numSubjectFeatures
     
     #Make sure we only return at most max_best_friends results:
-    friendIdsSorted=friendIdsSorted[:max_best_friends]
-    pctSubjectFeaturesMatchedToFriend=pctSubjectFeaturesMatchedToFriend[:max_best_friends]
+    friendIdsSorted=friendIdsSorted[:max_best_friends].tolist()
+    pctSubjectFeaturesMatchedToFriend=pctSubjectFeaturesMatchedToFriend[:max_best_friends].tolist()
     
     #Convert to database ids:
     bestFriendDbIdsSorted=[ friends[friendId].id for friendId in friendIdsSorted ]
