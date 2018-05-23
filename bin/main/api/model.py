@@ -1,5 +1,6 @@
-import os
 import base64
+import sys
+import os
 
 is_heroku = 'DATABASE_URL' in os.environ.keys()
 is_postgres = is_heroku
@@ -242,8 +243,10 @@ class Photo(db.Model):
     def set_base64(self, data, type):
 
         if isinstance(data, str):
+            print('Is a string.', file=sys.stderr)
             self.set_binary(base64.b64decode(data), type)
         else:
+            print('Is NOT a string.', file=sys.stderr)
             self.data = None
             self.type = None
             self.featureDescriptors = None

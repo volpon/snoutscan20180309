@@ -1,3 +1,4 @@
+#!/.condaUser/.anaconda3/envs/snoutScan/bin/python3 
 from main.api.model import db, Profile
 
 if __name__ == '__main__':

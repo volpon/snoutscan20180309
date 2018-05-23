@@ -104,9 +104,7 @@ class ImageFeatures(object):
         
         keypoints = detector.detect(imgGrayResized, None)
         keypoints, self.descriptors= descriptorExtractor.compute(imgGrayResized, keypoints)
-        
-        import pdb; pdb.set_trace()
-        
+                
         return (keypoints, self.descriptors)
 
 
@@ -362,6 +360,8 @@ def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_
         #Add our descriptors to the list:
         friendDescriptorsList.append(friendFeatureDescriptors)
                 
+    import pdb; pdb.set_trace()
+
     #Combine the lists together to make one array for the whole list of friends:
     friendIds=np.concatenate(friendIdsList)
     friendDescriptorsBytes=np.concatenate(friendDescriptorsList)

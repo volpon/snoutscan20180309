@@ -26,8 +26,9 @@ VOLUMES ?= --volume "$(shell pwd)"/../data:/home/vmagent/data:ro
 #This adds a persistent /persist directory:
 ENV ?= --net=host --volume='snoutScanPersist:/.snoutScanPersist:rw' --env=SQLALCHEMY_DATABASE_URI=mysql+pymysql://andromodon:worivrinVosk@127.0.0.1/snoutScan
 
+#TODO:  Remove -t 900 in production, as it will prevent appropriate timeouts.
 #What command to run with the 'make run' command:
-RUN_CMD ?= /.condaUser/.anaconda3/envs/snoutScan/bin/gunicorn main:app -b :$(CONTAINER_PORT)
+RUN_CMD ?= /.condaUser/.anaconda3/envs/snoutScan/bin/gunicorn main:app -t 900 -b :$(CONTAINER_PORT)
 
 #Alternatively you could use this command to add ssl:
 #RUN_CMD ?= /.condaUser/.anaconda3/envs/snoutScan/bin/gunicorn main:app -D -b :443 --certfile=ssl_fcert/cert.crt --keyfile=ssl_cert/cert.key
