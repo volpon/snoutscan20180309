@@ -74,11 +74,12 @@ def SSMatchAll(friendDirectories, indexDefinition, displayImages=True):
                         
                         imgFilePath=os.path.join(root,thisFile)
                         
-                        #Load image.
-                        img=cv2.imread(imgFilePath)
+                        with open(imgFilePath, "rb") as imageFileHandle:
+                            #Load the image file data:
+                            imgFile=imageFileHandle.read()
                         
                         #Create a Friend object from it with the dog name connected to it.
-                        friend=FriendMake(dogName, imgFilePath, img)
+                        friend=FriendMake(dogName, imgFilePath, imgFile)
                         
                         #Add it to a list of friends.
                         friends.append(friend)

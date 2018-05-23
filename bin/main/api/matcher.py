@@ -78,12 +78,10 @@ class ImageFeatures(object):
         #Decode the image into binary form:
         if (isinstance(imageFile, str)):
             imgGray = image_from_base64(bytes(imageFile, "utf-8"))
-
-        if (isinstance(imageFile, bytes)):
+        elif (isinstance(imageFile, bytes)):
             imgGray = image_from_binary(imageFile)
-
-#        #Convert to grayscale:
-#        imgGray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        else:
+            assert False, 'Should have imgGray from one of those cases by now.'
         
         #Get our original dimensions:
         (origHeight,origWidth)=imgGray.shape
