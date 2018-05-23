@@ -338,13 +338,18 @@ def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_
         
         #Get this friend:
         friend=friends[index]
-
-        #Make sure our friend photo has features:
-        if friend.photo.featureDescriptors is None:
-            print('Warning: Skipping a friend without features, %s.' % friend.name, 
-                  file=sys.stderr);
-            continue
         
+        fPhoto=friend.photo
+
+        #If our friend doesn't have featureDescriptors yet, then decode them:
+        if fPhoto.featureDescriptors is None:
+            
+            #Decode our features:
+            fPhoto.set_binary(fPhoto.data, fPhoto.type)
+
+        if fPhoto.featureDescriptors is None:
+            print('Warning:  Found a friend without featureDescriptors!', file=sys.stderr)
+                    
         #Get our features
         friendFeatureKeypoints=friend.photo.featureKeypoints
         friendFeatureDescriptors=friend.photo.featureDescriptors
@@ -360,8 +365,6 @@ def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_
         #Add our descriptors to the list:
         friendDescriptorsList.append(friendFeatureDescriptors)
                 
-    import pdb; pdb.set_trace()
-
     #Combine the lists together to make one array for the whole list of friends:
     friendIds=np.concatenate(friendIdsList)
     friendDescriptorsBytes=np.concatenate(friendDescriptorsList)

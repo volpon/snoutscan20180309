@@ -523,20 +523,6 @@ class Test_match(unittest.TestCase):
         self.assertEqual(res.get('status'), 'found')
         self.assertEqual(res.get('friend'), self.friend_id2)
        
-    def test_match3(self):
-        
-        image_data, image_type = load_image("snout_0003.jpg")
-
-        r = session.post('{0}/api/query_match'.format(api_url),
-            json= {'image': { 'data': image_data, 'type': image_type }},
-            verify=api_verify_ssl)
-        
-        self.assertEqual(r.status_code, 200)
-
-        res = r.json()
-        self.assertTrue(isinstance(res, dict))
-
-        self.assertEqual(res.get('status'), 'not found')
 
 if __name__ == '__main__':
     print("Testing API_URL: \'{}\'".format(api_url))      
@@ -548,15 +534,3 @@ if __name__ == '__main__':
     #requests_log.propagate = True
     
     unittest.main()
-    #unittest.main(argv=["", "Test_signup"])
-    #unittest.main(argv=["", "Test_signup.test_create_and_delete"])
-    #unittest.main(argv=["", "Test_auth.test_1"])
-    #unittest.main(argv=["", "Test_profile.test_get"])
-    #unittest.main(argv=["", "Test_friends"])
-    #unittest.main(argv=["", "Test_friends.test_get_list"])
-    #unittest.main(argv=["", "Test_friends.test_put_and_get"])
-    #unittest.main(argv=["", "Test_friends.test_create_get_delete"])
-    #unittest.main(argv=["", "Test_photo"])
-    #unittest.main(argv=["", "Test_photo.test_put_get"])
-    #unittest.main(argv=["", "Test_match"])
-    #unittest.main(argv=["", "Test_match.test_match1"])

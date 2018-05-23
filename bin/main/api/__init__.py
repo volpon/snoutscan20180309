@@ -279,7 +279,7 @@ def api_friend_set_photo(friend_id: int):
 
 @app.route('/api/query_match', methods=["POST"])
 def api_query_match():
-
+    
     data = request.get_json()
 
     if data is None:
@@ -294,10 +294,12 @@ def api_query_match():
     image_type = image.get('type', None)
 
     #image_data = bytes(image_data, "utf-8")
-
-    friend_id, per, best_index = find_best_match(image_data, image_type, friends = Friend.query.all())
+    
+    friends = Friend.query.all()
+    
+    friend_id, per, best_index, matcher= find_best_match(image_data, image_type, friends)
 
     if friend_id is None:
         return jsonify({'status': 'not found'}), 200
 
-    return jsonify({'status': 'found', 'friend' : friend_id, 'percent' : per }), 200
+    return jsonify({'status': 'found', 'friend' : friend_id, 'percent' : float(per) }), 200
