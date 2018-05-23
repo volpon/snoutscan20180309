@@ -297,12 +297,12 @@ def api_query_match():
     
     friends = Friend.query.all()
     
-    friend_id, per, best_index, matcher= find_best_match(image_data, image_type, friends)
+    friend_db_id, per, _, matcher= find_best_match(image_data, image_type, friends)
 
-    if friend_id is None:
+    if friend_db_id is None:
         return jsonify({'status': 'not found'}), 200
 
-    return jsonify({'status': 'found', 'friend' : friend_id, 'percent' : float(per) }), 200
+    return jsonify({'status': 'found', 'friend' : friend_db_id, 'percent' : float(per) }), 200
 
 @app.route('/api/query_matches/<int:max_best_friends>', methods=["POST"])
 def api_query_matches():
@@ -328,8 +328,8 @@ def api_query_matches():
     
     friends = Friend.query.all()
     
-    friend_ids_sorted, num_matches_sorted, matcher= find_best_matches(image_data, image_type,
-                                                                      friends, max_best_friends)
+    friend_ids_sorted, num_matches_sorted, _, matcher= find_best_matches(image_data, image_type,
+                                                                         friends, max_best_friends)
 
     if friend_id is None:
         return jsonify({'status': 'not found'}), 200

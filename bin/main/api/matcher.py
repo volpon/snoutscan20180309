@@ -429,8 +429,11 @@ def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_
     friendIdsSorted=friendIdsSorted[:max_best_friends]
     pctSubjectFeaturesMatchedToFriend=pctSubjectFeaturesMatchedToFriend[:max_best_friends]
     
+    #Convert to database ids:
+    bestFriendDbIdsSorted=[ friends[friendId].id for friendId in friendIdsSorted ]
+    
     #Return our list of best indicies to friends[] and their corresponding best scores:
-    return friendIdsSorted, pctSubjectFeaturesMatchedToFriend, matcher
+    return bestFriendDbIdsSorted, pctSubjectFeaturesMatchedToFriend, friendIdsSorted, matcher
     
     
 def find_best_match(image_data, image_type, friends, index_definition=None, f_ids_excluded=None, matcher=None):
@@ -446,13 +449,13 @@ def find_best_match(image_data, image_type, friends, index_definition=None, f_id
         f_ids_excluded=[]
 
     #Find our best match:
-    best_indices, percentMatched, matcher=find_best_matches(image_data, image_type, friends, 
+    best_db_ids_sorted, percentMatched, friend_ids, matcher=find_best_matches(image_data, image_type, friends, 
                                                             1, f_ids_excluded, 
                                                             index_definition, matcher)
 
     #Get our info for the bet matching friend:
-    best_index=best_indices[0]
+    best_db_id=best_db_ids_sorted[0]
     percentOfSubjectFeaturesMatched=percentMatched[0]
-    best_db_id=friends[best_index].id
+    friend_id=friend_ids[0]
     
-    return best_db_id, percentOfSubjectFeaturesMatched, best_index, matcher
+    return best_db_id, percentOfSubjectFeaturesMatched, friend_id, matcher

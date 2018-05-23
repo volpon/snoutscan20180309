@@ -522,6 +522,25 @@ class Test_match(unittest.TestCase):
 
         self.assertEqual(res.get('status'), 'found')
         self.assertEqual(res.get('friend'), self.friend_id2)
+        
+#    def test_matches(self):
+#        '''
+#        This test tests the api_query_matches endpoint to search for multiple matches.
+#        '''
+#    
+#        image_data, image_type = load_image("snout_0002.jpg")
+#
+#        r = session.post('{0}/api/query_matches/{1}'.format(api_url, 2),
+#            json= {'image': { 'data': image_data, 'type': image_type }},
+#            verify=api_verify_ssl)
+#        
+#        self.assertEqual(r.status_code, 200)
+#
+#        res = r.json()
+#        self.assertTrue(isinstance(res, dict))
+#
+#        self.assertEqual(res.get('status'), 'found')
+#        self.assertEqual(res.get('friend'), self.friend_id2)
        
 
 if __name__ == '__main__':
