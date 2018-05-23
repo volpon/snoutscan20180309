@@ -13,7 +13,7 @@ include make_env
 
 #Format:  the target name, then a file whose modified date represents the last time we ran this:
 build .build : Dockerfile setup.sh make_env Makefile
-	docker build -t $(NS)/$(IMAGE_NAME):$(VERSION) -f Dockerfile . && touch .build
+	docker build -q -t $(NS)/$(IMAGE_NAME):$(VERSION) . > /dev/null && touch .build
 
 push:
 	docker push $(NS)/$(IMAGE_NAME):$(VERSION)

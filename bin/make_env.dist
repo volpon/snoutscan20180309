@@ -18,6 +18,9 @@ HOST_PORT ?= 8080
 #This forwards the CONTAINER_PORT so it's accessible at HOST_PORT
 PORTS ?= -p $(HOST_PORT):$(CONTAINER_PORT)
 
+#Which mount flags to use, if any:
+VOLUMES ?= --volume "$(shell pwd)"/../data:/home/vmagent/data:ro
+
 #--net=host  is what allows the docker container to access mysql on my local box.  
 # It won't be used in production.
 #This adds a persistent /persist directory:
@@ -30,7 +33,7 @@ RUN_CMD ?= /.condaUser/.anaconda3/envs/snoutScan/bin/gunicorn main:app -b :$(CON
 #RUN_CMD ?= /.condaUser/.anaconda3/envs/snoutScan/bin/gunicorn main:app -D -b :443 --certfile=ssl_fcert/cert.crt --keyfile=ssl_cert/cert.key
 
 #What data directory to run the benchmark on
-BENCHMKAR_DATA ?= ./data/0/small
+BENCHMKAR_DATA ?= ../data/0/small
 
 #What command to use for 'make benchmark'
 BENCHMARK_CMD ?= /.condaUser/.anaconda3/envs/snoutScan/bin/python3 ./cli/snoutScan.py $(BENCHMKAR_DATA)
@@ -40,3 +43,4 @@ BENCHMARK_PDB_CMD ?= /.condaUser/.anaconda3/envs/snoutScan/bin/python3 -m pdb ./
 
 #Some special flags that allow us to connect to the host's x-server from inside the container:
 #BENCHMARK_ENV ?= --env="DISPLAY" --env="QT_X11_NO_MITSHM=1" --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" 
+ 
