@@ -243,10 +243,8 @@ class Photo(db.Model):
     def set_base64(self, data, type):
 
         if isinstance(data, str):
-            print('Is a string.', file=sys.stderr)
             self.set_binary(base64.b64decode(data), type)
         else:
-            print('Is NOT a string.', file=sys.stderr)
             self.data = None
             self.type = None
             self.featureDescriptors = None
