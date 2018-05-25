@@ -449,7 +449,7 @@ class Test_photo(unittest.TestCase):
 
     def test_put_get(self):
         
-        image_data, image_type = do_set_photo(self, self.access_token, self.friend_id, "snout_0003.jpg")
+        image_data, image_type = do_set_photo(self, self.access_token, self.friend_id, "snout_0002.jpg")
 
         #print("PUT image_data size: ", len(image_data))
 
@@ -479,7 +479,7 @@ class Test_match(unittest.TestCase):
         self.access_token, self.profile_id = do_auth(test_email, test_password)
 
         self.friend_id1 = do_add_friend(self, self.access_token, self.profile_id)
-        do_set_photo(self, self.access_token, self.friend_id1, "snout_0001.jpg")
+        do_set_photo(self, self.access_token, self.friend_id1, "snout_0001a.jpg")
 
         self.friend_id2 = do_add_friend(self, self.access_token, self.profile_id)
         do_set_photo(self, self.access_token, self.friend_id2, "snout_0002.jpg")
@@ -493,7 +493,7 @@ class Test_match(unittest.TestCase):
 
     def test_match1(self):
 
-        image_data, image_type = load_image("snout_0001.jpg")
+        image_data, image_type = load_image("snout_0001a.jpg")
 
         r = session.post('{0}/api/query_match'.format(api_url),
             json= {'image': { 'data': image_data, 'type': image_type }},
@@ -534,17 +534,17 @@ class Test_matches(unittest.TestCase):
         # login
         self.access_token, self.profile_id = do_auth(test_email, test_password)
 
-        #Add a friend:
-        self.friend_id1 = do_add_friend(self, self.access_token, self.profile_id)
-        do_set_photo(self, self.access_token, self.friend_id1, "snout_0001.jpg")
+        #Add a dog:
+        self.friend_id1a = do_add_friend(self, self.access_token, self.profile_id)
+        do_set_photo(self, self.access_token, self.friend_id1a, "snout_0001a.jpg")
 
         #Add one we do not want to match:
         self.friend_id2 = do_add_friend(self, self.access_token, self.profile_id)
         do_set_photo(self, self.access_token, self.friend_id2, "snout_0002.jpg")
         
-        #Add the same friend again.
-        self.friend_id3 = do_add_friend(self, self.access_token, self.profile_id)
-        do_set_photo(self, self.access_token, self.friend_id3, "snout_0001.jpg")
+        #Add the same dog again, using a different photo:
+        self.friend_id1b = do_add_friend(self, self.access_token, self.profile_id)
+        do_set_photo(self, self.access_token, self.friend_id1b, "snout_0001b.jpg")
 
     def tearDown(self):
 
@@ -558,7 +558,7 @@ class Test_matches(unittest.TestCase):
         This test tests the api_query_matches endpoint to search for multiple matches.
         '''
     
-        image_data, image_type = load_image("snout_0001.jpg")
+        image_data, image_type = load_image("snout_0001c.jpg")
 
         r = session.post('{0}/api/query_matches/{1}'.format(api_url, 2),
             json= {'image': { 'data': image_data, 'type': image_type }},
@@ -574,15 +574,15 @@ class Test_matches(unittest.TestCase):
         
         self.assertEqual(res.get('status'), 'found')
         
-        self.assertTrue(len(friendIds)==2)
+        self.assertTrue(len(friendIds)==2, 'Need 2 friends returned.  Received %i.' % len(friendIds))
         
         #Make sure the right friends are returned and no more:
-        self.assertTrue(self.friend_id1 in friendIds)
+        self.assertTrue(self.friend_id1a in friendIds)
         self.assertTrue(self.friend_id2 not in friendIds)
-        self.assertTrue(self.friend_id3 in friendIds)
+        self.assertTrue(self.friend_id1b in friendIds)
         
-        #Make sure our percents are in descending order and nonnegative:
-        self.assesrtTrue(len(percents)==2)
+        #Make sure our percents are the right length, in descending order and nonnegative:
+        self.assertTrue(len(percents)==2)
         self.assertTrue(percents[0]>=percents[1])
         self.assertTrue(percents[1]>=0)
 
