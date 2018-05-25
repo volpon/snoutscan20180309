@@ -112,7 +112,7 @@ def SSMatchAll(friendDirectories, indexDefinition, displayImages=True):
                 subjectImgBinary,subjectImgType=friend.photo.get_binary()
                 
                 #Find the other friend that matches this friend best:
-                best_db_id, best_match_score, best_index, matcher= \
+                best_db_id, percentOfSubjectFeaturesMatched, best_index, matcher= \
                     find_best_match(subjectImgBinary, subjectImgType, friends, 
                                     indexDefinition, fIdsExcluded, matcher)
                 
@@ -132,10 +132,10 @@ def SSMatchAll(friendDirectories, indexDefinition, displayImages=True):
                 confusionMatrixData[dogNameIndex][matchedDogNameIndex]+=1
                 
                 #Print info about this best match:
-                print('      %s:\t%s (%s) => %s (%s):\t%i' %(
+                print('      %s:\t%s (%s) => %s (%s):\t%f' %(
                                str(dogName == matchedDogName),
                                actualDogFile, dogName, matchedDogFile, matchedDogName, 
-                               best_match_score), 
+                               percentOfSubjectFeaturesMatched), 
                             file=sys.stderr)
     
     #Make a pandas array that bundles the dog names and confusion matrix together for display:

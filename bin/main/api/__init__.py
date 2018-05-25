@@ -1,6 +1,6 @@
 from main.api.auth import jwt_required, current_identity
 from main.api.model import db, Profile, Friend
-from main.api.matcher import find_best_match
+from main.api.matcher import find_best_match, find_best_matches
 #from flask_jwt import jwt_required
 from flask import request, jsonify
 from main import app
@@ -297,9 +297,42 @@ def api_query_match():
     
     friends = Friend.query.all()
     
-    friend_id, per, best_index, matcher= find_best_match(image_data, image_type, friends)
+    friend_db_id, per, _, matcher= find_best_match(image_data, image_type, friends)
 
-    if friend_id is None:
+    if friend_db_id is None:
         return jsonify({'status': 'not found'}), 200
 
-    return jsonify({'status': 'found', 'friend' : friend_id, 'percent' : float(per) }), 200
+    return jsonify({'status': 'found', 'friend' : friend_db_id, 'percent' : float(per) }), 200
+
+@app.route('/api/query_matches/<int:max_best_friends>', methods=["POST"])
+def api_query_matches(max_best_friends):
+    
+    data = request.get_json()
+
+    if data is None:
+        return jsonify({'error': {'message': 'invalid input'}}), 400
+
+    image = data.get('image', None)
+
+    if image is None:
+        return jsonify({'error': {'message': 'invalid input'}}), 400
+
+    #Enforce a maximum number of matches:
+    if max_best_friends > 100 or max_best_friends < 1:
+        return jsonify({'error': {'message': 'invalid num_matches specified.'}}), 400
+
+    image_data = image.get('data', None)
+    image_type = image.get('type', None)
+
+    #image_data = bytes(image_data, "utf-8")
+    
+    friends = Friend.query.all()
+        
+    friend_ids_sorted, num_matches_sorted, _, matcher= find_best_matches(image_data, image_type,
+                                                                         friends, max_best_friends)
+
+    if friend_ids_sorted is None or len(friend_ids_sorted) == 0:
+        return jsonify({'status': 'not found'}), 200
+
+    return jsonify({'status': 'found', 'friend_ids' : friend_ids_sorted, 
+                    'percents' : num_matches_sorted }), 200
