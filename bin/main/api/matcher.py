@@ -86,7 +86,7 @@ class ImageFeatures(object):
         imgHeight=int(1000)
       
         #How many features to create, maximum:
-        numFeaturesMax=500
+        numFeaturesMax=8000
         
         #How much to decimate iamges between levels
         scaleFactor=1.2
@@ -124,19 +124,17 @@ class ImageFeatures(object):
         imgGrayResized = cv2.resize(imgGray, (imgWidth,imgHeight),
                                     interpolation = cv2.INTER_CUBIC)
         
-        # Initiate BRISK detector
-        detector = cv2.BRISK_create()
-
         # Initiate ORB extractor
-        descriptorExtractor = cv2.ORB_create(numFeaturesMax, scaleFactor, nLevels,
+        featureExtractor = cv2.ORB_create(numFeaturesMax, scaleFactor, nLevels,
                                              edgeThreshold, 0, 2,  HARRIS_SCORE, patchSize)
         
-        self.keypoints = descriptorExtractor.detect(imgGrayResized, None)
-        self.keypoints, self.descriptors= descriptorExtractor.compute(imgGrayResized, 
-                                                                      self.keypoints)
-
-        import pdb; pdb.set_trace()
+        #Detect the keypoints:
+        self.keypoints = featureExtractor.detect(imgGrayResized, None)
         
+        
+        #Create the descriptors around each keypoint:
+        self.keypoints, self.descriptors= featureExtractor.compute(imgGrayResized, 
+                                                                      self.keypoints)        
         return (self.keypoints, self.descriptors)
 
 
