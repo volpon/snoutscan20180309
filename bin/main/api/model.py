@@ -229,13 +229,12 @@ class Photo(db.Model):
     data = db.Column(MEDIUMBLOB)
     type = db.Column(db.String(46))
 
-    #Don't store the keypoints in the databsae.  They're difficult to serialize and currently 
-    #only used for visualization/debugging:    
+    #These are not stored in the database directly but indirectly through featuresEncoded:
     featureKeypoints=None
     featureDescriptors=None
     
     #Feature descriptors, in encoded format:
-    featureDescriptorsEncoded = db.Column(MEDIUMBLOB)
+    featuresEncoded = db.Column(MEDIUMBLOB)
 
     def __init__(self):
         pass 
@@ -248,7 +247,7 @@ class Photo(db.Model):
             self.data = None
             self.type = None
             self.featureDescriptors = None
-            self.featureDescriptorsEncoded = None
+            self.featuresEncoded = None
 
     def set_binary(self, data, type):
 
@@ -258,8 +257,8 @@ class Photo(db.Model):
         fs=ImageFeatures()
 
         (self.featureKeypoints, self.featureDescriptors) = fs.from_image(self.data)
-        
-        self.featureDescriptorsEncoded = fs.encode() 
+                
+        self.featuresEncoded = fs.encode() 
      
 
     def get_base64(self):

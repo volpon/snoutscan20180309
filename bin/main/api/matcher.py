@@ -39,8 +39,38 @@ class ImageFeatures(object):
             self.decode(features)
         else:
             self.descriptors = None
+            self.keypoints = None
         pass
 
+
+    def _keypoints_package(self, keypoints):
+        '''
+        This function packages a collection of keypoints into something we can pickle successfully.
+        '''
+        return [ (
+                      k.pt, 
+                      k.size,
+                      k.angle, 
+                      k.response, 
+                      k.octave, 
+                      k.class_id,
+                  ) for k in keypoints ]
+    
+    def _keypoints_unpackage(self, keypoints_packaged):
+        '''
+        This function takes a collection of packaged keypoints as made by _keypoints_packaged
+        and sets up valid keypoints again from them.
+        '''
+        
+        return [ cv2.KeyPoint(x=k_pack[0][0],
+                              y=k_pack[0][1],
+                              _size=k_pack[1], 
+                              _angle=k_pack[2], 
+                              _response=k_pack[3],
+                              _octave=k_pack[4],
+                              _class_id=k_pack[5]) for k_pack in keypoints_packaged ]
+    
+    
 
     def from_image(self, imageFile):
         '''
@@ -100,21 +130,29 @@ class ImageFeatures(object):
         descriptorExtractor = cv2.ORB_create(numFeaturesMax, scaleFactor, nLevels,
                                              edgeThreshold, 0, 2,  HARRIS_SCORE, patchSize)
         
-        keypoints = detector.detect(imgGrayResized, None)
-        keypoints, self.descriptors= descriptorExtractor.compute(imgGrayResized, keypoints)
+        self.keypoints = detector.detect(imgGrayResized, None)
+        self.keypoints, self.descriptors= descriptorExtractor.compute(imgGrayResized, 
+                                                                      self.keypoints)
+        
+        
                 
-        return (keypoints, self.descriptors)
+        return (self.keypoints, self.descriptors)
 
 
     def encode(self):
         '''
-        Encodes the descriptors only because the keypoints are difficult to pickle.
+        Encodes the keypoints and descriptors.
         '''
 
         memfile = io.BytesIO()
-        pickle.dump(self.descriptors, memfile, protocol=pickle.HIGHEST_PROTOCOL)
+        
+        #Dump the descriptors to the memfile:
+        pickle.dump((self._keypoints_package(self.keypoints), 
+                     self.descriptors),
+                    memfile, protocol=pickle.HIGHEST_PROTOCOL)
+        
+        #Read the file back:
         memfile.seek(0)
-
         serialized = memfile.read()
 
         return serialized
@@ -126,7 +164,11 @@ class ImageFeatures(object):
         
         memfile = io.BytesIO(serialized)
         
-        self.descriptors=pickle.load(memfile)
+        #Load the file:
+        (keypoints_packaged, self.descriptors)=pickle.load(memfile)
+        
+        #Unpackage our keypoints:
+        self.keypoints=self._keypoints_unpackage(keypoints_packaged)
 
 class ImageMatcher(object):
     '''
@@ -163,13 +205,11 @@ class ImageMatcher(object):
             index_definition='IVF2048,Flat'
         
         #Initialize the index:
-        #self.featureMatcher = faiss.IndexIVFFlat(self.quantizer, numDimensions, nCells, faiss.METRIC_L2)
         self.featureMatcher = faiss.index_factory(numDimensions, index_definition)
         
         #Train our index using the data, so it can do an efficient job at adding it later:
         #(Techically, we just need to train on a set that has a similar distribution as what we'll 
         #be adding later, not the exact same data)
-#        assert not self.featureMatcher.is_trained
         self.featureMatcher.train(friendFeatureDescriptors)
         assert self.featureMatcher.is_trained
 
