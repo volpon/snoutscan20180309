@@ -17,11 +17,19 @@ import os
 import faiss
 
 def image_from_base64(data, type = None):
+    '''
+    This function takes base64 encoded version of the binary contents of an image file, converts
+    it to binary, and reads the image file into a numpy array representing the image.
+    '''
     return image_from_binary(base64.b64decode(data), type)
 
 def image_from_binary(data, type = None):
+    '''
+    This function reads the data from an image file and loads it into a grayscale numpy array
+    representing the image.
+    '''
     data = np.array(bytearray(data), dtype=np.uint8)
-    return cv2.imdecode(data, 0)
+    return cv2.imdecode(data, cv2.IMREAD_GRAYSCALE)
 
 
 class ImageFeatures(object):
@@ -31,14 +39,51 @@ class ImageFeatures(object):
             self.decode(features)
         else:
             self.descriptors = None
+            self.keypoints = None
         pass
 
 
-    def from_image(self, image):
+    def _keypoints_package(self, keypoints):
         '''
-        Creates features with both keypoints and descriptors.
+        This function packages a collection of keypoints into something we can pickle successfully.
+        '''
+        return [ (
+                      k.pt, 
+                      k.size,
+                      k.angle, 
+                      k.response, 
+                      k.octave, 
+                      k.class_id,
+                  ) for k in keypoints ]
+    
+    def _keypoints_unpackage(self, keypoints_packaged):
+        '''
+        This function takes a collection of packaged keypoints as made by _keypoints_packaged
+        and sets up valid keypoints again from them.
         '''
         
+        return [ cv2.KeyPoint(x=k_pack[0][0],
+                              y=k_pack[0][1],
+                              _size=k_pack[1], 
+                              _angle=k_pack[2], 
+                              _response=k_pack[3],
+                              _octave=k_pack[4],
+                              _class_id=k_pack[5]) for k_pack in keypoints_packaged ]
+    
+    
+
+    def from_image(self, imageFile):
+        '''
+        Creates features with both keypoints and descriptors from the binary data of an image file.
+        
+        Inputs:
+            imageFile     - Either a binary array of the bytes in the image file or a base64 
+                            encoded version of this.
+        '''
+        
+        #This is the height we resize all images to:
+        imgHeight=int(1000)
+      
         #How many features to create, maximum:
         numFeaturesMax=500
         
@@ -59,12 +104,25 @@ class ImageFeatures(object):
         #size on the smaller pyramid layers will cover more of the original image area.
         patchSize=31
 
-        if (isinstance(image, str)):
-            image = image_from_base64(bytes(image, "utf-8"))
 
-        if (isinstance(image, bytes)):
-            image = image_from_binary(image)
-
+        #Decode the image into binary form:
+        if (isinstance(imageFile, str)):
+            imgGray = image_from_base64(bytes(imageFile, "utf-8"))
+        elif (isinstance(imageFile, bytes)):
+            imgGray = image_from_binary(imageFile)
+        else:
+            assert False, 'Should have imgGray from one of those cases by now.'
+        
+        #Get our original dimensions:
+        (origHeight,origWidth)=imgGray.shape
+        
+        #Get the width we need to get the height we want:
+        imgWidth=int(round(imgHeight*origWidth/origHeight))                        
+        
+        #Resize so the height is imgHeight.
+        imgGrayResized = cv2.resize(imgGray, (imgWidth,imgHeight),
+                                    interpolation = cv2.INTER_CUBIC)
+        
         # Initiate BRISK detector
         detector = cv2.BRISK_create()
 
@@ -72,21 +130,29 @@ class ImageFeatures(object):
         descriptorExtractor = cv2.ORB_create(numFeaturesMax, scaleFactor, nLevels,
                                              edgeThreshold, 0, 2,  HARRIS_SCORE, patchSize)
         
-        keypoints = detector.detect(image, None)
-        keypoints, self.descriptors= descriptorExtractor.compute(image, keypoints)
+        self.keypoints = detector.detect(imgGrayResized, None)
+        self.keypoints, self.descriptors= descriptorExtractor.compute(imgGrayResized, 
+                                                                      self.keypoints)
         
-        return (keypoints, self.descriptors)
+        
+                
+        return (self.keypoints, self.descriptors)
 
 
     def encode(self):
         '''
-        Encodes the descriptors only because the keypoints are difficult to pickle.
+        Encodes the keypoints and descriptors.
         '''
 
         memfile = io.BytesIO()
-        pickle.dump(self.descriptors, memfile, protocol=pickle.HIGHEST_PROTOCOL)
+        
+        #Dump the descriptors to the memfile:
+        pickle.dump((self._keypoints_package(self.keypoints), 
+                     self.descriptors),
+                    memfile, protocol=pickle.HIGHEST_PROTOCOL)
+        
+        #Read the file back:
         memfile.seek(0)
-
         serialized = memfile.read()
 
         return serialized
@@ -98,7 +164,11 @@ class ImageFeatures(object):
         
         memfile = io.BytesIO(serialized)
         
-        self.descriptors=pickle.load(memfile)
+        #Load the file:
+        (keypoints_packaged, self.descriptors)=pickle.load(memfile)
+        
+        #Unpackage our keypoints:
+        self.keypoints=self._keypoints_unpackage(keypoints_packaged)
 
 class ImageMatcher(object):
     '''
@@ -135,13 +205,11 @@ class ImageMatcher(object):
             index_definition='IVF2048,Flat'
         
         #Initialize the index:
-        #self.featureMatcher = faiss.IndexIVFFlat(self.quantizer, numDimensions, nCells, faiss.METRIC_L2)
         self.featureMatcher = faiss.index_factory(numDimensions, index_definition)
         
         #Train our index using the data, so it can do an efficient job at adding it later:
         #(Techically, we just need to train on a set that has a similar distribution as what we'll 
         #be adding later, not the exact same data)
-#        assert not self.featureMatcher.is_trained
         self.featureMatcher.train(friendFeatureDescriptors)
         assert self.featureMatcher.is_trained
 
@@ -256,7 +324,7 @@ class MatchResult(object):
         cv2.imwrite(path, self.image)
 
 
-def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_excluded,
+def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_excluded=None,
                       index_definition=None, matcher=None):
     '''
     This function finds the <num_best_friends> best matches for image_data among a collection of 
@@ -268,7 +336,8 @@ def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_
         image_type      - Not currently used.
         friends         - A collection of Friend() objects representing the pictures the given image
                           could match to.
-        num_best_friends- n in the sentence "Find the n best matching friends that aren't excluded"
+        max_best_friends- n in the sentence "Find at most n best matching friends that aren't 
+                          excluded"
         f_ids_excluded  - A collection of the friend ids (indicies into friends) to not match with.
         indexDefinition - A string representing the faiss index setup to use, or ''
                           or None to represent "use the default"
@@ -278,7 +347,10 @@ def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_
     Outputs:
         best_indicies   - A list of indicies to the the num_best_friends closest matching friends.
                           Sorted in decending order by quality metric.
-        match_scores    - The quality metric for each best friend, sorted in descending order.
+        pctSubjectFeaturesMatchedToFriend
+                        - The quality metric for each best friend, sorted in descending order.
+                          Specifically, it's the percent of the subject features that are matched
+                          to each friend image.  A list.
         matcher         - a ImageMatcher that is made on the first query and can be reused if 
                           you want.  If it's given as an input, then it's output unchanged.
     '''
@@ -290,6 +362,8 @@ def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_
     if image_data is None:
         return None, None
 
+    assert len(friends) >=1, 'Must have at least one friend to match with.'
+
     subjectFeatures=ImageFeatures()
     
     #Make our features and keypoints.
@@ -297,6 +371,8 @@ def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_
     
     #Unpack the bytes now that we're about to use them:
     subjectFeatureDescriptors=np.unpackbits(subjectFeatureDescriptorsBytes,axis=1).astype('float32')
+    
+    numSubjectFeatures=subjectFeatureDescriptors.shape[0]
     
     #For each feature, this is the friend id it came from (index to friends):
     friendIdsList=[]
@@ -311,13 +387,18 @@ def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_
         
         #Get this friend:
         friend=friends[index]
-
-        #Make sure our friend photo has features:
-        if friend.photo.featureDescriptors is None:
-            print('Warning: Skipping a friend without features, %s.' % friend.name, 
-                  file=sys.stderr);
-            continue
         
+        fPhoto=friend.photo
+
+        #If our friend doesn't have featureDescriptors yet, then decode them:
+        if fPhoto.featureDescriptors is None:
+            
+            #Decode our features:
+            fPhoto.set_binary(fPhoto.data, fPhoto.type)
+
+        if fPhoto.featureDescriptors is None:
+            print('Warning:  Found a friend without featureDescriptors!', file=sys.stderr)
+                    
         #Get our features
         friendFeatureKeypoints=friend.photo.featureKeypoints
         friendFeatureDescriptors=friend.photo.featureDescriptors
@@ -379,15 +460,25 @@ def find_best_matches(image_data, image_type, friends,  num_best_friends, f_ids_
     
     #Make sure we return at least one as "best", even if it's a sucky one with 0 confidence:    
     if len(howToSort) == 0:
-        friendIdsSorted=[0]
-        numMatchesSorted=[0]
+        friendIdsSorted=np.array([0])
+        numMatchesSorted=np.array([0])
     else:
         #Sort them in descending order by numMatches:
         friendIdsSorted=friendIdsMatched[howToSort]
         numMatchesSorted=numMatches[howToSort]
+        
+    #Convert to a percent:
+    pctSubjectFeaturesMatchedToFriend=numMatchesSorted/numSubjectFeatures
+       
+    #Make sure we only return at most max_best_friends results:
+    friendIdsSorted=friendIdsSorted[:max_best_friends].tolist()
+    pctSubjectFeaturesMatchedToFriend=pctSubjectFeaturesMatchedToFriend[:max_best_friends].tolist()
+    
+    #Convert to database ids:
+    bestFriendDbIdsSorted=[ friends[friendId].id for friendId in friendIdsSorted ]
     
     #Return our list of best indicies to friends[] and their corresponding best scores:
-    return friendIdsSorted, numMatchesSorted, matcher
+    return bestFriendDbIdsSorted, pctSubjectFeaturesMatchedToFriend, friendIdsSorted, matcher
     
     
 def find_best_match(image_data, image_type, friends, index_definition=None, f_ids_excluded=None, matcher=None):
@@ -403,13 +494,13 @@ def find_best_match(image_data, image_type, friends, index_definition=None, f_id
         f_ids_excluded=[]
 
     #Find our best match:
-    best_indices, match_scores, matcher=find_best_matches(image_data, image_type, friends, 
-                                                          1, f_ids_excluded, 
-                                                          index_definition, matcher)
+    best_db_ids_sorted, percentMatched, friend_ids, matcher=find_best_matches(image_data, image_type, friends, 
+                                                            1, f_ids_excluded, 
+                                                            index_definition, matcher)
 
     #Get our info for the bet matching friend:
-    best_index=best_indices[0]
-    best_score=match_scores[0]
-    best_db_id=friends[best_index].id
+    best_db_id=best_db_ids_sorted[0]
+    percentOfSubjectFeaturesMatched=percentMatched[0]
+    friend_id=friend_ids[0]
     
-    return best_db_id, best_score, best_index, matcher
+    return best_db_id, percentOfSubjectFeaturesMatched, friend_id, matcher

@@ -18,7 +18,9 @@ import pandas as pd
 
 def SSMatchAll(friendDirectories, indexDefinition, displayImages=True):
     '''
-    This function matches each of the friend images with each of the other friend images and 
+    This function matches each of the friend images of specific dogs with each of the other 
+    friend images and outputs a confusion matrix showing how many of each dog was matched with
+    each of the other dogs (many friend images per dog).
     
     
     Inputs:
@@ -49,9 +51,6 @@ def SSMatchAll(friendDirectories, indexDefinition, displayImages=True):
     #We only use the keys, not the values.  This is essentially an OrderedSet
     dogNamesOD=OrderedDict()
     
-    #This is the height we resize all images to:
-    imgHeight=int(1000)
-    
     ###########
     # Load our images, as one friend per image:
     ###########
@@ -77,27 +76,12 @@ def SSMatchAll(friendDirectories, indexDefinition, displayImages=True):
                         
                         imgFilePath=os.path.join(root,thisFile)
                         
-                        #Load image.
-                        img=cv2.imread(imgFilePath)
-                        
-                        #Convert to grayscale:
-                        imgGray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                        
-                        #Get our original dimensions:
-                        (origHeight,origWidth)=imgGray.shape
-                        
-                        #Get the width we need to get the height we want:
-                        imgWidth=int(round(imgHeight*origWidth/origHeight))                        
-                        
-                        #Resize so the height is imgHeight.
-                        imgGrayResized = cv2.resize(imgGray, (imgWidth,imgHeight),
-                                                    interpolation = cv2.INTER_CUBIC)
-                        
-                        with TT('Image is now %s' % str(imgGrayResized.shape)):
-                            pass
+                        with open(imgFilePath, "rb") as imageFileHandle:
+                            #Load the image file data:
+                            imgFile=imageFileHandle.read()
                         
                         #Create a Friend object from it with the dog name connected to it.
-                        friend=FriendMake(dogName, imgFilePath, imgGrayResized)
+                        friend=FriendMake(dogName, imgFilePath, imgFile)
                         
                         #Add it to a list of friends.
                         friends.append(friend)
@@ -115,6 +99,8 @@ def SSMatchAll(friendDirectories, indexDefinition, displayImages=True):
     
     #Initialize our matcher as None so we build it on the first use:
     matcher=None
+    
+    import pdb; pdb.set_trace();
         
     with TT('Matching'):
         #For each friend:
@@ -130,7 +116,7 @@ def SSMatchAll(friendDirectories, indexDefinition, displayImages=True):
                 subjectImgBinary,subjectImgType=friend.photo.get_binary()
                 
                 #Find the other friend that matches this friend best:
-                best_db_id, best_match_score, best_index, matcher= \
+                best_db_id, percentOfSubjectFeaturesMatched, best_index, matcher= \
                     find_best_match(subjectImgBinary, subjectImgType, friends, 
                                     indexDefinition, fIdsExcluded, matcher)
                 
@@ -150,10 +136,10 @@ def SSMatchAll(friendDirectories, indexDefinition, displayImages=True):
                 confusionMatrixData[dogNameIndex][matchedDogNameIndex]+=1
                 
                 #Print info about this best match:
-                print('      %s:\t%s (%s) => %s (%s):\t%i' %(
+                print('      %s:\t%s (%s) => %s (%s):\t%f' %(
                                str(dogName == matchedDogName),
                                actualDogFile, dogName, matchedDogFile, matchedDogName, 
-                               best_match_score), 
+                               percentOfSubjectFeaturesMatched), 
                             file=sys.stderr)
     
     #Make a pandas array that bundles the dog names and confusion matrix together for display:
