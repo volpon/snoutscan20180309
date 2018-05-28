@@ -18,7 +18,9 @@ import pandas as pd
 
 def SSMatchAll(friendDirectories, indexDefinition, displayImages=True):
     '''
-    This function matches each of the friend images with each of the other friend images and 
+    This function matches each of the friend images of specific dogs with each of the other 
+    friend images and outputs a confusion matrix showing how many of each dog was matched with
+    each of the other dogs (many friend images per dog).
     
     
     Inputs:
