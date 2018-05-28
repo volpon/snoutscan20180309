@@ -99,9 +99,7 @@ def SSMatchAll(friendDirectories, indexDefinition, displayImages=True):
     
     #Initialize our matcher as None so we build it on the first use:
     matcher=None
-    
-    import pdb; pdb.set_trace();
-        
+            
     with TT('Matching'):
         #For each friend:
         for friendNum in range(numFriends):

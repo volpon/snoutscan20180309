@@ -1,3 +1,4 @@
+from main.api.matches_refine import matches_refine
 import numpy as np
 import pickle
 import base64
@@ -134,8 +135,6 @@ class ImageFeatures(object):
         self.keypoints, self.descriptors= descriptorExtractor.compute(imgGrayResized, 
                                                                       self.keypoints)
         
-        
-                
         return (self.keypoints, self.descriptors)
 
 
@@ -222,14 +221,22 @@ class ImageMatcher(object):
         This function matches the given subject subjectImg with a given friend subjectImg based on 
         the features in friendFeatureDescriptors.
         
-        Inputs:
+        Inputs:          
             subjectFeatureDescriptors
-                                    - The feature descriptors for the subject subjectImg. 
+                                    - A collection of numFeatures feature descriptors for the 
+                                      subject subjectImg. 
+                                      
             excludeFeatureMask      - A binary mask of the same length as the number of friend 
                                       features that we have saying if each feature should be 
                                       excluded from being considered a match.
-
-        @return percent
+                                      
+        Outputs:
+            matchedQueryTrainIds    - A numMatches x 2 np array of featureIds, where each row=(a,b)
+                                      shows that the a_th feature of the subject image matched the
+                                      b_th feature in the array of friend features.
+            matchDist               - A np vector of length numMatches specifying the distance 
+                                      metric fort each match.
+            
         '''
         
         #How many of the best friend features to search for in order to get 2 that are not excluded
@@ -303,11 +310,6 @@ class ImageMatcher(object):
         print('      Found %i good_matches w/ subjectFeatureIds:\n      ' % len(matchDistList), 
               matchedQueryTrainIds[:,0], file=sys.stderr);
             
-        ##TODO:  Further filter this list of potential metches by applying geometric constraints 
-        # using homogrphy estimation:
-        #https://docs.opencv.org/3.4/d9/d0c/group__calib3d.html#ga4abc2ece9fab9398f2e560d53c8c9780
-              
-              
         return (matchedQueryTrainIds, matchDist)
 
 class MatchResult(object):
@@ -322,7 +324,6 @@ class MatchResult(object):
     def saveImage(self, path):
 
         cv2.imwrite(path, self.image)
-
 
 def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_excluded=None,
                       index_definition=None, matcher=None):
@@ -369,6 +370,9 @@ def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_
     #Make our features and keypoints.
     subjectFeatureKeypoints, subjectFeatureDescriptorsBytes=subjectFeatures.from_image(image_data)
     
+    #Extract our subject feature coordinates from the keypoints:
+    subjectKPPos=np.array([ (kp.pt[0], kp.pt[1]) for kp in subjectFeatureKeypoints])
+    
     #Unpack the bytes now that we're about to use them:
     subjectFeatureDescriptors=np.unpackbits(subjectFeatureDescriptorsBytes,axis=1).astype('float32')
     
@@ -379,6 +383,9 @@ def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_
     
     #The descriptors for this feature:
     friendDescriptorsList=[]
+    
+    #This array holds the keypoint positions of the friends (x,y):
+    friendKPPosList=[]
         
     #####
     ##Loop through all of our friends and combine the feature data:
@@ -413,10 +420,14 @@ def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_
         
         #Add our descriptors to the list:
         friendDescriptorsList.append(friendFeatureDescriptors)
+        
+        friendKPPosList.append([(kp.pt[0], kp.pt[1]) for kp in friendFeatureKeypoints])
                 
     #Combine the lists together to make one array for the whole list of friends:
     friendIds=np.concatenate(friendIdsList)
     friendDescriptorsBytes=np.concatenate(friendDescriptorsList)
+    friendKPPos=np.vstack(friendKPPosList)
+    
     #Convert f_ids_excluded to featureIdsExcluded:
     
     #Initialize a binary mask saying if we should exclude this feature:
@@ -430,7 +441,8 @@ def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_
     friendDescriptors=np.unpackbits(friendDescriptorsBytes, axis=1).astype('float32')
     
     assert len(friendIds) == len(friendDescriptors) \
-           and len(friendIds) == friendDescriptors.shape[0], 'These should be the same.'
+            and len(friendDescriptors) == friendKPPos.shape[0] \
+            and len(friendIds) == friendDescriptors.shape[0], 'These should be the same.'
     
 
     #If we don't already have a matcher, make one from the friendDescriptors:
@@ -440,10 +452,16 @@ def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_
 
     #Using our subject-image based matcher, calculate how well it matches with this specific 
     # friend image.
-    (matchedQueryTrainIds, matchDist) = matcher.match(subjectFeatureDescriptors, excludeFeatureMask)
+    (matchedQueryTrainIds, matchDist) = matcher.match(subjectFeatureDescriptors, 
+                                                      excludeFeatureMask)
     
-    ##TODO:  convert matchedQueryTrainIds to which friends actually matched and how good the 
-    #match was, best_indices, best_scores, sorted by score.
+    #Further filter these matches using our geometric constraints:
+    (matchedQueryTrainIds, matchDist)=matches_refine( subjectKPPos,
+                                                      friendKPPos, 
+                                                      matchedQueryTrainIds, 
+                                                      matchDist)
+    
+    
     
     #These are the friendIds of the best match feature of each subject feature:
     friendIdsOfBestMatch=friendIds[matchedQueryTrainIds[:,1]]
