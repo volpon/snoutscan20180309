@@ -306,10 +306,7 @@ class ImageMatcher(object):
             #Just convert the lists to np arrays:
             matchedQueryTrainIds=np.array(matchedQueryTrainIdList)
             matchDist=np.array(matchDistList)
-            
-        print('      Found %i good_matches w/ subjectFeatureIds:\n      ' % len(matchDistList), 
-              matchedQueryTrainIds[:,0], file=sys.stderr);
-            
+                        
         return (matchedQueryTrainIds, matchDist)
 
 class MatchResult(object):
@@ -455,15 +452,18 @@ def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_
     (matchedQueryTrainIds, matchDist) = matcher.match(subjectFeatureDescriptors, 
                                                       excludeFeatureMask)
     
+    print('      Found %i matches based on ratio test.' % len(matchDist), file=sys.stderr)
+    
     #Further filter these matches using our geometric constraints:
     (matchedQueryTrainIds, matchDist)=matches_refine( subjectKPPos,
                                                       friendKPPos, 
+                                                      friendIds,
                                                       matchedQueryTrainIds, 
-                                                      matchDist)
+                                                      matchDist)  
+
+    print('      Filtered to %i matches using RANSAC.' % len(matchDist), file=sys.stderr)
     
-    
-    
-    #These are the friendIds of the best match feature of each subject feature:
+    #These are the friendIds of the best-matched feature of each subject feature:
     friendIdsOfBestMatch=friendIds[matchedQueryTrainIds[:,1]]
     
     #This is the unique set of friendIds represented in this set, and the number of features 
