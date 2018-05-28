@@ -131,9 +131,11 @@ class ImageFeatures(object):
         descriptorExtractor = cv2.ORB_create(numFeaturesMax, scaleFactor, nLevels,
                                              edgeThreshold, 0, 2,  HARRIS_SCORE, patchSize)
         
-        self.keypoints = detector.detect(imgGrayResized, None)
+        self.keypoints = descriptorExtractor.detect(imgGrayResized, None)
         self.keypoints, self.descriptors= descriptorExtractor.compute(imgGrayResized, 
                                                                       self.keypoints)
+
+        import pdb; pdb.set_trace()
         
         return (self.keypoints, self.descriptors)
 
@@ -487,7 +489,7 @@ def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_
         
     #Convert to a percent:
     pctSubjectFeaturesMatchedToFriend=numMatchesSorted/numSubjectFeatures
-       
+    
     #Make sure we only return at most max_best_friends results:
     friendIdsSorted=friendIdsSorted[:max_best_friends].tolist()
     pctSubjectFeaturesMatchedToFriend=pctSubjectFeaturesMatchedToFriend[:max_best_friends].tolist()
