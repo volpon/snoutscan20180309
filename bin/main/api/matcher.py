@@ -1,4 +1,4 @@
-from GlobalConstants import g as g_default
+from main.api.GlobalConstants import g as g_default
 from main.api.matches_refine import matches_refine
 import numpy as np
 import pickle
