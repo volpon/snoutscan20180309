@@ -27,6 +27,14 @@ gc=[]
 gc.append(('colorNotGrayscale', hp.choice, ((cv2.IMREAD_GRAYSCALE, cv2.IMREAD_COLOR),), 
            cv2.IMREAD_GRAYSCALE, 1))
 
+#The height that we convert all of the snout images to before we start the rest of the process:
+#We keep the aspect ratio the same.
+gc.append(('imgHeight', hp.quniform, (500,4096,1), 1000, 1))
+
+#How many features to create for each image, maximum:
+gc.append(('numFeaturesMax', hp.quniform, (500,20000,1), 8000, 1))
+
+
 
 
 #######################

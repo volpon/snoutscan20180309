@@ -1,3 +1,6 @@
+#Add this directory to our path so we can find things in it easily:
+import sys,os; sys.path.append(os.path.dirname(os.path.realpath(__file__)));
+
 from main.api.auth import jwt_required, current_identity
 from main.api.model import db, Profile, Friend
 from main.api.matcher import find_best_match, find_best_matches
@@ -5,6 +8,7 @@ from main.api.matcher import find_best_match, find_best_matches
 from flask import request, jsonify
 from main import app
 from GlobalConstants import g
+
 
 def decode_input():
 
@@ -114,7 +118,7 @@ def api_profile_friends_get(profile_id: int):
         return jsonify({'error': {'message': 'forbidden'}}), 403
 
     friends = Friend.find_by_profile_id(profile_id)
-
+    
     if friends is None:
         return jsonify({'error': {'message': 'not found'}}), 404
 
@@ -262,6 +266,7 @@ def api_friend_set_photo(friend_id: int):
     image_data = image.get('data', None)
     image_type = image.get('type', None)
 
+
     #print("PUT: ", image_data)
     #print("PUT: image_data size: ", len(image_data))
     
@@ -269,6 +274,11 @@ def api_friend_set_photo(friend_id: int):
 
     #print("PUT: ", image_data)
 
+    #set our global constants manually:
+    friend.g=g
+    
+    import pdb; pdb.set_trace()
+    
     error = friend.set_photo(image_data, image_type)
 
     #print("{}: {}".format(image_type, image_data))

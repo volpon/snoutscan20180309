@@ -1,4 +1,4 @@
-from main.api.GlobalConstants import g as g_default
+from GlobalConstants import g as g_default
 from main.api.matches_refine import matches_refine
 import numpy as np
 import pickle
@@ -85,12 +85,6 @@ class ImageFeatures(object):
                             encoded version of this.
         '''
         
-        #This is the height we resize all images to:
-        imgHeight=int(1000)
-      
-        #How many features to create, maximum:
-        numFeaturesMax=8000
-        
         #How much to decimate iamges between levels
         scaleFactor=1.2
         
@@ -120,14 +114,14 @@ class ImageFeatures(object):
         (origHeight,origWidth, *_)=image.shape
         
         #Get the width we need to get the height we want:
-        imgWidth=int(round(imgHeight*origWidth/origHeight))                        
+        imgWidth=int(round(g.imgHeight*origWidth/origHeight))                        
         
         #Resize so the height is imgHeight.
-        imgResized = cv2.resize(image, (imgWidth,imgHeight),
+        imgResized = cv2.resize(image, (imgWidth,int(g.imgHeight)),
                                     interpolation = cv2.INTER_CUBIC)
         
         # Initiate ORB extractor
-        featureExtractor = cv2.ORB_create(numFeaturesMax, scaleFactor, nLevels,
+        featureExtractor = cv2.ORB_create(int(g.numFeaturesMax), scaleFactor, nLevels,
                                              edgeThreshold, 0, 2,  HARRIS_SCORE, patchSize)
         
         #Detect the keypoints:

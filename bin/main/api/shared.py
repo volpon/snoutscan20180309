@@ -4,7 +4,8 @@ import os
 from os.path import expanduser
 
 homeDir = expanduser("~")
-snoutScanDir=homeDir + '/.snoutScan'
+
+snoutScanDir=os.path.join(os.path.dirname(os.path.realpath(__file__)),"..", '..', 'params');
 
 try:
     #Make sure the directory exists:
