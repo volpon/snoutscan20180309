@@ -2,9 +2,10 @@
 import sys,os; sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                             "helperFiles"));
 
-#Also add up a diretory:
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),".."));
-
+#Also add up a diretory so it can find main.
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),".."));                                            
+                                            
+import HyperparameterSearch
 from main.api.matcher import find_best_match
 from collections import OrderedDict
 from FriendMake import FriendMake
@@ -162,9 +163,14 @@ if __name__=="__main__":
     pd.set_option('display.max_columns', 5000)
     pd.set_option('display.width', 10000)
     
-    with TT('Running SSMatchAll'):
-        confusionMatrix=SSMatchAll(args.friendDirectories, args.indexDefinition, False, )
-        
+    if (args.optimizeHyperparameters):
+        with TT('Running HyperParmeterSearch'):
+            HyperparameterSearch.HyperparameterSearch(args.friendDirectories, args.indexDefinition)
+        sys.exit()
+    else:
+        with TT('Running SSMatchAll'):
+            confusionMatrix=SSMatchAll(args.friendDirectories, args.indexDefinition, False, )
+            
     numDogNames,_=confusionMatrix.shape
     
     print('Confusion Matrix:')

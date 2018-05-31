@@ -1,71 +1,136 @@
-from namedlist import namedlist
+from hyperopt import hp
+from GCExtract import GCExtract
 
-##Define our global constants as a named list. (https://pypi.python.org/pypi/namedlist)
+#This file keeps global constants that we might want to optimize over in a hyperparamter search.
 
-## WARNING: Constants are now set at the bottom of this file, not here:
-GCNamedList=namedlist('GCNamedList', 
-                      [('canonicalSampleRate', 6471),
-                       ('featuresNumSamplesInFFTLog2', 8),
-                       ('featuresSampleOverlapRatio', 0.25),
-                       ('featuresFreqResizeAmount', 0.88),      # How much to shrink the spectrogram freq.
-                       ('featuresWindowSize', 5),               # Rob says his humans need 500ms or more for most noises.
-                       ('fftFeatFreqRangeMin', 100),            # min freq for FeaturesFFTExtract.
-                       ('fftFeatFreqRangeMax', 2000),           # max freq for FeaturesFFTExtract.
-                       ('neuralNetNumNeurons', 1),              # The number of neurons in the hidden layer.
-                       ('neuralNetActivationFn', 1),            # The activation function (0=logistic, 1=tanh, 2=relu)
-                       ('neuralNetOptAlg', 3),                  # The optimization alg. for backprop. {0:'l-bfgs', 1:'sgd', 2:'adam'}
-                       ('neuralNetRegularzation', .0001),       # L2 pentalty - a regularization term
-                       ('neuralNetInitLearningRatePow', .001),  # The initial learning rate is .1^pow
-                       ('neuralNetLearningRateSched', 1),       # The learning rate schedule {0:'constant', 1: 'invscaling'}
-                       ('neuralNetTol', .0001),                 # Tolerance of error considered "good enough"
-                       ('neuralNetSdgMomentum', .9),            # Momentum constant for sgd algorithm.
-                       ('neuralNetSdgNestervosMomentum', 1),    # Whether or not to use nestervos momentum for sgd algorithm.
-                       ('neuralNetValidationFraction', .1),     # Proportion of training data to use as validation for early stoping
-                       ('neuralNetAdamBeta1', .9),              # Exponential decay rate for estimates of first moment vector in adam
-                       ('neuralNetAdamBeta2', .999),            # Exponential decay rate for estimates of second moment vector in adam
-                       ('classFreqFairTol', 1.1),               # Tolerance around class frequency equality. 1=completely equal class freq.
-                       ('samplesOutInRatio', .2),               # What proportion of the samples to keep when balancing
-                       ])
-                      
-#Define the domain (min and max that makes sense) of each varible:
-gcDomain=GCNamedList([5000, 12000],  #canonicalSampleRate
-                     [6, 12],        #featuresNumSamplesInFFTLog2 (Corresponds to 64 - 2048)
-                     [.1, .9],       #featuresSampleOverlapRatio
-                     [.2, 1],        #featuresFreqResizeAmount
-                     [1, 20],        #featuresWindowSize (will be rounded to the nearest odd number)
-                     [0, 200],       #fftFeatFreqRangeMin
-                     [400, 3000],    #fftFeatFreqRangeMax
-                     [1, 100],       #neuralNetNumNeurons
-                     [0, 2.999],     #neuralNetActivationFn
-                     [0, 2.999],     #neuralNetOptAlg
-                     [0, .002],      #neuralNetRegularzation
-                     [1, 8],         #neuralNetInitLearningRatePow
-                     [0, 1.999],     #neuralNetLearningRateSched
-                     [1e-5, 1e-1],   #neuralNetTol
-                     [.5, .95],      #neuralNetSdgMomentum
-                     [0, 1.999],     #neuralNetSdgNestervosMomentum
-                     [.05, .5],      #neuralNetValidationFraction
-                     [.8, .99],      #neuralNetAdamBeta1
-                     [.9, .9999],    #neuralNetAdamBeta2
-                     [1, 3],         #classFreqFairTol
-                     [.2, 1],        #samplesOutInRatio
-                     )
 
-#g stands for "global constants"
-##Instantiate the list, with defaults.
-g=GCNamedList();
+# Documentation for hyperopt and the distributions can be found here:
+#  https://github.com/hyperopt/hyperopt/wiki/FMin
 
-def SetConstants(constantList):
-  '''
-  This function is used to overwrite the constants from a normal list.
-  Used in the Metric Optimization Engine to set parameters for the system.
-  '''
-  global g  
-  #Update our global variable with the data from constantList:
-  g=GCNamedList(*constantList);
-  
-#Update list with our best values so far:
-SetConstants([5216.19118995, 9.6154968296, 0.378215193787, 0.616429340287, 4.3198546379, 29.1015969153, 
-               1801.65920047, 41.8472053456, 2.36744662227, 1.66366031535, 0.000900124980205, 2.19190591221, 
-               0.896389900254, 0.0548655339533, 0.7491208793, 1.11510782413, 0.293042701036, 0.950803541085, 
-               0.977055735765, 2.66233820729, 0.899952706712]);
+#This is a list of global constants.  We'll convert them to g later.
+#Each global constant is a tuple of:
+# (parameterName, distributionFn, distributionFnArgsExceptForLabel, fixedValue, isFixed=0)
+gc=[]
+
+########
+##  Time bin definitions for the historical information.
+
+#This is the number of seconds between time bins in the past:
+gc.append(('pastTimeBinsIncrementSec', hp.uniform, (1*60*60, 30*24*60*60), 60*60*24, 1))
+
+#How many time bins of past information to use, maximum.  If we have less than that, then less will 
+# be used:
+##NOTE:  This is the only parameter I know of that significantly effects what data is used in 
+# the testing step.  It's a source of leak from parameters to the testing result.
+# When this varries, some of the data in the testing set for some runs is actually in the 
+# training set for other runs.  I think the way to handle this is to do a couple optimizations 
+# where this can varry to get the right number range, and then to fix it and make sure that the 
+# final optimization run you do has this fixed, so we don't ever let testing data into our 
+# training.
+gc.append(('pastTimeNumBinsMax', hp.quniform, (1, 10*365, 1), 5*365, 0))
+
+#####
+#  Time bin definitions for future information.  This probably should stay fixed since it has 
+# more to do with our investing strategy than anything else.
+
+#This is the number of seconds between time bins in the future:
+#Putting this in variable mode seems to cause a lot of NaN problems, so I recommend you fix it:
+gc.append(('futureTimePointsIncrementSec', hp.uniform, (1*60*60, 30*24*60*60), 60*60*24, 1))
+
+#Our geometric progression factor for the future time points:
+gc.append(('futureTimePointsMultiplier', hp.uniform, (1, 10), 2, 1))
+
+#How many time bins of future information to try and predict:
+gc.append(('futureTimePointsNum', hp.quniform, (1, 5, 1), 2, 1))
+
+######
+
+#Number of samples per time bin to use:
+##TODO: Increase the max once we have a lot of data.
+gc.append(('samplesPerTimeBin', hp.quniform, (1, 50, 1), 1, 1))
+
+#What amount of the shaped data in each timestep to enforce to be text and not variable data,
+# assuming we have at least one of each we can replicate:
+gc.append(('samplesTextRatio', hp.uniform, (.1, .9), .6, 0))
+
+#The number of feature columns we use to encode the user the information is from:
+gc.append(('numFeaturesForUser', hp.quniform, (4, 64, 1), 4, 1))
+
+######
+
+#Says if we should make our variable data stationary before training the neural network with it:
+gc.append(('variablesMakeStationary', hp.randint, (1,),  0, 0))
+            
+#What spacy language model we should use:
+#Right now we just have one, but we could install several and compare their performance:
+gc.append(('spacyLanguageModel', hp.choice, (('en',),), 'en', 1))
+
+#The maximum n-gram to use for our terms.  n-grams up to this are used as well:
+gc.append(('textNgramMax', hp.quniform, (1, 2, 1), 2, 0))
+
+#This is the maximum number of terms that can be put into termsThatMatter to help predict 
+#each output variable.  Must be >= 2 to work because the actual number is floor(num/2)*2
+gc.append(('numTermsPerOutputVarMax', hp.quniform, (2, 256, 1), 4, 0))
+
+##########
+# For data reshaping:
+
+#This is how many time bins are in each window:
+#TODO: Increase the max once we have a lot of data.
+gc.append(('windowSizeTimeBins', hp.quniform, (2, 25, 1), 10, 0))
+
+#This is how many time bins we increment between different windows.  0 would give us the same 
+# window over and over again: (integer: 1-30)
+gc.append(('windowIncrementTimeBins', hp.quniform, (1, 5, 1), 1, 0))
+
+############
+
+##########
+## Building the neural network:
+#
+
+#Says if we should use LSTM as a cell or GRU:
+gc.append(('useLSTMNotGRU', hp.randint, (1,), 1, 0))
+
+
+##TODO:  When we have more data, increase this max as well:
+#How many meta layers to use (may have multiple layers in it) that are shared by all of the outputs:
+gc.append(('numMetaLayersShared', hp.quniform, (1, 5, 1), 3, 0 ))
+
+#How many cells that the first layer should have:
+gc.append(('numCellsStart', hp.quniform, (1, 100, 1 ), 5, 0 ))
+
+# How many fewer cells to have in each metaLayer: (.2-1)
+gc.append(('cellReductionFactor', hp.uniform, (.2, .9), .5, 0))
+
+gc.append(('rnnActivation', hp.choice, (('tanh', 'relu'),), 'tanh', 0)) 
+
+# Fraction of the units to drop for the linear transformation of the inputs.
+gc.append(('rnnDropout', hp.uniform, (0, .3), 0, 0))
+
+# Fraction of the units to drop for the linear transformation of the recurrent state:
+gc.append(('rnnRecurrantDroput', hp.uniform, (0, .3), 0, 0))
+
+#Which implementation to of the RNN cell calculations.  This shouldn't affect the answer but 
+# should affect the speed dependong on the hardware.  Either 1 or 2.
+gc.append(('rnnImplementation', hp.choice, ((1,2),), 1, 0))
+
+#How many samples to use in each training batch:
+gc.append(('fitBatchSize', hp.quniform, (1, 2048, 1 ), 2048, 0))
+
+#How many consecutive epochs without any improvement in val_loss we allow before we stop training:
+#20-30 seemed like a good value.  We might be missing out on some accuracy, so let's test more.
+gc.append(('fitEarlyStoppingPatience', hp.quniform, (20, 500, 1 ), 500, 0))
+
+#The maximum number of epochs to use when training.  We have early-stopping enabled so hopefully
+#we won't reach this very often.
+gc.append(('fitEpochs', hp.quniform, (1, 500, 1 ), 1, 0))
+
+#Which optimizer to use:
+optimizerChoices=('RMSProp', 'SGD', 'Adagrad', 'Adadelta', 'Adam', 'Adamax', 'Nadam' )
+gc.append(('optimizer', hp.choice, (optimizerChoices,), optimizerChoices[0], 0))
+
+#######################
+
+#Produce g and searchSpace and other variables we will be importing from other files:
+(g, searchVarNamesInOrder, fixedParamDict, searchSpace)=GCExtract(gc)

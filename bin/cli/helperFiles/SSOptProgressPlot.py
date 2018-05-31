@@ -6,11 +6,11 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 from matplotlib.patches import Rectangle
-from shared import crystalBallDir
+from shared import snoutScanDir
 
-def CBOptProgressPlot(compositeCosts, costsFromAccuracy, costsFromTime):
+def SSOptProgressPlot(compositeCosts, costsFromAccuracy, costsFromTime):
     '''
-    This function plots our progress through cbOptimize.
+    This function plots our progress through SSOptimize.
     
     Inputs:
         compositeCosts                  
@@ -20,11 +20,11 @@ def CBOptProgressPlot(compositeCosts, costsFromAccuracy, costsFromTime):
     
     try:
         #Check to see if we've made a figure yet.  If we haven't, make one.
-        if not hasattr(CBOptProgressPlot, 'figure'):
-            CBOptProgressPlot.figure=plt.figure()
+        if not hasattr(SSOptProgressPlot, 'figure'):
+            SSOptProgressPlot.figure=plt.figure()
 
         #Make sure the right figure is activated:
-        fig=plt.figure(CBOptProgressPlot.figure.number)
+        fig=plt.figure(SSOptProgressPlot.figure.number)
         
         costsFromAccuracyColor='yellow'
         costsFromTimeColor='green'
@@ -46,7 +46,7 @@ def CBOptProgressPlot(compositeCosts, costsFromAccuracy, costsFromTime):
         #plt.axis(ymax=np.percentile(compositeCosts, 95), ymin=0)
 
         #Get the file name to save to:
-        progressPlotFile=os.path.join(crystalBallDir, 'progress.png')
+        progressPlotFile=os.path.join(snoutScanDir, 'progress.png')
     
         #Save the figure rather than displaying it:
         plt.savefig(progressPlotFile, dpi=150)

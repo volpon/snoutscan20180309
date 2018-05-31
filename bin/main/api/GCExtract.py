@@ -1,0 +1,90 @@
+from shared import savedParametersFile
+from StringIndent import StringIndent
+from Namespace import Namespace        
+from pprint import pformat
+from TicToc import TT
+import numpy as np
+import pickle
+import os
+
+
+
+def GCExtract(gc):
+    '''
+    This function takes the gc list of tuples and creates g and our searchSpace.
+    
+    Inputs:
+        gc                  - a list of tuples.  Each tuple has these elements:
+            parameterName       - The parameter name
+            distributionFn      - The function from hyperopt.hp that specifies the distribution.
+            distributionFnArgs  - The arguments to that function, in a tuple, skipping the label.
+            fixedValue          - The fixed value to use if isFixed=1:
+            isFixed=0 (optional)- If we should fix this variable to the fixedValue instead of 
+                                  searching over it.  default is 0 if it's not there.
+                                  
+    Outputs:
+        g                       - a Namespace() object representing name.value pairs that are 
+                                  loaded or created from the "fixedValue" if no saved values exist 
+                                  yet.
+                                  
+        searchVarNamesInOrder   - This is a list of parameterNames that are not fixed, in the order
+                                  in which they're defined in the search space.
+                                  
+        fixedParamDict          - This is a dictionary of variables that are fixed (names:values).
+                                  
+        searchSpace             - a valid hyperopt search space for each non-fixed parameter, 
+                                  as defined by: https://github.com/hyperopt/hyperopt/wiki/FMin
+    '''
+    #Note: g stands for "global constants".  Elements can be retrieved with g.<name>
+    
+    #If a saved parameters file exists:
+    if os.access(savedParametersFile, os.R_OK):
+        
+            #Load it.
+        g=pickle.load(open(savedParametersFile, 'rb'))
+            
+        with TT('Saved parameters found: \n' + StringIndent(pformat(g.__dict__),2)):
+            pass
+    else:
+        with TT('No saved parameters found'):
+            #Make g from the fixedValues (just a backup.)
+            
+            #the dictionary is :{parameterName: fixedValue, ...}
+            gcAsDict={ c[0] : c[3] for c in gc }
+
+            # Make g from gc's fixedValues:
+            g=Namespace(gcAsDict)
+
+    # Make the searchSpace from gc:
+    searchSpace=[]
+    
+    searchVarNamesInOrder=[]
+    
+    fixedParamDict=dict()
+    
+    #For each tuple in our gc list:
+    for c in gc:
+
+        #Distribute our values:
+        if len(c)==5:
+            (name, distFn, distFnArgs, fixedValue, isFixed) = c
+        elif len(c)==4:
+            (name, distFn, distFnArgs, fixedValue) = c
+            isFixed=0
+        else:
+            assert 0, 'Incorrect number of values in a gc element.'
+
+        if isFixed:
+            #Update our fixedParamDict:
+            fixedParamDict.update({name: fixedValue})
+        else:
+            #Add it to the search space if it's not a "fixed value'.
+            
+            #Add this to a list we use to keep track of our order:
+            searchVarNamesInOrder.append(name)
+            
+            #Add the corresponding distFn to our searchSpace:
+            searchSpace.append(distFn(name, *distFnArgs))
+        
+    return (g, searchVarNamesInOrder, fixedParamDict, searchSpace)
+

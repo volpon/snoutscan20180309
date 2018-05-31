@@ -1,10 +1,11 @@
 from GlobalConstants import searchVarNamesInOrder, fixedParamDict
-from CBOptProgressPlot import CBOptProgressPlot
+from SSOptProgressPlot import SSOptProgressPlot
 from shared import savedParametersFile
 from StringIndent import StringIndent
-from crystalBall import CrystalBall
+from snoutScan import SSMatchAll
 from Namespace import Namespace
 from pprint import pformat
+from random import random
 from TicToc import TT
 from math import log
 import traceback
@@ -12,28 +13,19 @@ import pickle
 import time
 import sys
 
-def CBWrapper(dataFiles, predictVariables, modelFile, modelSidekicksFile, numJobs, parameters):
+def SSWrapper(friendDirectories, indexDefinition, parameters):
     '''
-    This function wraps CrystalBall(), and returns a cost that takes into account how much time
-    was spent training.  Models of equal quality that take less time are lower-cost.
+    This function wraps SSMatchAll(), and returns a cost that takes into account how much time
+    was spent training.  
     
      Inputs:
-        dataFiles                   - a list of paths (strings) to input data files to process
-        
-        predictVariables            - a list of variable names from the input files
-                                      to train to predict.  If empty, then not in 
-                                      training mode.
-                                      
-        modelFile                   - The model file to read from or write to.
-        
-        modelSidekicksFile          - The file to store additional information corresponding with 
-                                      the model file.  Ideally this information would go to the
-                                      same file as the model, but keras limits how models are
-                                      saved a bit.
-                                      
-        numJobs                     - How many concurrent jobs (threads or processes)
-                                      to start.
-    
+        friendDirectories      - A list of strings giving paths to the directories that hold our
+                                images of each dog we want to analyze.  The directory names
+                                are the names of the dogs.
+                                
+        indexDefinition        - A string representing the faiss index setup to use, or ''
+                                 or None to represent "use the default"
+                                 
         parameters                  - a Tuple of the parameter values we're currently using.
         
     Outputs:
@@ -41,7 +33,10 @@ def CBWrapper(dataFiles, predictVariables, modelFile, modelSidekicksFile, numJob
                                       time the model required to train (lower is better).
     '''
 
-    with TT('Running CBWrapper'):
+    #Testing only:
+    return random()
+
+    with TT('Running SSWrapper'):
         timeImportantance=0
         errorIndentLevel=6
         paramIndentLevel=2
@@ -88,7 +83,7 @@ def CBWrapper(dataFiles, predictVariables, modelFile, modelSidekicksFile, numJob
             try: 
                 #Call CrystalBall, and get the model and cost back.
                 (model, modelSidekick, validationLoss, testing3D)=\
-                    CrystalBall(dataFiles, predictVariables, modelFile, modelSidekicksFile, 
+                    SSMatchAll(dataFiles, predictVariables, modelFile, modelSidekicksFile, 
                                 numJobs, g, False)
             except Exception as e:
                 print(StringIndent('Error:  '+ str(e),errorIndentLevel), file=sys.stderr)
@@ -108,42 +103,38 @@ def CBWrapper(dataFiles, predictVariables, modelFile, modelSidekicksFile, numJob
         #Combine the cost returned by crystalBall and the elapsed time to make a new cost.
         compositeCost=costFromAccuracy+costFromTime
         
-        print('CBWrapper: compositeCost: %f\tcostFromAccuracy: %f\tcostFromTime: %f' % \
+        print('SSWrapper: compositeCost: %f\tcostFromAccuracy: %f\tcostFromTime: %f' % \
             (compositeCost, costFromAccuracy, costFromTime))
 
         #If that new cost is the lowest we've seen so far, save the model in memory for cbOptimize to 
         #use when we're done:
-        if compositeCost < CBWrapper.bestCompositeCost:
+        if compositeCost < SSWrapper.bestCompositeCost:
             with TT('Best model so far.  Saving'):
-                CBWrapper.bestCompositeCost=compositeCost
-                CBWrapper.bestModel=model
-                CBWrapper.bestG=g
-                CBWrapper.bestModelSidekicks=modelSidekick
-                CBWrapper.bestTesting3D=testing3D
+                SSWrapper.bestCompositeCost=compositeCost
+                SSWrapper.bestG=g
                 
                 #Save our best g to savedParametersFile so if we stop early we don't lose everything.
-                pickle.dump(CBWrapper.bestG, open(savedParametersFile, 'wb'))
+                pickle.dump(SSWrapper.bestG, open(savedParametersFile, 'wb'))
                 
                 #We could also save the model, but that might take a while (they can be huge).
                         
         #Save some data for plotting:
-        CBWrapper.compositeCosts.append(compositeCost)
-        CBWrapper.costsFromAccuracy.append(costFromAccuracy)
-        CBWrapper.costsFromTime.append(costFromTime)
+        SSWrapper.compositeCosts.append(compositeCost)
+        SSWrapper.costsFromAccuracy.append(costFromAccuracy)
+        SSWrapper.costsFromTime.append(costFromTime)
        
         #Plot them:
-        CBOptProgressPlot(CBWrapper.compositeCosts, 
-                          CBWrapper.costsFromAccuracy, 
-                          CBWrapper.costsFromTime)
+        SSOptProgressPlot(SSWrapper.compositeCosts, 
+                          SSWrapper.costsFromAccuracy, 
+                          SSWrapper.costsFromTime)
                     
     return compositeCost
 
 #Some variables we'll be using to keep track of the best:
-CBWrapper.bestCompositeCost=float('Inf')
-#We check to see if this is None as a way if checking if we've run at least once.
-CBWrapper.bestModel=None
+SSWrapper.bestCompositeCost=float('Inf')
+SSWrapper.betG=None
 
 #Some data for plotting as we go:
-CBWrapper.compositeCosts=[]
-CBWrapper.costsFromAccuracy=[]
-CBWrapper.costsFromTime=[]
+SSWrapper.compositeCosts=[]
+SSWrapper.costsFromAccuracy=[]
+SSWrapper.costsFromTime=[]
