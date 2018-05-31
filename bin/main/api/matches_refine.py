@@ -30,7 +30,7 @@ def matches_refine(subjectKPPos, friendKPPos, friendIds, matchedQueryTrainIds, m
     '''
     
     #Maximum allowed reprojection error to treat a point pair as an inlier:
-    ransacReprojeThreshold=10
+    ransacReprojectThreshold=10
     
     #Maximum number of RANSAC iterations:
     ransacMaxIters=2000
@@ -69,7 +69,7 @@ def matches_refine(subjectKPPos, friendKPPos, friendIds, matchedQueryTrainIds, m
         #Find the inlier set using RANSAC:
         #https://docs.opencv.org/3.4.1/d9/d0c/group__calib3d.html#ga4abc2ece9fab9398f2e560d53c8c9780
         H, mask=cv2.findHomography(matchPosForFriend[:,0:2], matchPosForFriend[:,2:4],
-                                  cv2.RANSAC, ransacReprojeThreshold, None, ransacMaxIters, 
+                                  cv2.RANSAC, ransacReprojectThreshold, None, ransacMaxIters, 
                                   ransacConfidence)
         
         #Convert to a boolean mask:

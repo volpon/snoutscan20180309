@@ -98,13 +98,12 @@ class ImageFeatures(object):
         #Should roughly match patchSize.
         edgeThreshold=31
         
-        #THe definition of cv::ORB::HARRIS_SCORE as of v 3.4.0
+        #The definition of cv::ORB::HARRIS_SCORE as of v 3.4.0
         HARRIS_SCORE=0
         
         #The size of the patch to used in each layer to create the ORB descriptor.  This 
         #size on the smaller pyramid layers will cover more of the original image area.
         patchSize=31
-
 
         #Decode the image into binary form:
         if (isinstance(imageFile, str)):
@@ -317,7 +316,6 @@ class MatchResult(object):
         self.image = image
         self.match_score = match_score
 
-
     def saveImage(self, path):
 
         cv2.imwrite(path, self.image)
@@ -499,7 +497,8 @@ def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_
     return bestFriendDbIdsSorted, pctSubjectFeaturesMatchedToFriend, friendIdsSorted, matcher
     
     
-def find_best_match(image_data, image_type, friends, index_definition=None, f_ids_excluded=None, matcher=None):
+def find_best_match(image_data, image_type, friends, index_definition=None, f_ids_excluded=None, 
+                    matcher=None):
     '''
     This function finds the best match for image_data among a collection of friends, where
     each friend represents a photo of a dog, with accompanying metadata.
