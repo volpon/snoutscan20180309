@@ -18,31 +18,33 @@ import os
 #to that benchmark
 import faiss
 
-def image_from_base64(data, type = None):
+def image_from_base64(data, g, type = None):
     '''
     This function takes base64 encoded version of the binary contents of an image file, converts
     it to binary, and reads the image file into a numpy array representing the image.
     '''
-    return image_from_binary(base64.b64decode(data), type)
+    return image_from_binary(base64.b64decode(data), g, type)
 
-def image_from_binary(data, type = None):
+def image_from_binary(data, g, type = None):
     '''
     This function reads the data from an image file and loads it into a grayscale numpy array
     representing the image.
     '''
     data = np.array(bytearray(data), dtype=np.uint8)
-    return cv2.imdecode(data, cv2.IMREAD_GRAYSCALE)
+    return cv2.imdecode(data, g.colorNotGrayscale)
 
 
 class ImageFeatures(object):
+    g=None
 
-    def __init__(self, features = None):
+    def __init__(self, g, features = None):
         if isinstance(features, bytes):
             self.decode(features)
         else:
             self.descriptors = None
             self.keypoints = None
-        pass
+            
+        self.g=g
 
 
     def _keypoints_package(self, keypoints):
@@ -74,7 +76,7 @@ class ImageFeatures(object):
     
     
 
-    def from_image(self, imageFile):
+    def from_image(self, imageFile, g):
         '''
         Creates features with both keypoints and descriptors from the binary data of an image file.
         
@@ -108,20 +110,20 @@ class ImageFeatures(object):
 
         #Decode the image into binary form:
         if (isinstance(imageFile, str)):
-            image = image_from_base64(bytes(imageFile, "utf-8"))
+            image = image_from_base64(bytes(imageFile, "utf-8"), self.g)
         elif (isinstance(imageFile, bytes)):
-            image = image_from_binary(imageFile)
+            image = image_from_binary(imageFile, self.g)
         else:
             assert False, 'Should have image from one of those cases by now.'
         
         #Get our original dimensions:
-        (origHeight,origWidth)=image.shape
+        (origHeight,origWidth, *_)=image.shape
         
         #Get the width we need to get the height we want:
         imgWidth=int(round(imgHeight*origWidth/origHeight))                        
         
         #Resize so the height is imgHeight.
-        imgGrayResized = cv2.resize(image, (imgWidth,imgHeight),
+        imgResized = cv2.resize(image, (imgWidth,imgHeight),
                                     interpolation = cv2.INTER_CUBIC)
         
         # Initiate ORB extractor
@@ -129,11 +131,11 @@ class ImageFeatures(object):
                                              edgeThreshold, 0, 2,  HARRIS_SCORE, patchSize)
         
         #Detect the keypoints:
-        self.keypoints = featureExtractor.detect(imgGrayResized, None)
+        self.keypoints = featureExtractor.detect(imgResized, None)
         
         
         #Create the descriptors around each keypoint:
-        self.keypoints, self.descriptors= featureExtractor.compute(imgGrayResized, 
+        self.keypoints, self.descriptors= featureExtractor.compute(imgResized, 
                                                                       self.keypoints)        
         return (self.keypoints, self.descriptors)
 
@@ -372,10 +374,10 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
 
     assert len(friends) >=1, 'Must have at least one friend to match with.'
 
-    subjectFeatures=ImageFeatures()
+    subjectFeatures=ImageFeatures(g)
     
     #Make our features and keypoints.
-    subjectFeatureKeypoints, subjectFeatureDescriptorsBytes=subjectFeatures.from_image(image_data)
+    subjectFeatureKeypoints, subjectFeatureDescriptorsBytes=subjectFeatures.from_image(image_data,g)
     
     #Extract our subject feature coordinates from the keypoints:
     subjectKPPos=np.array([ (kp.pt[0], kp.pt[1]) for kp in subjectFeatureKeypoints])

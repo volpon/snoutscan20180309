@@ -48,7 +48,7 @@ def HyperparameterSearch(friendDirectories, indexDefinition):
     #Always do this cleanup, even if we run into an error or do a ctrl-C
     finally:
         #If we ran at least once and have a "best model"
-        if SSWrapper.bestCompositeCost != None:
+        if SSWrapper.bestG != None:
             with TT("Saving Best Parameters, which had compositeCost=%f: \n" \
                         % SSWrapper.bestCompositeCost \
                             + StringIndent(pformat(SSWrapper.bestG.__dict__),2)):

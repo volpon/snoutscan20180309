@@ -4,9 +4,7 @@ from main.api.matcher import find_best_match, find_best_matches
 #from flask_jwt import jwt_required
 from flask import request, jsonify
 from main import app
-
-
-
+from GlobalConstants import g
 
 def decode_input():
 
@@ -142,7 +140,7 @@ def api_friend_create(profile_id:int):
     if fields is None:
         return jsonify({'error': {'message': 'invalid input'}}), 400
 
-    friend, error = Friend.create(profile, fields)
+    friend, error = Friend.create(profile, fields, g)
 
     if friend is None:
         return jsonify({'error': error}), error['status']

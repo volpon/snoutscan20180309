@@ -1,5 +1,6 @@
 from hyperopt import hp
 from GCExtract import GCExtract
+import cv2
 
 #This file keeps global constants that we might want to optimize over in a hyperparamter search.
 
@@ -20,6 +21,11 @@ gc=[]
 #gc.append(('pastTimeNumBinsMax', hp.quniform, (1, 10*365, 1), 5*365, 0))
 #gc.append(('variablesMakeStationary', hp.randint, (1,),  0, 0))
 #gc.append(('spacyLanguageModel', hp.choice, (('en',),), 'en', 1))
+
+
+#This flag defines if we load (and thus process) our images as color iamges or grayscale images:
+gc.append(('colorNotGrayscale', hp.choice, ((cv2.IMREAD_GRAYSCALE, cv2.IMREAD_COLOR),), 
+           cv2.IMREAD_GRAYSCALE, 0))
 
 
 

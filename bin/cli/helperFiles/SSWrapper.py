@@ -27,7 +27,7 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
         indexDefinition        - A string representing the faiss index setup to use, or ''
                                  or None to represent "use the default"
                                  
-        parameters                  - a Tuple of the parameter values we're currently using.
+        parameters             - a Tuple of the parameter values we're currently using.
         
     Outputs:
         costIncludingTime           - A number that reflects the accuracy of the model and the 
@@ -36,8 +36,8 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
 
     with TT('Running SSWrapper'):
         timeImportantance=.01
-        errorIndentLevel=6
-        paramIndentLevel=2
+        errorIndentLevel=8
+        paramIndentLevel=8
         
         gAsDict=dict()
         
@@ -72,9 +72,7 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
         startTime=time.time()
         
         ##Use this instead of the stuff below if you want to break for pdb on errors:
-        #confusionMatrix=SSMatchAll(friendDirectories, indexDefinition, g)
-        #percentCorrect=ResultsJudge(confusionMatrix)
-
+        confusionMatrix=SSMatchAll(friendDirectories, indexDefinition, g)
         
         #with TT("Trying parameters: \n" + StringIndent(pformat(gAsDict),paramIndentLevel)):
         with TT("Running a benchmark"):
@@ -134,7 +132,7 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
 
 #Some variables we'll be using to keep track of the best:
 SSWrapper.bestCompositeCost=float('Inf')
-SSWrapper.betG=None
+SSWrapper.bestG=None
 
 #Some data for plotting as we go:
 SSWrapper.compositeCosts=[]

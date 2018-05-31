@@ -7,6 +7,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),".."));
                                             
 import HyperparameterSearch
 from main.api.matcher import find_best_match
+from GlobalConstants import g as g_default
 from ResultsJudge import ResultsJudge
 from GlobalConstants import g
 from collections import OrderedDict
@@ -18,6 +19,7 @@ import sys
 import cv2
 import os
 import pandas as pd
+
 
 def SSMatchAll(friendDirectories, indexDefinition, g=None, displayImages=True):
     '''
@@ -51,6 +53,10 @@ def SSMatchAll(friendDirectories, indexDefinition, g=None, displayImages=True):
     #We only use the keys, not the values.  This is essentially an OrderedSet
     dogNamesOD=OrderedDict()
     
+    #If we don't have a g.  Load the defualts from our best optimization run so far:
+    if g is None:
+        g=g_default
+    
     ###########
     # Load our images, as one friend per image:
     ###########
@@ -81,7 +87,7 @@ def SSMatchAll(friendDirectories, indexDefinition, g=None, displayImages=True):
                             imgFile=imageFileHandle.read()
                         
                         #Create a Friend object from it with the dog name connected to it.
-                        friend=FriendMake(dogName, imgFilePath, imgFile)
+                        friend=FriendMake(dogName, imgFilePath, imgFile, g)
                         
                         #Add it to a list of friends.
                         friends.append(friend)
