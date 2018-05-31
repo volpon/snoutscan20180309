@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-def matches_refine(subjectKPPos, friendKPPos, friendIds, matchedQueryTrainIds, matchDist):
+def matches_refine(subjectKPPos, friendKPPos, friendIds, matchedQueryTrainIds, matchDist, g):
     '''
     This function refines a set of matches to keep only the ones that are geomentrically consistent.
    
@@ -21,6 +21,9 @@ def matches_refine(subjectKPPos, friendKPPos, friendIds, matchedQueryTrainIds, m
                                   
         matchDist               - A np vector of length numMatches specifying the distance 
                                   metric fort each match.
+                                  
+        g                       - Our global constants.
+
                                   
     Outputs:
         newMatchedQueryTrainIds    - A subset of the rows of matchedQueryTrainIds, showing only the 

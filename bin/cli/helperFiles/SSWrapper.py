@@ -1,6 +1,7 @@
 from GlobalConstants import searchVarNamesInOrder, fixedParamDict
 from SSOptProgressPlot import SSOptProgressPlot
 from shared import savedParametersFile
+from ResultsJudge import ResultsJudge
 from StringIndent import StringIndent
 from snoutScan import SSMatchAll
 from Namespace import Namespace
@@ -33,11 +34,8 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
                                       time the model required to train (lower is better).
     '''
 
-    #Testing only:
-    return random()
-
     with TT('Running SSWrapper'):
-        timeImportantance=0
+        timeImportantance=.01
         errorIndentLevel=6
         paramIndentLevel=2
         
@@ -74,30 +72,34 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
         startTime=time.time()
         
         ##Use this instead of the stuff below if you want to break for pdb on errors:
-        #(model, validationLoss)=CrystalBall(dataFiles, predictVariables, modelFile, \
-                                            #modelSidekicksFile, numJobs, g, False)
+        #confusionMatrix=SSMatchAll(friendDirectories, indexDefinition, g)
+        #percentCorrect=ResultsJudge(confusionMatrix)
 
         
         #with TT("Trying parameters: \n" + StringIndent(pformat(gAsDict),paramIndentLevel)):
-        with TT("Training"):
+        with TT("Running a benchmark"):
             try: 
                 #Call CrystalBall, and get the model and cost back.
-                (model, modelSidekick, validationLoss, testing3D)=\
-                    SSMatchAll(dataFiles, predictVariables, modelFile, modelSidekicksFile, 
-                                numJobs, g, False)
+                confusionMatrix=\
+                    SSMatchAll(friendDirectories, indexDefinition, g)
+                    
+                percentCorrect=ResultsJudge(confusionMatrix)
+
             except Exception as e:
                 print(StringIndent('Error:  '+ str(e),errorIndentLevel), file=sys.stderr)
                 print(StringIndent(traceback.format_exc(),errorIndentLevel+2), file=sys.stderr)
                 
                 #Assign a very high cost to this:
-                validationLoss=float('Inf')
+                percentCorrect=float('Inf')
             
         #Get our end time in seconds since the epoch.
         endTime=time.time()
         
         elapsedSec=endTime-startTime
         
-        costFromAccuracy=log(validationLoss+1,2)
+        #A log scale represents the fact that getting the first 10% accuracy is easier than getting
+        #the last 10% accuracy:
+        costFromAccuracy=log(2-percentCorrect,2)
         costFromTime=timeImportantance*log(elapsedSec+1,2)
         
         #Combine the cost returned by crystalBall and the elapsed time to make a new cost.

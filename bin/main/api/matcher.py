@@ -1,3 +1,4 @@
+from GlobalConstants import g as g_default
 from main.api.matches_refine import matches_refine
 import numpy as np
 import pickle
@@ -107,20 +108,20 @@ class ImageFeatures(object):
 
         #Decode the image into binary form:
         if (isinstance(imageFile, str)):
-            imgGray = image_from_base64(bytes(imageFile, "utf-8"))
+            image = image_from_base64(bytes(imageFile, "utf-8"))
         elif (isinstance(imageFile, bytes)):
-            imgGray = image_from_binary(imageFile)
+            image = image_from_binary(imageFile)
         else:
-            assert False, 'Should have imgGray from one of those cases by now.'
+            assert False, 'Should have image from one of those cases by now.'
         
         #Get our original dimensions:
-        (origHeight,origWidth)=imgGray.shape
+        (origHeight,origWidth)=image.shape
         
         #Get the width we need to get the height we want:
         imgWidth=int(round(imgHeight*origWidth/origHeight))                        
         
         #Resize so the height is imgHeight.
-        imgGrayResized = cv2.resize(imgGray, (imgWidth,imgHeight),
+        imgGrayResized = cv2.resize(image, (imgWidth,imgHeight),
                                     interpolation = cv2.INTER_CUBIC)
         
         # Initiate ORB extractor
@@ -183,13 +184,16 @@ class ImageMatcher(object):
     #have a distance less than matchDistanceThreshold are considered good matches:
     bestToSecondBestDistRatio=.7
     
-    def __init__(self, friendFeatureDescriptors, index_definition=None):
+    def __init__(self, friendFeatureDescriptors, g, index_definition=None,):
         '''
         Inputs:
             friendFeatureDescriptors    - The feature descriptors for all the friends, concatenated
                                           together.
             indexDefinition             - A string representing the faiss index setup to use, or ''
                                           or None to represent "use the default"
+                                          
+            g                      - Our global constants.
+
 
         Side-effects:
             self.FeatureMatcher is created and the friendFeatureDescriptors are added to it and 
@@ -215,7 +219,7 @@ class ImageMatcher(object):
         self.featureMatcher.add(friendFeatureDescriptors)
         print('      Total num features in  index: ', self.featureMatcher.ntotal, file=sys.stderr)
                                                         
-    def match(self, subjectFeatureDescriptors, excludeFeatureMask):
+    def match(self, subjectFeatureDescriptors, excludeFeatureMask, g):
         '''
         This function matches the given subject subjectImg with a given friend subjectImg based on 
         the features in friendFeatureDescriptors.
@@ -228,6 +232,9 @@ class ImageMatcher(object):
             excludeFeatureMask      - A binary mask of the same length as the number of friend 
                                       features that we have saying if each feature should be 
                                       excluded from being considered a match.
+                                      
+            g                       - Our global constants.
+
                                       
         Outputs:
             matchedQueryTrainIds    - A numMatches x 2 np array of featureIds, where each row=(a,b)
@@ -320,7 +327,7 @@ class MatchResult(object):
 
         cv2.imwrite(path, self.image)
 
-def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_excluded=None,
+def find_best_matches(image_data, image_type, friends, max_best_friends, g=None, f_ids_excluded=None,
                       index_definition=None, matcher=None):
     '''
     This function finds the <num_best_friends> best matches for image_data among a collection of 
@@ -334,6 +341,7 @@ def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_
                           could match to.
         max_best_friends- n in the sentence "Find at most n best matching friends that aren't 
                           excluded"
+        g               - Our global constants, or None if we should load the defaults.
         f_ids_excluded  - A collection of the friend ids (indicies into friends) to not match with.
         indexDefinition - A string representing the faiss index setup to use, or ''
                           or None to represent "use the default"
@@ -352,11 +360,15 @@ def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_
     '''
     
     #Take care of the default:
-    if f_ids_excluded==None:
+    if f_ids_excluded is None:
         f_ids_excluded=[]
     
     if image_data is None:
         return None, None
+    
+    #If we don't have a g.  Load the defualts from our best optimization run so far:
+    if g is None:
+        g=g_default
 
     assert len(friends) >=1, 'Must have at least one friend to match with.'
 
@@ -443,12 +455,12 @@ def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_
     #If we don't already have a matcher, make one from the friendDescriptors:
     if matcher==None:    
         #Make a matcher object using our friend image features:
-        matcher = ImageMatcher(friendDescriptors, index_definition)    
+        matcher = ImageMatcher(friendDescriptors, g, index_definition)    
 
     #Using our subject-image based matcher, calculate how well it matches with this specific 
-    # friend image.
+    # subject image.
     (matchedQueryTrainIds, matchDist) = matcher.match(subjectFeatureDescriptors, 
-                                                      excludeFeatureMask)
+                                                      excludeFeatureMask,g)
     
     print('      Found %i matches based on ratio test.' % len(matchDist), file=sys.stderr)
     
@@ -457,7 +469,7 @@ def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_
                                                       friendKPPos, 
                                                       friendIds,
                                                       matchedQueryTrainIds, 
-                                                      matchDist)  
+                                                      matchDist, g)  
 
     print('      Filtered to %i matches using RANSAC.' % len(matchDist), file=sys.stderr)
     
@@ -497,7 +509,7 @@ def find_best_matches(image_data, image_type, friends,  max_best_friends, f_ids_
     return bestFriendDbIdsSorted, pctSubjectFeaturesMatchedToFriend, friendIdsSorted, matcher
     
     
-def find_best_match(image_data, image_type, friends, index_definition=None, f_ids_excluded=None, 
+def find_best_match(image_data, image_type, friends, g=None, index_definition=None, f_ids_excluded=None, 
                     matcher=None):
     '''
     This function finds the best match for image_data among a collection of friends, where
@@ -511,9 +523,9 @@ def find_best_match(image_data, image_type, friends, index_definition=None, f_id
         f_ids_excluded=[]
 
     #Find our best match:
-    best_db_ids_sorted, percentMatched, friend_ids, matcher=find_best_matches(image_data, image_type, friends, 
-                                                            1, f_ids_excluded, 
-                                                            index_definition, matcher)
+    best_db_ids_sorted, percentMatched, friend_ids, matcher=\
+        find_best_matches(image_data, image_type, friends, 1, g, f_ids_excluded, index_definition, 
+                          matcher)
 
     #Get our info for the bet matching friend:
     best_db_id=best_db_ids_sorted[0]

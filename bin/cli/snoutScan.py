@@ -7,6 +7,8 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),".."));
                                             
 import HyperparameterSearch
 from main.api.matcher import find_best_match
+from ResultsJudge import ResultsJudge
+from GlobalConstants import g
 from collections import OrderedDict
 from FriendMake import FriendMake
 from ArgsParse import ArgsParse
@@ -17,7 +19,7 @@ import cv2
 import os
 import pandas as pd
 
-def SSMatchAll(friendDirectories, indexDefinition, displayImages=True):
+def SSMatchAll(friendDirectories, indexDefinition, g=None, displayImages=True):
     '''
     This function matches each of the friend images of specific dogs with each of the other 
     friend images and outputs a confusion matrix showing how many of each dog was matched with
@@ -33,17 +35,14 @@ def SSMatchAll(friendDirectories, indexDefinition, displayImages=True):
                                  or None to represent "use the default"
         
         displayImages          - Says if we should display images for debugging purposes.
+        
+        g                      - Our global constants.
                                           
     Outputs:
     
-        dogNames               - A list of unique dog names, corresponding to each of the rows and
-                                 collumns of the confusionMatrixData.
-    
-        confusionMatrixData        - A confusion matrix, with each position (i,j) saying how many 
-                                 images that were of friendDirectories[i], were recognized as being 
-                                 of friend friendDirectories[j] instead. 
-                                 (Pandas array, of size (numDogNames x numDogNames), with the 
-                                 dog names as row and column labels)
+        confusionMatrix        - A pandas array confusion matrix, labeled with dog names.
+                                 Each position (i,j) says how many images that were of a given dog 
+                                 name (i) were recognized as being of a dog name (j) instead. 
     '''
     
     #Our list of friends:
@@ -116,7 +115,7 @@ def SSMatchAll(friendDirectories, indexDefinition, displayImages=True):
                 
                 #Find the other friend that matches this friend best:
                 best_db_id, percentOfSubjectFeaturesMatched, best_index, matcher= \
-                    find_best_match(subjectImgBinary, subjectImgType, friends, 
+                    find_best_match(subjectImgBinary, subjectImgType, friends, g,
                                     indexDefinition, fIdsExcluded, matcher)
                 
                 #Get our names:
@@ -169,21 +168,15 @@ if __name__=="__main__":
         sys.exit()
     else:
         with TT('Running SSMatchAll'):
-            confusionMatrix=SSMatchAll(args.friendDirectories, args.indexDefinition, False, )
+            confusionMatrix=SSMatchAll(args.friendDirectories, args.indexDefinition, g, False, )
             
-    numDogNames,_=confusionMatrix.shape
-    
     print('Confusion Matrix:')
     print('=================')
     print('')
     print('Actual:  Matched with:')
     print(confusionMatrix)
     
-    #Sum the diagonal
-    numCorrect=np.trace(confusionMatrix)
-    numTried=np.sum(np.sum(confusionMatrix))
-    
-    percentCorrect=numCorrect/numTried
+    percentCorrect=ResultsJudge(confusionMatrix)
     
     print('\n')
     print('Proportion of subject images correctly matched: %0.2f' % percentCorrect)
