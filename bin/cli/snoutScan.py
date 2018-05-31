@@ -3,7 +3,10 @@ import sys,os; sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__f
                                             "helperFiles"));
 
 #Also add up a diretory so it can find main.
-sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),".."));                                            
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),".."));
+
+#Also add the path to main.api too:
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..", 'main', 'api'));                                                      
                                             
 import HyperparameterSearch
 from main.api.matcher import find_best_match

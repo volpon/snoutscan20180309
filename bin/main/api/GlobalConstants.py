@@ -25,7 +25,7 @@ gc=[]
 
 #This flag defines if we load (and thus process) our images as color iamges or grayscale images:
 gc.append(('colorNotGrayscale', hp.choice, ((cv2.IMREAD_GRAYSCALE, cv2.IMREAD_COLOR),), 
-           cv2.IMREAD_GRAYSCALE, 0))
+           cv2.IMREAD_GRAYSCALE, 1))
 
 
 

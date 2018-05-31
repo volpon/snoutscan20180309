@@ -219,7 +219,8 @@ class ImageMatcher(object):
 
         #Add our data:
         self.featureMatcher.add(friendFeatureDescriptors)
-        print('      Total num features in  index: ', self.featureMatcher.ntotal, file=sys.stderr)
+        with TT('      Total num features in  index: %i' % self.featureMatcher.ntotal):
+            pass
                                                         
     def match(self, subjectFeatureDescriptors, excludeFeatureMask, g):
         '''
@@ -413,7 +414,8 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
             fPhoto.set_binary(fPhoto.data, fPhoto.type)
 
         if fPhoto.featureDescriptors is None:
-            print('Warning:  Found a friend without featureDescriptors!', file=sys.stderr)
+            with TT('Warning:  Found a friend without featureDescriptors!'):
+                pass
                     
         #Get our features
         friendFeatureKeypoints=friend.photo.featureKeypoints
@@ -464,7 +466,7 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
     (matchedQueryTrainIds, matchDist) = matcher.match(subjectFeatureDescriptors, 
                                                       excludeFeatureMask,g)
     
-    print('      Found %i matches based on ratio test.' % len(matchDist), file=sys.stderr)
+    with TT('Found %i matches based on ratio test.' % len(matchDist)): pass
     
     #Further filter these matches using our geometric constraints:
     (matchedQueryTrainIds, matchDist)=matches_refine( subjectKPPos,
@@ -473,7 +475,7 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
                                                       matchedQueryTrainIds, 
                                                       matchDist, g)  
 
-    print('      Filtered to %i matches using RANSAC.' % len(matchDist), file=sys.stderr)
+    with TT('Filtered to %i matches using RANSAC.' % len(matchDist)): pass
     
     #These are the friendIds of the best-matched feature of each subject feature:
     friendIdsOfBestMatch=friendIds[matchedQueryTrainIds[:,1]]
