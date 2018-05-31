@@ -276,8 +276,7 @@ def api_friend_set_photo(friend_id: int):
 
     #set our global constants manually:
     friend.g=g
-    
-    import pdb; pdb.set_trace()
+    friend.photo.g=g
     
     error = friend.set_photo(image_data, image_type)
 
@@ -305,7 +304,12 @@ def api_query_match():
     
     friends = Friend.query.all()
     
-    friend_db_id, per, _, matcher= find_best_match(image_data, image_type, friends)
+    #Add g to our friends and friend photos:
+    for friend in friends:
+        friend.g=g
+        friend.photo.g=g
+    
+    friend_db_id, per, _, matcher= find_best_match(image_data, image_type, friends, g)
 
     if friend_db_id is None:
         return jsonify({'status': 'not found'}), 200
@@ -336,8 +340,8 @@ def api_query_matches(max_best_friends):
     
     friends = Friend.query.all()
         
-    friend_ids_sorted, num_matches_sorted, _, matcher= find_best_matches(image_data, image_type,
-                                                                         friends, max_best_friends)
+    friend_ids_sorted, num_matches_sorted,_, matcher=find_best_matches(image_data, image_type,
+                                                                       friends, max_best_friends, g)
 
     if friend_ids_sorted is None or len(friend_ids_sorted) == 0:
         return jsonify({'status': 'not found'}), 200

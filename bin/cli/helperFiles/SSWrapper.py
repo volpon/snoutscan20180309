@@ -72,6 +72,7 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
         startTime=time.time()
         
         ##Use this instead of the stuff below if you want to break for pdb on errors:
+        ## TODO: Remove this.
         confusionMatrix=SSMatchAll(friendDirectories, indexDefinition, g)
         
         #with TT("Trying parameters: \n" + StringIndent(pformat(gAsDict),paramIndentLevel)):

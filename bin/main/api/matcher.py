@@ -1,5 +1,6 @@
 from GlobalConstants import g as g_default
 from main.api.matches_refine import matches_refine
+from TicToc import TT
 import numpy as np
 import pickle
 import base64
@@ -400,6 +401,10 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
         friend=friends[index]
         
         fPhoto=friend.photo
+
+        #Set some global constants:
+        friend.g=g
+        fPhoto.g=g
 
         #If our friend doesn't have featureDescriptors yet, then decode them:
         if fPhoto.featureDescriptors is None:

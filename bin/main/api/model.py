@@ -132,7 +132,6 @@ class Friend(db.Model):
 
     photo = db.relationship("Photo", uselist=False, cascade="all,delete", back_populates="friend")
     
-    g=None
 
     def __init__(self, profile, fields: dict, g):
 
@@ -216,7 +215,7 @@ class Friend(db.Model):
 
     def set_photo(self, image_data, image_type):
 
-        self.photo.set_base64(image_data, image_type, self.g)
+        self.photo.set_base64(image_data, image_type)
         
         db.session.commit()
         return None
@@ -242,7 +241,7 @@ class Photo(db.Model):
     def __init__(self, g):
         self.g=g
 
-    def set_base64(self, data, type, g):
+    def set_base64(self, data, type):
 
         if isinstance(data, str):
             self.set_binary(base64.b64decode(data), type)
