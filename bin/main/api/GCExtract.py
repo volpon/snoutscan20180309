@@ -18,9 +18,8 @@ def GCExtract(gc):
             parameterName       - The parameter name
             distributionFn      - The function from hyperopt.hp that specifies the distribution.
             distributionFnArgs  - The arguments to that function, in a tuple, skipping the label.
-            fixedValue          - The fixed value to use if isFixed=1:
-            isFixed=0 (optional)- If we should fix this variable to the fixedValue instead of 
-                                  searching over it.  default is 0 if it's not there.
+            fixedValue          - The fixed value to use if varry=1:
+            varry=1 (optional)  - If we should let this variable varry (1) or stay fixed(0).
                                   
     Outputs:
         g                       - a Namespace() object representing name.value pairs that are 
@@ -67,24 +66,24 @@ def GCExtract(gc):
 
         #Distribute our values:
         if len(c)==5:
-            (name, distFn, distFnArgs, fixedValue, isFixed) = c
+            (name, distFn, distFnArgs, fixedValue, varry) = c
         elif len(c)==4:
             (name, distFn, distFnArgs, fixedValue) = c
-            isFixed=0
+            varry=1
         else:
             assert 0, 'Incorrect number of values in a gc element.'
 
-        if isFixed:
-            #Update our fixedParamDict:
-            fixedParamDict.update({name: fixedValue})
-        else:
-            #Add it to the search space if it's not a "fixed value'.
+        #Add it to the search space if it's not a "fixed value'.
+        if varry:
             
             #Add this to a list we use to keep track of our order:
             searchVarNamesInOrder.append(name)
             
             #Add the corresponding distFn to our searchSpace:
             searchSpace.append(distFn(name, *distFnArgs))
-        
+        else:
+            #Update our fixedParamDict:
+            fixedParamDict.update({name: fixedValue})
+
     return (g, searchVarNamesInOrder, fixedParamDict, searchSpace)
 
