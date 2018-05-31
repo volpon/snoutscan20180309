@@ -32,6 +32,8 @@ Before you can run or deploy the app, you will need to do the following:
     mysql> create database YOUR_DATABASE;
     mysql> create user 'YOUR_USER'@'%' identified by 'PASSWORD';
     mysql> grant all on YOUR_DATABASE.* to 'YOUR_USER'@'%';
+    
+    Note:  This is currently automated in the "create_db.sh" script.  You can just run that instead.
 
 1. Set the connection string environment variable. This allows the app to connect to your Cloud SQL instance through the proxy:
 
@@ -49,3 +51,17 @@ It's recommended to follow the instructions above to run the Cloud SQL proxy. Yo
 
     $ export SQLALCHEMY_DATABASE_URI=[your connection string]
     $ python runserver.py
+    
+## Running using docker:
+    # Make a local copy of make_env, the file that holds all variables that can be different from system to system:
+        cp make_env.dist make_env
+    # Edit make_env accordingly. 
+    # Create the docker container (when needed) and run it using make:
+        make run
+    # Go to http://localhost:8000/ to view the site.
+    # It should work, but should give a database connection error.
+    # Set up a sql connection either throught the cloud or locally.  Here's how to do it locally:
+        Install mysql-server, run create_db.sh and edit Dockerifile to run create_tables.py instead of gunicorn.  Then run the docker container one more time and then revert it. TODO:  Automate this.  It's a big cludgey.
+    # Now run the following again and the db connection should work:
+        make run
+        

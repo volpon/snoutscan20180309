@@ -1,3 +1,4 @@
+#!/.condaUser/.anaconda3/envs/snoutScan/bin/python3 
 import unittest
 
 import requests
@@ -8,9 +9,13 @@ import logging
 
 ##################################################
 
-#api_url = 'http://localhost:5555'
-api_url = 'https://snout-cloud.appspot.com'
-api_verify_ssl=True
+#For testing the cloud instance:
+#api_url = 'https://snout-cloud.appspot.com'
+#api_verify_ssl=True
+
+#For testing a local instance:
+api_url = 'http://127.0.0.1:8080'
+api_verify_ssl=False
 
 test_email = "test@a.a"
 test_password = "test"
@@ -444,7 +449,7 @@ class Test_photo(unittest.TestCase):
 
     def test_put_get(self):
         
-        image_data, image_type = do_set_photo(self, self.access_token, self.friend_id, "snout_0003.jpg")
+        image_data, image_type = do_set_photo(self, self.access_token, self.friend_id, "snout_0002.jpg")
 
         #print("PUT image_data size: ", len(image_data))
 
@@ -474,7 +479,7 @@ class Test_match(unittest.TestCase):
         self.access_token, self.profile_id = do_auth(test_email, test_password)
 
         self.friend_id1 = do_add_friend(self, self.access_token, self.profile_id)
-        do_set_photo(self, self.access_token, self.friend_id1, "snout_0001.jpg")
+        do_set_photo(self, self.access_token, self.friend_id1, "snout_0001a.jpg")
 
         self.friend_id2 = do_add_friend(self, self.access_token, self.profile_id)
         do_set_photo(self, self.access_token, self.friend_id2, "snout_0002.jpg")
@@ -488,7 +493,7 @@ class Test_match(unittest.TestCase):
 
     def test_match1(self):
 
-        image_data, image_type = load_image("snout_0001.jpg")
+        image_data, image_type = load_image("snout_0001a.jpg")
 
         r = session.post('{0}/api/query_match'.format(api_url),
             json= {'image': { 'data': image_data, 'type': image_type }},
@@ -517,12 +522,45 @@ class Test_match(unittest.TestCase):
 
         self.assertEqual(res.get('status'), 'found')
         self.assertEqual(res.get('friend'), self.friend_id2)
-       
-    def test_match3(self):
-        
-        image_data, image_type = load_image("snout_0003.jpg")
 
-        r = session.post('{0}/api/query_match'.format(api_url),
+
+class Test_matches(unittest.TestCase):
+    
+    def setUp(self):
+        
+        # create profile
+        _ = do_create(self, test_email, test_password)
+
+        # login
+        self.access_token, self.profile_id = do_auth(test_email, test_password)
+
+        #Add a dog:
+        self.friend_id1a = do_add_friend(self, self.access_token, self.profile_id)
+        do_set_photo(self, self.access_token, self.friend_id1a, "snout_0001a.jpg")
+
+        #Add one we do not want to match:
+        self.friend_id2 = do_add_friend(self, self.access_token, self.profile_id)
+        do_set_photo(self, self.access_token, self.friend_id2, "snout_0002.jpg")
+        
+        #Add the same dog again, using a different photo:
+        self.friend_id1b = do_add_friend(self, self.access_token, self.profile_id)
+        do_set_photo(self, self.access_token, self.friend_id1b, "snout_0001b.jpg")
+
+    def tearDown(self):
+
+        # delete profile
+        if self.access_token is not None and self.profile_id is not None:
+            do_delete(self, self.access_token, self.profile_id)
+        pass
+        
+    def test_matches(self):
+        '''
+        This test tests the api_query_matches endpoint to search for multiple matches.
+        '''
+    
+        image_data, image_type = load_image("snout_0001c.jpg")
+
+        r = session.post('{0}/api/query_matches/{1}'.format(api_url, 2),
             json= {'image': { 'data': image_data, 'type': image_type }},
             verify=api_verify_ssl)
         
@@ -531,7 +569,22 @@ class Test_match(unittest.TestCase):
         res = r.json()
         self.assertTrue(isinstance(res, dict))
 
-        self.assertEqual(res.get('status'), 'not found')
+        friendIds=res.get('friend_ids')
+        percents=res.get('percents')
+        
+        self.assertEqual(res.get('status'), 'found')
+        
+        self.assertTrue(len(friendIds)==2, 'Need 2 friends returned.  Received %i.' % len(friendIds))
+        
+        #Make sure the right friends are returned and no more:
+        self.assertTrue(self.friend_id1a in friendIds)
+        self.assertTrue(self.friend_id2 not in friendIds)
+        self.assertTrue(self.friend_id1b in friendIds)
+        
+        #Make sure our percents are the right length, in descending order and nonnegative:
+        self.assertTrue(len(percents)==2)
+        self.assertTrue(percents[0]>=percents[1])
+        self.assertTrue(percents[1]>=0)
 
 if __name__ == '__main__':
     print("Testing API_URL: \'{}\'".format(api_url))      
@@ -543,15 +596,3 @@ if __name__ == '__main__':
     #requests_log.propagate = True
     
     unittest.main()
-    #unittest.main(argv=["", "Test_signup"])
-    #unittest.main(argv=["", "Test_signup.test_create_and_delete"])
-    #unittest.main(argv=["", "Test_auth.test_1"])
-    #unittest.main(argv=["", "Test_profile.test_get"])
-    #unittest.main(argv=["", "Test_friends"])
-    #unittest.main(argv=["", "Test_friends.test_get_list"])
-    #unittest.main(argv=["", "Test_friends.test_put_and_get"])
-    #unittest.main(argv=["", "Test_friends.test_create_get_delete"])
-    #unittest.main(argv=["", "Test_photo"])
-    #unittest.main(argv=["", "Test_photo.test_put_get"])
-    #unittest.main(argv=["", "Test_match"])
-    #unittest.main(argv=["", "Test_match.test_match1"])

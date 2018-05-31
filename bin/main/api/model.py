@@ -1,11 +1,10 @@
-import os
-import datetime
 import base64
+import sys
+import os
 
 is_heroku = 'DATABASE_URL' in os.environ.keys()
 is_postgres = is_heroku
 
-import sqlalchemy
 from sqlalchemy.orm import relationship
 from flask_sqlalchemy import SQLAlchemy
 
@@ -229,10 +228,16 @@ class Photo(db.Model):
 
     data = db.Column(MEDIUMBLOB)
     type = db.Column(db.String(46))
-    features = db.Column(MEDIUMBLOB)
+
+    #These are not stored in the database directly but indirectly through featuresEncoded:
+    featureKeypoints=None
+    featureDescriptors=None
+    
+    #Feature descriptors, in encoded format:
+    featuresEncoded = db.Column(MEDIUMBLOB)
 
     def __init__(self):
-        pass
+        pass 
 
     def set_base64(self, data, type):
 
@@ -241,15 +246,20 @@ class Photo(db.Model):
         else:
             self.data = None
             self.type = None
-            self.features = None
+            self.featureDescriptors = None
+            self.featuresEncoded = None
 
     def set_binary(self, data, type):
 
         self.data = data
         self.type = type
+        
+        fs=ImageFeatures()
 
-        fs = ImageFeatures.from_image(self.data)
-        self.features = fs.encode()
+        (self.featureKeypoints, self.featureDescriptors) = fs.from_image(self.data)
+                
+        self.featuresEncoded = fs.encode() 
+     
 
     def get_base64(self):
 
@@ -259,4 +269,7 @@ class Photo(db.Model):
         return str(base64.b64encode(self.data), "utf-8"), self.type
 
     def get_binary(self):
+        '''
+        Gets the image in binary form, and it's type.
+        '''
         return self.data, self.type
