@@ -120,9 +120,14 @@ class ImageFeatures(object):
                                               g.agastType)
 
         #AKAZE:
-        akaze=cv2.AKAZE.create(int(g.akazeDescriptorType), int(g.akazeDescriptorSize),
+        akazeNumDescriptorBits=int(round(g.akazeNumChan*162*g.akazeDescriptorSizeRelative))
+        
+        akaze=cv2.AKAZE.create(int(g.akazeDescriptorType), akazeNumDescriptorBits,
                                int(g.akazeNumChan), g.akazeThreshold, int(g.akazeNOctaves),
                                int(g.akazeNOctaveLayers), g.akazeDiffusivityType)
+
+        #BRISK (I fix patternScale at 1, since we can resize the image to get the same effect):
+        brisk=cv2.BRISK.create(int(g.briskThreshold), int(g.briskOctaves), 1.0)
 
         ######
         
@@ -130,6 +135,8 @@ class ImageFeatures(object):
         featureGenerators={ 'ORB':         orb,
                             'AGAST':       agast,
                             'AKAZE':       akaze,
+                            'BRISK':       brisk,
+                            
                             }
         
         #Figure out what keypointExtractor and descriptorExtractor to use:

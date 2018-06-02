@@ -37,10 +37,10 @@ gc.append(('numFeaturesMax', hp.quniform, (500,20000,1), 8000, 1))
 
 
 #The type of keypoint detector we use:
-gc.append(('keypointType', hp.choice, (('ORB', 'AGAST', 'AKAZE'),), 'AKAZE', 1))
+gc.append(('keypointType', hp.choice, (('ORB', 'AGAST', 'AKAZE', 'BRISK'),), 'BRISK', 1))
                
 #The type of descriptor extractor we use:
-gc.append(('descriptorType', hp.choice, (('ORB', 'AKAZE' ),), 'AKAZE', 1))
+gc.append(('descriptorType', hp.choice, (('ORB', 'AKAZE', 'BRISK' ),), 'BRISK', 1))
 
 ########
 #Options for the ORB keypoint detector / descriptor extractor:
@@ -89,8 +89,8 @@ gc.append(('akazeDescriptorType', hp.choice, ((cv2.AKAZE_DESCRIPTOR_KAZE_UPRIGHT
                                      ),), 
             cv2.AKAZE_DESCRIPTOR_MLDB, 1))
 
-#The number of bits in the binary descriptor:  The max is 486 (from the source code)
-gc.append(('akazeDescriptorSize', hp.quniform, (32,486, 1), 256, 1))
+#The proportion of bits to use per channel.  Each channel has 162 possible bits.
+gc.append(('akazeDescriptorSizeRelative', hp.uniform, (0.2,1.0), 0.526749, 1))
 
 #The number of descriptor channels to use, 1-3:
 gc.append(('akazeNumChan', hp.choice, ((1,2,3),), 3 ,1))
@@ -110,6 +110,17 @@ gc.append(('akazeDiffusivityType', hp.choice, ((cv2.KAZE_DIFF_PM_G1,
                                                 cv2.KAZE_DIFF_WEICKERT,
                                                 cv2.KAZE_DIFF_CHARBONNIER),), 
             cv2.KAZE_DIFF_PM_G2, 1))
+
+########
+#Options for the BRISK keypoint detector/descriptor extractor:
+#https://docs.opencv.org/3.4.1/de/dbf/classcv_1_1BRISK.html
+###
+
+#Detection threshold score:
+gc.append(('briskThreshold', hp.quniform, (10,60,1), 30, 1))
+
+#The number of octaves to use: 0 is a single scale.
+gc.append(('briskOctaves', hp.quniform, (0,8,1), 3, 1))
 
 ##
 ########
