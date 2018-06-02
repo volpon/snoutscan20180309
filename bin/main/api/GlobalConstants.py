@@ -35,8 +35,31 @@ gc.append(('imgHeight', hp.quniform, (500,4096,1), 1000, 1))
 gc.append(('numFeaturesMax', hp.quniform, (500,20000,1), 8000, 1))
 
 
+########
+#Options for the ORB keypoint detector / descriptor computer:
+##
 
+#The pyramid decimation ratio. >=1.
+gc.append(('orbScaleFactor', hp.uniform, (1.01, 2), 1.2, 1))
 
+#The number of pyramid levels
+gc.append(('orbNLevels', hp.quniform, (1, 16), 8, 1))
+
+#The size of the patch to used in each layer to create the ORB descriptor.  This 
+#size on the smaller pyramid layers will cover more of the original image area.
+#Also used for the edgeThreshold:
+gc.append(('orbPatchSize', hp.quniform, (5, 64), 31, 1))
+
+##               
+########
+
+#The type of keypoint detector we use:
+gc.append(('keypointType', hp.choice, (('ORB', 'Agast'),), 'ORB', 1))
+               
+               
+               
+               
+               
 #######################
 
 #Produce g and searchSpace and other variables we will be importing from other files:

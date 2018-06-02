@@ -85,23 +85,9 @@ class ImageFeatures(object):
             imageFile     - Either a binary array of the bytes in the image file or a base64 
                             encoded version of this.
         '''
-        
-        #How much to decimate iamges between levels
-        scaleFactor=1.2
-        
-        #Number of pyramid levels.
-        nLevels=8
-        
-        #The size of the border where the features are not detected.  
-        #Should roughly match patchSize.
-        edgeThreshold=31
-        
+               
         #The definition of cv::ORB::HARRIS_SCORE as of v 3.4.0
         HARRIS_SCORE=0
-        
-        #The size of the patch to used in each layer to create the ORB descriptor.  This 
-        #size on the smaller pyramid layers will cover more of the original image area.
-        patchSize=31
 
         #Decode the image into binary form:
         if (isinstance(imageFile, str)):
@@ -121,16 +107,26 @@ class ImageFeatures(object):
         imgResized = cv2.resize(image, (imgWidth,int(g.imgHeight)),
                                     interpolation = cv2.INTER_CUBIC)
         
-        # Initiate keypoint extractor:
-        keypointExtractor = cv2.ORB_create(int(g.numFeaturesMax), scaleFactor, nLevels,
-                                             edgeThreshold, 0, 2,  HARRIS_SCORE, patchSize)
+        #This is our our orb extractor keypoint extractor or descriptor generator:
+        orb=cv2.ORB_create(  int(g.numFeaturesMax), g.orbScaleFactor, int(g.orbNLevels), 
+                             int(g.orbPatchSize), 0, 2,  HARRIS_SCORE, 
+                             int(g.orbPatchSize))
         
-        #Initiate descriptor extractor:
-        descriptorExtractor = cv2.ORB_create(int(g.numFeaturesMax), scaleFactor, nLevels,
-                                             edgeThreshold, 0, 2,  HARRIS_SCORE, patchSize)
         
-        #Detect the keypoints:
+        if g.keypointType == 'ORB':
+            # Initiate keypoint extractor:
+            keypointExtractor = orb
+        elif g.keypointType == 'Agast':
+            keypointExtractor = cv2.AgastFeatureDetector.create(int(g.agastThreshold))
+        else:
+            assert False, 'Invalid g.keypointType'
+        
+        
+        #Initiate descriptor computer:
+        descriptorExtractor = orb        
+
         self.keypoints = keypointExtractor.detect(imgResized, None)
+        
         
         #Create the descriptors around each keypoint:
         self.keypoints, self.descriptors= descriptorExtractor.compute(imgResized, 
