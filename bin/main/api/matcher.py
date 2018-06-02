@@ -121,16 +121,19 @@ class ImageFeatures(object):
         imgResized = cv2.resize(image, (imgWidth,int(g.imgHeight)),
                                     interpolation = cv2.INTER_CUBIC)
         
-        # Initiate ORB extractor
-        featureExtractor = cv2.ORB_create(int(g.numFeaturesMax), scaleFactor, nLevels,
+        # Initiate keypoint extractor:
+        keypointExtractor = cv2.ORB_create(int(g.numFeaturesMax), scaleFactor, nLevels,
+                                             edgeThreshold, 0, 2,  HARRIS_SCORE, patchSize)
+        
+        #Initiate descriptor extractor:
+        descriptorExtractor = cv2.ORB_create(int(g.numFeaturesMax), scaleFactor, nLevels,
                                              edgeThreshold, 0, 2,  HARRIS_SCORE, patchSize)
         
         #Detect the keypoints:
-        self.keypoints = featureExtractor.detect(imgResized, None)
-        
+        self.keypoints = keypointExtractor.detect(imgResized, None)
         
         #Create the descriptors around each keypoint:
-        self.keypoints, self.descriptors= featureExtractor.compute(imgResized, 
+        self.keypoints, self.descriptors= descriptorExtractor.compute(imgResized, 
                                                                       self.keypoints)        
         return (self.keypoints, self.descriptors)
 

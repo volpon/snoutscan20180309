@@ -39,13 +39,13 @@ def GCExtract(gc):
     #If a saved parameters file exists:
     if os.access(savedParametersFile, os.R_OK):
         
-            #Load it.
+        #Load it.
         g=pickle.load(open(savedParametersFile, 'rb'))
             
         with TT('Saved parameters found: \n' + StringIndent(pformat(g.__dict__),2)):
             pass
     else:
-        with TT('No saved parameters found'):
+        with TT('No saved parameters found.  Using defaults.'):
             #Make g from the fixedValues (just a backup.)
             
             #the dictionary is :{parameterName: fixedValue, ...}

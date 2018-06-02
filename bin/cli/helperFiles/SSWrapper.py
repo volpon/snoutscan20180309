@@ -44,7 +44,7 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
         assert len(parameters)==len(searchVarNamesInOrder), \
             'Different number of parameters than expected.'
         
-        #Convert our parameters into a g that CrystalBall can use:
+        #Convert our parameters into a g that SnoutScan can use:
         
         #Iterate over the paramter names in the designated order:
         for i, pName in enumerate(searchVarNamesInOrder):
@@ -71,8 +71,8 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
         #Get our start time in seconds since the epoch.
         startTime=time.time()
         
-        ##Use this instead of the stuff below if you want to break for pdb on errors:
-        ## TODO: Remove this.
+        #Use this instead of the stuff below if you want to break for pdb on errors:
+        # TODO: Remove this.
         confusionMatrix=SSMatchAll(friendDirectories, indexDefinition, g)
         
         #with TT("Trying parameters: \n" + StringIndent(pformat(gAsDict),paramIndentLevel)):
