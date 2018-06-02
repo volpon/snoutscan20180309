@@ -107,41 +107,44 @@ class ImageFeatures(object):
         imgResized = cv2.resize(image, (imgWidth,int(g.imgHeight)),
                                     interpolation = cv2.INTER_CUBIC)
         
-        #This is our our orb extractor keypoint extractor or descriptor extractor:
+        #####
+        #Define our feature keypoint extractors and descriptor generators:
+        
+        #ORB:
         orb=cv2.ORB_create(  int(g.numFeaturesMax), g.orbScaleFactor, int(g.orbNLevels), 
                              int(g.orbPatchSize), 0, 2,  HARRIS_SCORE, 
                              int(g.orbPatchSize))
         
-        #An agast keypoint extractor or descriptor extactor:
+        #AGAST:
         agast=cv2.AgastFeatureDetector.create(int(g.agastThreshold), g.agastNonmaxSuppression,
                                               g.agastType)
 
+        #AKAZE:
+        akaze=cv2.AKAZE.create(int(g.akazeDescriptorType), int(g.akazeDescriptorSize),
+                               int(g.akazeNumChan), g.akazeThreshold, int(g.akazeNOctaves),
+                               int(g.akazeNOctaveLayers), g.akazeDiffusivityType)
+
+        ######
         
-        #FIgure out what keypointExtractor to use:
-        if g.keypointType == 'ORB':
-            # Initiate keypoint extractor:
-            keypointExtractor = orb
-        elif g.keypointType == 'Agast':
-            keypointExtractor = agast
-        else:
-            assert False, 'Invalid g.keypointType'
+        #Put them in a dictionary we use to convert a string designator to the actual featureGen:
+        featureGenerators={ 'ORB':         orb,
+                            'AGAST':       agast,
+                            'AKAZE':       akaze,
+                            }
+        
+        #Figure out what keypointExtractor and descriptorExtractor to use:
+        keypointExtractor  =featureGenerators[g.keypointType]
+        descriptorExtractor=featureGenerators[g.descriptorType]
+        
+        ##TODO:  See if we unpack the bits correctly regardless of descriptor length??
         
         #Detect the keypoints:
         self.keypoints = keypointExtractor.detect(imgResized, None)
-
-        #Figure out what descriptorExtractor to use:
-        if g.descriptorType == 'ORB':
-            descriptorExtractor=orb
-        elif g.descriptorType == 'Agast':
-            descriptorExtractor=agast
-        else:
-            assert False, 'Invalid g.descriptorType'
             
         #Create the descriptors around each keypoint:
         self.keypoints, self.descriptors= descriptorExtractor.compute(imgResized, 
-                                                                      self.keypoints)        
+                                                                      self.keypoints)       
         return (self.keypoints, self.descriptors)
-
 
     def encode(self):
         '''
