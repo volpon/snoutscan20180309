@@ -107,27 +107,36 @@ class ImageFeatures(object):
         imgResized = cv2.resize(image, (imgWidth,int(g.imgHeight)),
                                     interpolation = cv2.INTER_CUBIC)
         
-        #This is our our orb extractor keypoint extractor or descriptor generator:
+        #This is our our orb extractor keypoint extractor or descriptor extractor:
         orb=cv2.ORB_create(  int(g.numFeaturesMax), g.orbScaleFactor, int(g.orbNLevels), 
                              int(g.orbPatchSize), 0, 2,  HARRIS_SCORE, 
                              int(g.orbPatchSize))
         
+        #An agast keypoint extractor or descriptor extactor:
+        agast=cv2.AgastFeatureDetector.create(int(g.agastThreshold), g.agastNonmaxSuppression,
+                                              g.agastType)
+
         
+        #FIgure out what keypointExtractor to use:
         if g.keypointType == 'ORB':
             # Initiate keypoint extractor:
             keypointExtractor = orb
         elif g.keypointType == 'Agast':
-            keypointExtractor = cv2.AgastFeatureDetector.create(int(g.agastThreshold))
+            keypointExtractor = agast
         else:
             assert False, 'Invalid g.keypointType'
         
-        
-        #Initiate descriptor computer:
-        descriptorExtractor = orb        
-
+        #Detect the keypoints:
         self.keypoints = keypointExtractor.detect(imgResized, None)
-        
-        
+
+        #Figure out what descriptorExtractor to use:
+        if g.descriptorType == 'ORB':
+            descriptorExtractor=orb
+        elif g.descriptorType == 'Agast':
+            descriptorExtractor=agast
+        else:
+            assert False, 'Invalid g.descriptorType'
+            
         #Create the descriptors around each keypoint:
         self.keypoints, self.descriptors= descriptorExtractor.compute(imgResized, 
                                                                       self.keypoints)        

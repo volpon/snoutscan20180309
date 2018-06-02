@@ -36,7 +36,7 @@ gc.append(('numFeaturesMax', hp.quniform, (500,20000,1), 8000, 1))
 
 
 ########
-#Options for the ORB keypoint detector / descriptor computer:
+#Options for the ORB keypoint detector / descriptor extractor:
 ##
 
 #The pyramid decimation ratio. >=1.
@@ -50,13 +50,32 @@ gc.append(('orbNLevels', hp.quniform, (1, 16), 8, 1))
 #Also used for the edgeThreshold:
 gc.append(('orbPatchSize', hp.quniform, (5, 64), 31, 1))
 
-##               
+##
+##Options for the agast keypoint detector/descriptor extractor:
+##
+
+#Some threshold.  Unkown:
+gc.append(('agastThreshold', hp.uniform, (5,30), 10, 1))
+
+#Boolean turning on nonmaxSuppression:
+gc.append(('agastNonmaxSuppression', hp.choice, ((True, False,),), True, 1))
+
+gc.append(('agastType', hp.choice, ((cv2.AgastFeatureDetector_AGAST_5_8,
+                                     cv2.AgastFeatureDetector_AGAST_7_12d,
+                                     cv2.AgastFeatureDetector_AGAST_7_12s,
+                                     cv2.AgastFeatureDetector_NONMAX_SUPPRESSION,
+                                     cv2.AgastFeatureDetector_OAST_9_16,
+                                     cv2.AgastFeatureDetector_THRESHOLD),), 
+            cv2.AgastFeatureDetector_OAST_9_16, 1))
+                                     
+##
 ########
 
 #The type of keypoint detector we use:
 gc.append(('keypointType', hp.choice, (('ORB', 'Agast'),), 'ORB', 1))
                
-               
+#The type of descriptor extractor we use:
+gc.append(('descriptorType', hp.choice, (('ORB', 'Agast'),), 'ORB', 1))
                
                
                
