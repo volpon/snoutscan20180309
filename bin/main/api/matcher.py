@@ -133,6 +133,11 @@ class ImageFeatures(object):
         fast=cv2.FastFeatureDetector.create(int(g.fastThreshold), g.fastNonmaxSuppression, 
                                             g.fastType)
         
+        #Maximally stable extremal region extractor (keypoint extractor):
+        mser=cv2.MSER.create(int(g.mserDelta), int(g.mserMinArea), int(g.mserMaxArea),
+                             g.mserMaxVariation, g.mserMinDiversity, int(g.mserMaxEvolution),
+                             1.01, g.mserMinMargin, int(g.mserEdgeBlurSize))
+        
         ######
         
         #Put them in a dictionary we use to convert a string designator to the actual featureGen:
@@ -141,6 +146,7 @@ class ImageFeatures(object):
                             'AKAZE':       akaze,
                             'BRISK':       brisk,
                             'FAST':        fast,
+                            'MSER':        mser,
                             }
         
         #Figure out what keypointExtractor and descriptorExtractor to use:

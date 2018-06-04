@@ -37,8 +37,8 @@ gc.append(('numFeaturesMax', hp.quniform, (500,20000,1), 8000, 1))
 
 
 #The type of keypoint detector we use:
-gc.append(('keypointType', hp.choice, (('ORB', 'AGAST', 'AKAZE', 'BRISK', 'FAST', ),),
-           'FAST', 1))
+gc.append(('keypointType', hp.choice, (('ORB', 'AGAST', 'AKAZE', 'BRISK', 'FAST', 'MSER' ),),
+           'MSER', 1))
                
 #The type of descriptor extractor we use:
 gc.append(('descriptorType', hp.choice, (('ORB', 'AKAZE', 'BRISK' ),), 'BRISK', 1))
@@ -140,9 +140,28 @@ gc.append(('fastType', hp.choice, ((cv2.FAST_FEATURE_DETECTOR_FAST_N,
                                     cv2.FAST_FEATURE_DETECTOR_TYPE_9_16),), 
             cv2.FAST_FEATURE_DETECTOR_TYPE_9_16, 1))
 
-#Remaining:
+########
+#Options for the Maximally Stable Extremal Region keypoint detector:
 #https://docs.opencv.org/3.4.1/d3/d28/classcv_1_1MSER.html#details
-               
+###
+
+gc.append(('mserDelta', hp.quniform, (3, 30, 1), 5, 1))
+
+gc.append(('mserMinArea', hp.quniform, (20, 120, 1), 60, 1))
+
+gc.append(('mserMaxArea', hp.quniform, (3000, 30000, 1), 14400, 1))
+
+gc.append(('mserMaxVariation', hp.uniform, (0.01, 1), 0.25, 1))
+
+gc.append(('mserMinDiversity', hp.uniform, (0.01, 1), 0.25, 1))
+
+gc.append(('mserMaxEvolution', hp.quniform, (50, 800, 1), 200, 1))
+
+gc.append(('mserMinMargin', hp.uniform, (0.0001, 0.02), 0.003, 1))
+
+gc.append(('mserEdgeBlurSize', hp.quniform, (1, 13, 1), 5, 1))
+
+#
 #######################
 
 #Produce g and searchSpace and other variables we will be importing from other files:
