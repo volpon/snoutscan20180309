@@ -128,6 +128,14 @@ class ImageFeatures(object):
 
         #BRISK (I fix patternScale at 1, since we can resize the image to get the same effect):
         brisk=cv2.BRISK.create(int(g.briskThreshold), int(g.briskOctaves), 1.0)
+        
+        #FAST corner detector (no descriptor):
+        fast=cv2.FastFeatureDetector.create(int(g.fastThreshold), g.fastNonmaxSuppression, 
+                                            g.fastType)
+        
+        #Good Features to Track keypoint detector:
+        gfft=cv2.GFTTDetector(  int(g.numFeaturesMax), g.gfftQualityLevel, g.gfftMinDistance, 
+                                int(g.gfftBlockSize), g.gfftUseHarrisDetector, g.gfftK)
 
         ######
         
@@ -136,7 +144,8 @@ class ImageFeatures(object):
                             'AGAST':       agast,
                             'AKAZE':       akaze,
                             'BRISK':       brisk,
-                            
+                            'FAST':        fast,
+                            'GFFT':        gfft,
                             }
         
         #Figure out what keypointExtractor and descriptorExtractor to use:
