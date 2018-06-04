@@ -34,7 +34,7 @@ gc.append(('keypointType', hp.choice, (('ORB', 'AGAST', 'AKAZE', 'BRISK', 'FAST'
            'MSER', 1))
                
 #The type of descriptor extractor we use:
-gc.append(('descriptorType', hp.choice, (('ORB', 'AKAZE', 'BRISK' ),), 'BRISK', 1))
+gc.append(('descriptorType', hp.choice, (('ORB', 'AKAZE', 'BRISK' ),), 'ORB', 1))
 
 ########
 #Options for the ORB keypoint detector / descriptor extractor:
