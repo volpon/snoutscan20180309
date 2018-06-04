@@ -16,13 +16,6 @@ gc=[]
 ###########
 #Defining the global constants:
 
-#Some examples:
-#gc.append(('pastTimeBinsIncrementSec', hp.uniform, (1*60*60, 30*24*60*60), 60*60*24, 1))
-#gc.append(('pastTimeNumBinsMax', hp.quniform, (1, 10*365, 1), 5*365, 0))
-#gc.append(('variablesMakeStationary', hp.randint, (1,),  0, 0))
-#gc.append(('spacyLanguageModel', hp.choice, (('en',),), 'en', 1))
-
-
 #This flag defines if we load (and thus process) our images as color iamges or grayscale images:
 gc.append(('colorNotGrayscale', hp.choice, ((cv2.IMREAD_GRAYSCALE, cv2.IMREAD_COLOR),), 
            cv2.IMREAD_GRAYSCALE, 1))
@@ -160,6 +153,34 @@ gc.append(('mserMaxEvolution', hp.quniform, (50, 800, 1), 200, 1))
 gc.append(('mserMinMargin', hp.uniform, (0.0001, 0.02), 0.003, 1))
 
 gc.append(('mserEdgeBlurSize', hp.quniform, (1, 13, 1), 5, 1))
+
+
+##########
+# Other parameters:
+
+
+#Any feature descriptors less than this distance are considered a candidate for a  "good match":
+gc.append(('matchDistanceThreshold', hp.uniform, (1, 200), 40, 1))
+
+#This is the ratio of the best match distance to second best match distance that also defines
+# what a "good match" is.  Any best matches that have a distance ratio less than this and also
+#have a distance less than g.matchDistanceThreshold are considered good matches:
+gc.append(('bestToSecondBestDistRatio', hp.uniform, (.2, 1), .7, 1))
+
+#The definition of our FAISS feature descriptor indexing technology for fast search:
+#NOTE:  Varrying this will cause a huge difference in our runtime, so we might want to limit the
+# search or add a timeout or something so it doesn't take forever:
+gc.append(('indexDefinition', hp.choice, (( "Flat",
+                                            "IVF1024,Flat",
+                                            "IVF2048,Flat",
+                                            "IVF4096,Flat",
+                                            "PQ32",
+                                            "PCA80,Flat",
+                                            "IVF4096,PQ8+16",
+                                            "IVF4096,PQ32",
+                                            "IMI2x8,PQ32",
+                                            "IMI2x8,PQ8+16",
+                                            "OPQ16_64,IMI2x8,PQ8+16",),), 'IVF2048,Flat', 0))
 
 #
 #######################

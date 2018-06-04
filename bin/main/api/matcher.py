@@ -200,14 +200,6 @@ class ImageMatcher(object):
     
     
     '''
-
-    #Anything with a matching distance less than this is considered a candidate for a  "good match".
-    matchDistanceThreshold=40
-    
-    #This is the ratio of the best match distance to second best match distance that also defines
-    # what a "good match" is.  Any best matches that have a distance ratio less than this and also
-    #have a distance less than matchDistanceThreshold are considered good matches:
-    bestToSecondBestDistRatio=.7
     
     def __init__(self, friendFeatureDescriptors, g, index_definition=None,):
         '''
@@ -229,7 +221,7 @@ class ImageMatcher(object):
         
         #If it's not specified, provide a default:
         if index_definition is None or index_definition == '':
-            index_definition='IVF2048,Flat'
+            index_definition=g.indexDefinition
         
         #Initialize the index:
         self.featureMatcher = faiss.index_factory(numDimensions, index_definition)
@@ -293,7 +285,7 @@ class ImageMatcher(object):
         #Their corresponding distance:
         matchDistList=[]
         
-        # Check to make sure that the best match is at least 1/self.bestToSecondBestDistRatio
+        # Check to make sure that the best match is at least 1/g.bestToSecondBestDistRatio
         # as close as the second best match, and only use those:
         for i in range(nSubFeatures):
             
@@ -322,8 +314,8 @@ class ImageMatcher(object):
             secondBestDist=distances[i,secondBestFriendMatchId]
 
             #Do the ratio test:
-            if (    bestMatchDist < self.bestToSecondBestDistRatio*secondBestDist \
-                    and bestMatchDist<self.matchDistanceThreshold):
+            if (    bestMatchDist < g.bestToSecondBestDistRatio*secondBestDist \
+                    and bestMatchDist<g.matchDistanceThreshold):
                 
                 #Then, add the subject feature and friend feature to our "best matches" lists:
                 matchedQueryTrainIdList.append((i,bestSubFeatMatchId));
