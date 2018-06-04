@@ -72,8 +72,7 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
         startTime=time.time()
         
         #Use this instead of the stuff below if you want to break for pdb on errors:
-        # TODO: Remove this.
-        confusionMatrix=SSMatchAll(friendDirectories, indexDefinition, g)
+        #confusionMatrix=SSMatchAll(friendDirectories, indexDefinition, g)
         
         #with TT("Trying parameters: \n" + StringIndent(pformat(gAsDict),paramIndentLevel)):
         with TT("Running a benchmark"):
@@ -88,8 +87,8 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
                 print(StringIndent('Error:  '+ str(e),errorIndentLevel), file=sys.stderr)
                 print(StringIndent(traceback.format_exc(),errorIndentLevel+2), file=sys.stderr)
                 
-                #Assign a very high cost to this:
-                percentCorrect=float('Inf')
+                #If we got an error there was 0 correct:
+                percentCorrect=0
             
         #Get our end time in seconds since the epoch.
         endTime=time.time()
