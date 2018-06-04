@@ -133,10 +133,6 @@ class ImageFeatures(object):
         fast=cv2.FastFeatureDetector.create(int(g.fastThreshold), g.fastNonmaxSuppression, 
                                             g.fastType)
         
-        #Good Features to Track keypoint detector:
-        gfft=cv2.GFTTDetector(  int(g.numFeaturesMax), g.gfftQualityLevel, g.gfftMinDistance, 
-                                int(g.gfftBlockSize), g.gfftUseHarrisDetector, g.gfftK)
-
         ######
         
         #Put them in a dictionary we use to convert a string designator to the actual featureGen:
@@ -145,7 +141,6 @@ class ImageFeatures(object):
                             'AKAZE':       akaze,
                             'BRISK':       brisk,
                             'FAST':        fast,
-                            'GFFT':        gfft,
                             }
         
         #Figure out what keypointExtractor and descriptorExtractor to use:

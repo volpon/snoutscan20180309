@@ -37,8 +37,8 @@ gc.append(('numFeaturesMax', hp.quniform, (500,20000,1), 8000, 1))
 
 
 #The type of keypoint detector we use:
-gc.append(('keypointType', hp.choice, (('ORB', 'AGAST', 'AKAZE', 'BRISK', 'FAST', 'GFFT'),),
-           'GFFT', 1))
+gc.append(('keypointType', hp.choice, (('ORB', 'AGAST', 'AKAZE', 'BRISK', 'FAST', ),),
+           'FAST', 1))
                
 #The type of descriptor extractor we use:
 gc.append(('descriptorType', hp.choice, (('ORB', 'AKAZE', 'BRISK' ),), 'BRISK', 1))
@@ -139,23 +139,6 @@ gc.append(('fastType', hp.choice, ((cv2.FAST_FEATURE_DETECTOR_FAST_N,
                                     cv2.FAST_FEATURE_DETECTOR_TYPE_7_12,
                                     cv2.FAST_FEATURE_DETECTOR_TYPE_9_16),), 
             cv2.FAST_FEATURE_DETECTOR_TYPE_9_16, 1))
-
-
-########
-#Options for the Good Features To Track keypoint detector:
-#https://docs.opencv.org/3.4.1/df/d21/classcv_1_1GFTTDetector.html
-###
-
-gc.append(('gfftQualityLevel', hp.uniform, (.001, .1), .01, 1))
-
-gc.append(('gfftMinDistance', hp.uniform, (.1, 10), 1, 1))
-
-gc.append(('gfftBlockSize', hp.quniform, (3, 9, 1), 3, 1))
-
-gc.append(('gfftUseHarrisDetector', hp.choice, ((True, False,),), True, 1))
-
-gc.append(('gfftK', hp.uniform, (.001,.2), .04, 1))
-
 
 #Remaining:
 #https://docs.opencv.org/3.4.1/d3/d28/classcv_1_1MSER.html#details
