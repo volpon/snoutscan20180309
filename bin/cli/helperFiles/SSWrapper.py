@@ -5,6 +5,7 @@ from ResultsJudge import ResultsJudge
 from StringIndent import StringIndent
 from snoutScan import SSMatchAll
 from Namespace import Namespace
+import multiprocessing as mp
 from pprint import pformat
 from random import random
 from TicToc import TT
@@ -39,6 +40,9 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
         errorIndentLevel=8
         paramIndentLevel=8
         
+        #How many seconds to let ssMatchRun before killing it:
+        ssMatchTimeoutSec=1000
+        
         gAsDict=dict()
         
         assert len(parameters)==len(searchVarNamesInOrder), \
@@ -64,7 +68,7 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
         #Create our g out of it:
         g=Namespace(gAsDict)
         
-        #Save it so that if there is an error we can run crystalBall and get the same parameters to 
+        #Save it so that if there is an error we can run SSMatchAll and get the same parameters to 
         #inspect.
         pickle.dump(g, open(savedParametersFile, 'wb'))
         
@@ -75,12 +79,32 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
         #confusionMatrix=SSMatchAll(friendDirectories, indexDefinition, g)
         
         #with TT("Trying parameters: \n" + StringIndent(pformat(gAsDict),paramIndentLevel)):
-        with TT("Running a benchmark"):
+        with TT("Running the benchmark in a separate process:"):
             try: 
-                #Call CrystalBall, and get the model and cost back.
-                confusionMatrix=\
-                    SSMatchAll(friendDirectories, indexDefinition, g)
-                    
+                #Call SSMatch, and get the model and cost back, but do it in it's own process.
+                #This prevents segfaults or memory leaks in an opencv implementation from stoping
+                #the optimization (which has happened already):
+                
+                #Set up a multiprocessing queue we can use to get the return value from SSMatchAll:
+                ssQueue=mp.Queue()
+                
+                #Set up a Process object.
+                ssProc= mp.Process( target=SSMatchAll, 
+                                    args=(friendDirectories, indexDefinition, g, ssQueue),
+                                    name='SSMatchAll')
+                
+                #Start the process running SSMatchAll.
+                ssProc.start()
+                
+                #Get our confusion matrix from the queue.  Wait at most ssMatchTimeoutSec for it 
+                # to be available.  Needs to be done before the join.
+                confusionMatrix=ssQueue.get(block=True, timeout=ssMatchTimeoutSec)
+                
+                #At this point, it should be done.  Join it.  If it takes longer than 15 seconds, 
+                #something is wrong.
+                ssProc.join(timeout=15)
+                        
+                #Calculate our percentCorrect from that:
                 percentCorrect=ResultsJudge(confusionMatrix)
 
             except Exception as e:
@@ -100,7 +124,7 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
         costFromAccuracy=log(2-percentCorrect,2)
         costFromTime=timeImportantance*log(elapsedSec+1,2)
         
-        #Combine the cost returned by crystalBall and the elapsed time to make a new cost.
+        #Combine the cost returned by SSMatchAll and the elapsed time to make a new cost.
         compositeCost=costFromAccuracy+costFromTime
         
         print('SSWrapper: compositeCost: %f\tcostFromAccuracy: %f\tcostFromTime: %f' % \

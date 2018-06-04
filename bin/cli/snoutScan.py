@@ -24,7 +24,7 @@ import os
 import pandas as pd
 
 
-def SSMatchAll(friendDirectories, indexDefinition, g=None, displayImages=True):
+def SSMatchAll(friendDirectories, indexDefinition, g=None, displayImages=True, mpQueue=None):
     '''
     This function matches each of the friend images of specific dogs with each of the other 
     friend images and outputs a confusion matrix showing how many of each dog was matched with
@@ -42,6 +42,10 @@ def SSMatchAll(friendDirectories, indexDefinition, g=None, displayImages=True):
         displayImages          - Says if we should display images for debugging purposes.
         
         g                      - Our global constants.
+        
+        mpQueue                - This is an instance of multiprocessing.Queue() that we can use to
+                                 return the output if this is run as a separate process instead of
+                                 a function.
                                           
     Outputs:
     
@@ -153,6 +157,10 @@ def SSMatchAll(friendDirectories, indexDefinition, g=None, displayImages=True):
     
     confusionMatrix=pd.DataFrame(data=confusionMatrixData, index=dogNames, columns=dogNames,
                                  dtype=int)
+    
+    #If we have a queue, use it to output the confusionMatrix:
+    if mpQueue is not None:
+        mpQueue.put(confusionMatrix)
     
     return confusionMatrix
         
