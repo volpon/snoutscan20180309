@@ -182,6 +182,19 @@ gc.append(('indexDefinition', hp.choice, (( "Flat",
                                             "IMI2x8,PQ8+16",
                                             "OPQ16_64,IMI2x8,PQ8+16",),), 'IVF2048,Flat', 0))
 
+########
+# RANSAC Constants:
+###
+
+#Maximum allowed reprojection error to treat a point pair as an inlier:
+gc.append(('ransacReprojectThreshold', hp.uniform, (1, 200), 10, 1))
+
+#Maximum number of RANSAC iterations:
+gc.append(('ransacMaxIters', hp.quniform, (50, 10000, 1), 2000, 1))
+
+#A confidence threshold for the result:
+gc.append(('ransacConfidence', hp.uniform, (0.9, 0.9999), 0.995, 1))
+
 #
 #######################
 
