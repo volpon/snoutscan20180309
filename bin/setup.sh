@@ -18,7 +18,7 @@ sudo apt-get update -y
 sudo apt-get upgrade -y
 
 #Install dependencies here:
-sudo apt-get install -y fortunes libsm6 libxrender1 libfontconfig1 libxext6
+sudo apt-get install -y fortunes libsm6 libxrender1 libfontconfig1 libxext6 build-essential
 
 #Made with:
 # conda env export --name snoutScan | xsel -b

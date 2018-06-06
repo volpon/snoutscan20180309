@@ -10,13 +10,12 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..", '
                                             
 import HyperparameterSearch
 from main.api.matcher import find_best_match
-from GlobalConstants import g as g_default
 from ResultsJudge import ResultsJudge
 from StringIndent import StringIndent
-from GlobalConstants import g
 from collections import OrderedDict
 from FriendMake import FriendMake
 from ArgsParse import ArgsParse
+from GlobalConstants import g
 from TicToc import TT
 import numpy as np
 import sys
@@ -25,7 +24,7 @@ import os
 import pandas as pd
 
 
-def SSMatchAll(friendDirectories, indexDefinition, g=None, displayImages=True, mpQueue=None):
+def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueue=None):
     '''
     This function matches each of the friend images of specific dogs with each of the other 
     friend images and outputs a confusion matrix showing how many of each dog was matched with
@@ -67,10 +66,6 @@ def SSMatchAll(friendDirectories, indexDefinition, g=None, displayImages=True, m
         
         #We only use the keys, not the values.  This is essentially an OrderedSet
         dogNamesOD=OrderedDict()
-        
-        #If we don't have a g.  Load the defualts from our best optimization run so far:
-        if g is None:
-            g=g_default
         
         ###########
         # Load our images, as one friend per image:
@@ -191,7 +186,7 @@ if __name__=="__main__":
     pd.set_option('display.max_rows', 5000)
     pd.set_option('display.max_columns', 5000)
     pd.set_option('display.width', 10000)
-    
+        
     if (args.optimizeHyperparameters):
         with TT('Running HyperParmeterSearch'):
             HyperparameterSearch.HyperparameterSearch(args.friendDirectories, args.indexDefinition)
