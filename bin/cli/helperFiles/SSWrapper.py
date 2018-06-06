@@ -90,7 +90,7 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
                 
                 #Set up a Process object.
                 ssProc= mp.Process( target=SSMatchAll, 
-                                    args=(friendDirectories, indexDefinition, g, ssQueue),
+                                    args=(friendDirectories, indexDefinition, g, False, ssQueue),
                                     name='SSMatchAll')
                 
                 #Start the process running SSMatchAll.
@@ -103,7 +103,11 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
                 #At this point, it should be done.  Join it.  If it takes longer than 15 seconds, 
                 #something is wrong.
                 ssProc.join(timeout=15)
-                        
+                
+                #We return an empty pandas array if there was an exception.  If the child has an 
+                #exceptuion raise one in the parent too to keep things consistent.
+                assert confusionMatrix.empty == False, 'SSMatchAll exited with an exception.'
+                
                 #Calculate our percentCorrect from that:
                 percentCorrect=ResultsJudge(confusionMatrix)
 

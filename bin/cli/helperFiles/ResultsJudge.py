@@ -13,6 +13,9 @@ def ResultsJudge(confusionMatrix):
     numCorrect=np.trace(confusionMatrix)
     numTried=np.sum(np.sum(confusionMatrix))
     
-    percentCorrect=numCorrect/numTried
+    if numTried>0:
+        percentCorrect=numCorrect/numTried
+    else:
+        percentCorrect=0
  
     return percentCorrect

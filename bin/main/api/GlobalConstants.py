@@ -31,7 +31,7 @@ gc.append(('numFeaturesMax', hp.quniform, (500,20000,1), 8000, 1))
 
 #The type of keypoint detector we use:
 gc.append(('keypointType', hp.choice, (('ORB', 'AGAST', 'AKAZE', 'BRISK', 'FAST', 'MSER' ),),
-           'MSER', 1))
+           'ORB', 1))
                
 #The type of descriptor extractor we use:
 gc.append(('descriptorType', hp.choice, (('ORB', 'AKAZE', 'BRISK' ),), 'ORB', 1))
