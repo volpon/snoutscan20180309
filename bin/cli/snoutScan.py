@@ -13,9 +13,10 @@ from main.api.matcher import find_best_match
 from ResultsJudge import ResultsJudge
 from StringIndent import StringIndent
 from collections import OrderedDict
-from FriendMake import FriendMake
+from FriendLoad import FriendLoad
 from ArgsParse import ArgsParse
 from GlobalConstants import g
+import multiprocessing as mp
 from TicToc import TT
 import numpy as np
 import sys
@@ -71,7 +72,9 @@ def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueu
         # Load our images, as one friend per image:
         ###########
         
-        with TT('Loading images'):
+        friendLoadArgsList=[]
+        
+        with TT('Finding images.'):
             #For each directory:
             for friendDir in friendDirectories:
                 #Extract the dog name:
@@ -80,7 +83,7 @@ def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueu
                 #Add our dogName
                 dogNamesOD[dogName]=None
 
-                with TT('Loading images for %s' % dogName):
+                with TT('Finding images for %s' % dogName):
                     #Get the files in that directory:
                     (root, dirs, files)= next(os.walk(friendDir))
                     
@@ -88,21 +91,28 @@ def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueu
                     
                     #For each file in the directory:
                     for thisFile in files:
-                        with TT('Loading %s' % thisFile):
-                            
-                            imgFilePath=os.path.join(root,thisFile)
-                            
-                            with open(imgFilePath, "rb") as imageFileHandle:
-                                #Load the image file data:
-                                imgFile=imageFileHandle.read()
-                            
-                            #Create a Friend object from it with the dog name connected to it.
-                            friend=FriendMake(dogName, imgFilePath, imgFile, g)
-                            
-                            #Add it to a list of friends.
-                            friends.append(friend)
+                        #with TT('Preparing to load %s' %K thisFile):
+                        
+                        #Get the full file path:
+                        imgFilePath=os.path.join(root,thisFile)
+                        
+                        #Add this entry to our list:
+                        friendLoadArgsList.append((dogName,imgFilePath,g))
+                        
+        with TT('These images found: \n%s' % str([imgFilePath for (dogName, imgFilePath, g) 
+                                                  in friendLoadArgsList])):
+            pass
         
+        #Create a multiprocessing pool we can use to load images and compute features in parallel:
+        friendLoadPool=mp.Pool()
     
+        with TT('Loading all images and computing features in parallel'):
+            ##The sequential version (for debugging only):
+            #for friendLoadArgs in friendLoadArgsList:
+                #friends.append(FriendLoad(friendLoadArgs))
+            
+            friendLoadPool.map(FriendLoad, friendLoadArgsList)
+        
         numFriends=len(friends)
         
         #Get a list of our dogNames:
