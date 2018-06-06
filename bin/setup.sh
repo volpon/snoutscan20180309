@@ -18,7 +18,7 @@ sudo apt-get update -y
 sudo apt-get upgrade -y
 
 #Install dependencies here:
-sudo apt-get install -y fortunes libsm6 libxrender1 libfontconfig1 libxext6
+sudo apt-get install -y fortunes libsm6 libxrender1 libfontconfig1 libxext6 build-essential
 
 #Made with:
 # conda env export --name snoutScan | xsel -b
@@ -63,6 +63,7 @@ dependencies:
     - chardet==3.0.4
     - click==6.7
     - cloudpickle==0.5.2
+    - cycler==0.10.0
     - decorator==4.3.0
     - docutils==0.14
     - entrypoints==0.2.3
@@ -70,8 +71,10 @@ dependencies:
     - flask==0.12.2
     - flask-jwt==0.3.2
     - flask-sqlalchemy==2.3.2
+    - future==0.16.0
     - gunicorn==19.7.1
     - html5lib==1.0.1
+    - hyperopt==0.1
     - idna==2.6
     - imagesize==1.0.0
     - ipykernel==4.8.2
@@ -84,13 +87,17 @@ dependencies:
     - jsonschema==2.6.0
     - jupyter-client==5.2.3
     - jupyter-core==4.4.0
+    - kiwisolver==1.0.1
     - lazy-object-proxy==1.3.1
     - markupsafe==1.0
+    - matplotlib==2.2.2
     - mccabe==0.6.1
     - mistune==0.8.3
     - namedlist==1.7
     - nbconvert==5.3.1
     - nbformat==4.4.0
+    - networkx==1.11
+    - nose==1.3.7
     - numpydoc==0.8.0
     - opencv-contrib-python==3.4.0.12
     - opencv-python==3.4.0.12
@@ -110,6 +117,7 @@ dependencies:
     - pygments==2.2.0
     - pyjwt==1.4.2
     - pylint==1.8.4
+    - pymongo==3.6.1
     - pymysql==0.7.11
     - pyopengl==3.1.0
     - pyparsing==2.2.0
@@ -122,6 +130,7 @@ dependencies:
     - qtpy==1.4.1
     - requests==2.18.4
     - rope==0.10.7
+    - scipy==1.1.0
     - simplegeneric==0.8.1
     - sip==4.19.8
     - six==1.11.0

@@ -6,7 +6,7 @@ friendMakingDependencies=['/.condaUser/app/main/api/model.py']
 
 
 #@CachePersistent('/.snoutScanPersist/friendCache', friendMakingDependencies)
-def FriendMake(friendName, imgFilePath, image):
+def FriendMake(friendName, imgFilePath, image, g):
     '''
     This function makes a Friend() given just a friendName, imageName, and an image.
     
@@ -14,10 +14,12 @@ def FriendMake(friendName, imgFilePath, image):
         friendName          - the name of the friend, an identifier.
         imgFilePath         - the full path to the file image, just so we can record it.
         image               - the image data itself.
+        g                   - Our global constants.
+
     '''
     
     #Make the Photo:
-    photo=Photo()
+    photo=Photo(g)
     
     #Make it so we don't save this in the database.
     make_transient(photo)
@@ -37,7 +39,7 @@ def FriendMake(friendName, imgFilePath, image):
                             'sex'       : 'Male',
                             'location'  : 'Minneapolis',
                             'staus'     : 'alive'
-                                })
+                                }, g)
     
     make_transient(friend)
     

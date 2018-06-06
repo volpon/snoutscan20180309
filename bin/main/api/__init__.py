@@ -1,11 +1,13 @@
+#Add this directory to our path so we can find things in it easily:
+import sys,os; sys.path.append(os.path.dirname(os.path.realpath(__file__)));
+
 from main.api.auth import jwt_required, current_identity
 from main.api.model import db, Profile, Friend
 from main.api.matcher import find_best_match, find_best_matches
 #from flask_jwt import jwt_required
 from flask import request, jsonify
 from main import app
-
-
+from GlobalConstants import g
 
 
 def decode_input():
@@ -116,7 +118,7 @@ def api_profile_friends_get(profile_id: int):
         return jsonify({'error': {'message': 'forbidden'}}), 403
 
     friends = Friend.find_by_profile_id(profile_id)
-
+    
     if friends is None:
         return jsonify({'error': {'message': 'not found'}}), 404
 
@@ -142,7 +144,7 @@ def api_friend_create(profile_id:int):
     if fields is None:
         return jsonify({'error': {'message': 'invalid input'}}), 400
 
-    friend, error = Friend.create(profile, fields)
+    friend, error = Friend.create(profile, fields, g)
 
     if friend is None:
         return jsonify({'error': error}), error['status']
@@ -264,6 +266,7 @@ def api_friend_set_photo(friend_id: int):
     image_data = image.get('data', None)
     image_type = image.get('type', None)
 
+
     #print("PUT: ", image_data)
     #print("PUT: image_data size: ", len(image_data))
     
@@ -271,6 +274,10 @@ def api_friend_set_photo(friend_id: int):
 
     #print("PUT: ", image_data)
 
+    #set our global constants manually:
+    friend.g=g
+    friend.photo.g=g
+    
     error = friend.set_photo(image_data, image_type)
 
     #print("{}: {}".format(image_type, image_data))
@@ -297,7 +304,12 @@ def api_query_match():
     
     friends = Friend.query.all()
     
-    friend_db_id, per, _, matcher= find_best_match(image_data, image_type, friends)
+    #Add g to our friends and friend photos:
+    for friend in friends:
+        friend.g=g
+        friend.photo.g=g
+    
+    friend_db_id, per, _, matcher= find_best_match(image_data, image_type, friends, g)
 
     if friend_db_id is None:
         return jsonify({'status': 'not found'}), 200
@@ -328,8 +340,8 @@ def api_query_matches(max_best_friends):
     
     friends = Friend.query.all()
         
-    friend_ids_sorted, num_matches_sorted, _, matcher= find_best_matches(image_data, image_type,
-                                                                         friends, max_best_friends)
+    friend_ids_sorted, num_matches_sorted,_, matcher=find_best_matches(image_data, image_type,
+                                                                       friends, max_best_friends, g)
 
     if friend_ids_sorted is None or len(friend_ids_sorted) == 0:
         return jsonify({'status': 'not found'}), 200

@@ -1,0 +1,18 @@
+#This file holds variables that are shared in many places, but do not varry.
+
+import os
+from os.path import expanduser
+
+homeDir = expanduser("~")
+
+snoutScanDir=os.path.join(os.path.dirname(os.path.realpath(__file__)),"..", '..', 'params');
+
+try:
+    #Make sure the directory exists:
+    os.mkdir(snoutScanDir)
+except FileExistsError:
+    #Don't worry if it already exists -that's fine.
+    pass
+
+#This file holds the last set of parameters we used (for repeatability):
+savedParametersFile=snoutScanDir + '/lastParameters.pickle'

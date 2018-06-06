@@ -131,8 +131,9 @@ class Friend(db.Model):
     status= db.Column(db.String(16))
 
     photo = db.relationship("Photo", uselist=False, cascade="all,delete", back_populates="friend")
+    
 
-    def __init__(self, profile, fields: dict):
+    def __init__(self, profile, fields: dict, g):
 
         self.profile = profile
 
@@ -142,15 +143,16 @@ class Friend(db.Model):
         self.age = fields.get('age', '')
         self.location = fields.get('location', '')
         self.status = fields.get('status', '')
+        self.g=g
 
-        self.photo = Photo()
+        self.photo = Photo(self.g)
 
         pass
 
     @classmethod
-    def create(cls, profile, fields: dict):
+    def create(cls, profile, fields: dict, g):
 
-        f = Friend(profile, fields)
+        f = Friend(profile, fields, g)
 
         db.session.add(f)
         db.session.commit()
@@ -219,8 +221,8 @@ class Friend(db.Model):
         return None
 
 class Photo(db.Model):
-
     __tablename__ = 'photos'
+    g=None
 
     id = db.Column(db.Integer, primary_key=True)
     friend_id = db.Column(db.Integer, db.ForeignKey('friends.id'))
@@ -236,8 +238,8 @@ class Photo(db.Model):
     #Feature descriptors, in encoded format:
     featuresEncoded = db.Column(MEDIUMBLOB)
 
-    def __init__(self):
-        pass 
+    def __init__(self, g):
+        self.g=g
 
     def set_base64(self, data, type):
 
@@ -254,9 +256,9 @@ class Photo(db.Model):
         self.data = data
         self.type = type
         
-        fs=ImageFeatures()
+        fs=ImageFeatures(self.g)
 
-        (self.featureKeypoints, self.featureDescriptors) = fs.from_image(self.data)
+        (self.featureKeypoints, self.featureDescriptors) = fs.from_image(self.data,self.g)
                 
         self.featuresEncoded = fs.encode() 
      

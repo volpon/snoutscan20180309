@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-def matches_refine(subjectKPPos, friendKPPos, friendIds, matchedQueryTrainIds, matchDist):
+def matches_refine(subjectKPPos, friendKPPos, friendIds, matchedQueryTrainIds, matchDist, g):
     '''
     This function refines a set of matches to keep only the ones that are geomentrically consistent.
    
@@ -22,21 +22,15 @@ def matches_refine(subjectKPPos, friendKPPos, friendIds, matchedQueryTrainIds, m
         matchDist               - A np vector of length numMatches specifying the distance 
                                   metric fort each match.
                                   
+        g                       - Our global constants.
+
+                                  
     Outputs:
         newMatchedQueryTrainIds    - A subset of the rows of matchedQueryTrainIds, showing only the 
                                   geometrically self-consistent set of matches.
                                   
         newMatchDist               - The corresponding distances for these matches.
     '''
-    
-    #Maximum allowed reprojection error to treat a point pair as an inlier:
-    ransacReprojeThreshold=10
-    
-    #Maximum number of RANSAC iterations:
-    ransacMaxIters=2000
-    
-    #A confidence threshold for the result:
-    ransacConfidence=.995
     
     #These are the friendIds used in matchedQueryTraineIds:
     friendIdsMatched=np.unique(friendIds[matchedQueryTrainIds[:,1]])
@@ -69,8 +63,8 @@ def matches_refine(subjectKPPos, friendKPPos, friendIds, matchedQueryTrainIds, m
         #Find the inlier set using RANSAC:
         #https://docs.opencv.org/3.4.1/d9/d0c/group__calib3d.html#ga4abc2ece9fab9398f2e560d53c8c9780
         H, mask=cv2.findHomography(matchPosForFriend[:,0:2], matchPosForFriend[:,2:4],
-                                  cv2.RANSAC, ransacReprojeThreshold, None, ransacMaxIters, 
-                                  ransacConfidence)
+                                  cv2.RANSAC, g.ransacReprojectThreshold, None, 
+                                  int(g.ransacMaxIters), g.ransacConfidence)
         
         #Convert to a boolean mask:
         maskBool=mask.ravel().astype(bool)
