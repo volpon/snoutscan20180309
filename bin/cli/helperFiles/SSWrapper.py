@@ -68,9 +68,10 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
         #Create our g out of it:
         g=Namespace(gAsDict)
         
-        #Save it so that if there is an error we can run SSMatchAll and get the same parameters to 
-        #inspect.
-        pickle.dump(g, open(savedParametersFile, 'wb'))
+        ##Save it so that if there is an error we can run SSMatchAll and get the same parameters to 
+        ##inspect.
+        ##Disabled because it makes it so that when I ctrl-C I no longer have the best parameters.
+        #pickle.dump(g, open(savedParametersFile, 'wb'))
         
         #Get our start time in seconds since the epoch.
         startTime=time.time()
