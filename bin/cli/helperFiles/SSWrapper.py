@@ -36,7 +36,7 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
     '''
 
     with TT('Running SSWrapper'):
-        timeImportantance=.01
+        timeImportantance=.002
         errorIndentLevel=8
         paramIndentLevel=8
         
@@ -126,14 +126,15 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
         
         #A log scale represents the fact that getting the first 10% accuracy is easier than getting
         #the last 10% accuracy:
+        #Inverse is: percentCorrect= 2-2^costFromAccuracy
         costFromAccuracy=log(2-percentCorrect,2)
         costFromTime=timeImportantance*log(elapsedSec+1,2)
         
         #Combine the cost returned by SSMatchAll and the elapsed time to make a new cost.
         compositeCost=costFromAccuracy+costFromTime
         
-        print('SSWrapper: compositeCost: %f\tcostFromAccuracy: %f\tcostFromTime: %f' % \
-            (compositeCost, costFromAccuracy, costFromTime))
+        print('SSWrapper: percentCorrect: %f\tcompositeCost: %f\tcostFromAccuracy: %f\tcostFromTime: %f' % \
+            (percentCorrect, compositeCost, costFromAccuracy, costFromTime))
 
         #If that new cost is the lowest we've seen so far, save the model in memory for cbOptimize to 
         #use when we're done:
