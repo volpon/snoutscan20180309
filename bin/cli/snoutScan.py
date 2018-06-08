@@ -107,11 +107,11 @@ def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueu
         friendLoadPool=mp.Pool()
     
         with TT('Loading all images and computing features in parallel'):
-            ##The sequential version (for debugging only):
-            #for friendLoadArgs in friendLoadArgsList:
-                #friends.append(FriendLoad(friendLoadArgs))
+            #The sequential version (for debugging only):
+            for friendLoadArgs in friendLoadArgsList:
+                friends.append(FriendLoad(friendLoadArgs))
             
-            friendLoadPool.map(FriendLoad, friendLoadArgsList)
+#            friendLoadPool.map(FriendLoad, friendLoadArgsList)
         
         numFriends=len(friends)
         

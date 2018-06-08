@@ -4,11 +4,9 @@ from TicToc import TT
 import numpy as np
 import pickle
 import base64
-import json
-import sys
 import cv2
+import sys
 import io
-import os
 
 #A search of nearest neighbor search implementations brings me to this page:
 #https://www.benfrederickson.com/approximate-nearest-neighbours-for-recommender-systems/
@@ -43,39 +41,9 @@ class ImageFeatures(object):
             self.decode(features)
         else:
             self.descriptors = None
-            self.keypoints = None
+            self.keypointPos = None
             
         self.g=g
-
-
-    def _keypoints_package(self, keypoints):
-        '''
-        This function packages a collection of keypoints into something we can pickle successfully.
-        '''
-        return [ (
-                      k.pt, 
-                      k.size,
-                      k.angle, 
-                      k.response, 
-                      k.octave, 
-                      k.class_id,
-                  ) for k in keypoints ]
-    
-    def _keypoints_unpackage(self, keypoints_packaged):
-        '''
-        This function takes a collection of packaged keypoints as made by _keypoints_packaged
-        and sets up valid keypoints again from them.
-        '''
-        
-        return [ cv2.KeyPoint(x=k_pack[0][0],
-                              y=k_pack[0][1],
-                              _size=k_pack[1], 
-                              _angle=k_pack[2], 
-                              _response=k_pack[3],
-                              _octave=k_pack[4],
-                              _class_id=k_pack[5]) for k_pack in keypoints_packaged ]
-    
-    
 
     def from_image(self, imageFile, g):
         '''
@@ -156,12 +124,16 @@ class ImageFeatures(object):
         ##TODO:  See if we unpack the bits correctly regardless of descriptor length??
         
         #Detect the keypoints:
-        self.keypoints = keypointExtractor.detect(imgResized, None)
+        keypoints = keypointExtractor.detect(imgResized, None)
             
         #Create the descriptors around each keypoint:
-        self.keypoints, self.descriptors= descriptorExtractor.compute(imgResized, 
-                                                                      self.keypoints)       
-        return (self.keypoints, self.descriptors)
+        keypoints, self.descriptors= descriptorExtractor.compute(imgResized, 
+                                                                 keypoints)
+        
+        #A numPoints x 2 numpy array with each row as [x, y]
+        self.keypointPos=np.array([ k.pt for k in keypoints])
+        
+        return (self.keypointPos, self.descriptors)
 
     def encode(self):
         '''
@@ -171,8 +143,7 @@ class ImageFeatures(object):
         memfile = io.BytesIO()
         
         #Dump the descriptors to the memfile:
-        pickle.dump((self._keypoints_package(self.keypoints), 
-                     self.descriptors),
+        pickle.dump((self.keypointPos, self.descriptors),
                     memfile, protocol=pickle.HIGHEST_PROTOCOL)
         
         #Read the file back:
@@ -189,11 +160,9 @@ class ImageFeatures(object):
         memfile = io.BytesIO(serialized)
         
         #Load the file:
-        (keypoints_packaged, self.descriptors)=pickle.load(memfile)
+        (self.keypointPos, self.descriptors)=pickle.load(memfile)
         
-        #Unpackage our keypoints:
-        self.keypoints=self._keypoints_unpackage(keypoints_packaged)
-
+        
 class ImageMatcher(object):
     '''
     This class is used to match the features from a subject image to features for another friend.
@@ -393,10 +362,7 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
     subjectFeatures=ImageFeatures(g)
     
     #Make our features and keypoints.
-    subjectFeatureKeypoints, subjectFeatureDescriptorsBytes=subjectFeatures.from_image(image_data,g)
-    
-    #Extract our subject feature coordinates from the keypoints:
-    subjectKPPos=np.array([ (kp.pt[0], kp.pt[1]) for kp in subjectFeatureKeypoints])
+    subjectKPPos, subjectFeatureDescriptorsBytes=subjectFeatures.from_image(image_data,g)
     
     #Unpack the bytes now that we're about to use them:
     subjectFeatureDescriptors=np.unpackbits(subjectFeatureDescriptorsBytes,axis=1).astype('float32')
@@ -411,7 +377,7 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
     
     #This array holds the keypoint positions of the friends (x,y):
     friendKPPosList=[]
-        
+    
     #####
     ##Loop through all of our friends and combine the feature data:
     #####
@@ -451,8 +417,9 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
         #Add our descriptors to the list:
         friendDescriptorsList.append(friendFeatureDescriptors)
         
-        friendKPPosList.append([(kp.pt[0], kp.pt[1]) for kp in friendFeatureKeypoints])
-                
+        #Add our keypoints to the list:
+        friendKPPosList.append(friendFeatureKeypoints)
+                        
     #Combine the lists together to make one array for the whole list of friends:
     friendIds=np.concatenate(friendIdsList)
     friendDescriptorsBytes=np.concatenate(friendDescriptorsList)

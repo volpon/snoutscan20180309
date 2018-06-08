@@ -1,5 +1,4 @@
 import base64
-import sys
 import os
 
 is_heroku = 'DATABASE_URL' in os.environ.keys()
