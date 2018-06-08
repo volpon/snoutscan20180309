@@ -62,9 +62,6 @@ def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueu
     confusionMatrix=pd.DataFrame()
     
     try:
-        #Our list of friends:
-        friends=[]
-        
         #We only use the keys, not the values.  This is essentially an OrderedSet
         dogNamesOD=OrderedDict()
         
@@ -107,12 +104,13 @@ def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueu
         friendLoadPool=mp.Pool()
     
         with TT('Loading all images and computing features in parallel'):
-            #The sequential version (for debugging only):
-            for friendLoadArgs in friendLoadArgsList:
-                friends.append(FriendLoad(friendLoadArgs))
+#            #The sequential version (for debugging only):
+#            friends=[]
+#            for friendLoadArgs in friendLoadArgsList:
+#                friends.append(FriendLoad(friendLoadArgs))
             
-#            friendLoadPool.map(FriendLoad, friendLoadArgsList)
-        
+            friends=friendLoadPool.map(FriendLoad, friendLoadArgsList)
+            
         numFriends=len(friends)
         
         #Get a list of our dogNames:
