@@ -313,6 +313,96 @@ class MatchResult(object):
     def saveImage(self, path):
 
         cv2.imwrite(path, self.image)
+        
+
+def matcher_info_create(friends,index_definition, g):
+    '''
+    This function creates a pre-computed matcher and corresponding information we need to use it,
+    given a set of friends and an index definition.
+    
+    Inputs:
+        friends         - A collection of Friend() objects representing the pictures the given image
+                          could match to.
+                          
+        indexDefinition - A string representing the faiss index setup to use, or ''
+                          or None to represent "use the default"
+        g               - Our global constants, or None if we should load the defaults.
+                          
+    Output:
+        matcher_info    - A tuple (friendKPPos, friendIds, matcher) where:
+            friendKPPos - A (numFriendFeatures x 2) numpy array of the [X, Y] positions of every 
+                            friend feature.
+            friendIds   - The index to the original friends collection that is the source of each 
+                          friend feature in our friend friendKPPos
+            matcher     - A trained faiss index for a given set of friends.
+    '''
+    #For each feature, this is the friend id it came from (index to friends):
+    friendIdsList=[]
+    
+    #The descriptors for this feature:
+    friendDescriptorsList=[]
+    
+    #This array holds the keypoint positions of the friends (x,y):
+    friendKPPosList=[]
+    
+    #####
+    ##Loop through all of our friends and combine the feature data:
+    #####
+    for index in range(len(friends)):
+        
+        #Get this friend:
+        friend=friends[index]
+        
+        fPhoto=friend.photo
+
+        #Set some global constants:
+        friend.g=g
+        fPhoto.g=g
+
+        #If our friend doesn't have featureDescriptors yet, then decode them:
+        if fPhoto.featureDescriptors is None:
+            
+            #Decode our features:
+            fPhoto.set_binary(fPhoto.data, fPhoto.type)
+
+        if fPhoto.featureDescriptors is None:
+            with TT('Warning:  Found a friend without featureDescriptors!'):
+                pass
+                    
+        #Get our features
+        friendFeatureKeypoints=friend.photo.featureKeypoints
+        friendFeatureDescriptors=friend.photo.featureDescriptors
+        
+        numFeatures=len(friendFeatureDescriptors)
+        
+        assert numFeatures == len(friendFeatureKeypoints), \
+            'The number of keypoints and descriptors should be equal.'
+        
+        #Add our indices to the list:
+        friendIdsList.append(np.full(numFeatures,index))
+        
+        #Add our descriptors to the list:
+        friendDescriptorsList.append(friendFeatureDescriptors)
+        
+        #Add our keypoints to the list:
+        friendKPPosList.append(friendFeatureKeypoints)
+                        
+    #Combine the lists together to make one array for the whole list of friends:
+    friendIds=np.concatenate(friendIdsList)
+    friendDescriptorsBytes=np.concatenate(friendDescriptorsList)
+    friendKPPos=np.vstack(friendKPPosList)
+    
+    #Convert the byte representation to an array of bits:      
+    friendDescriptors=np.unpackbits(friendDescriptorsBytes, axis=1).astype('float32')
+    
+    assert len(friendIds) == friendDescriptors.shape[0] \
+               and friendDescriptors.shape[0] == friendKPPos.shape[0], \
+               'These should be the same.'
+
+    #Make a matcher object using our friend image features:
+    matcher = ImageMatcher(friendDescriptors, g, index_definition)
+    
+    return (friendKPPos, friendIds, matcher)
 
 def find_best_matches(image_data, image_type, friends, max_best_friends, g=None, f_ids_excluded=None,
                       index_definition=None, matcher_info=None):
@@ -333,8 +423,10 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
         indexDefinition - A string representing the faiss index setup to use, or ''
                           or None to represent "use the default"
         matcher_info    - A tuple including a matcher and some other internal variables that can be
-                          re-used between calls if the friends stay the same to save computations.
-                          Set as None to calculate this.
+                          re-used between calls if friends and matcerh_info stay the same 
+                          to save computations.
+                          Set as None to calculate it instead.  If this is provided, friends and 
+                          matcher_info are ignored.
                               
     Outputs:
         best_indicies   - A list of indicies to the the num_best_friends closest matching friends.
@@ -371,78 +463,12 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
     
     numSubjectFeatures=subjectFeatureDescriptors.shape[0]
       
-    #If we don't already have a matcher, make one from the friendDescriptors:
+    #If we don't already have a matcher and corresponding info, create one:
     if matcher_info==None:    
-        #For each feature, this is the friend id it came from (index to friends):
-        friendIdsList=[]
+        matcher_info=matcher_info_create(friends,index_definition, g)
         
-        #The descriptors for this feature:
-        friendDescriptorsList=[]
-        
-        #This array holds the keypoint positions of the friends (x,y):
-        friendKPPosList=[]
-        
-        #####
-        ##Loop through all of our friends and combine the feature data:
-        #####
-        for index in range(len(friends)):
-            
-            #Get this friend:
-            friend=friends[index]
-            
-            fPhoto=friend.photo
-    
-            #Set some global constants:
-            friend.g=g
-            fPhoto.g=g
-    
-            #If our friend doesn't have featureDescriptors yet, then decode them:
-            if fPhoto.featureDescriptors is None:
-                
-                #Decode our features:
-                fPhoto.set_binary(fPhoto.data, fPhoto.type)
-    
-            if fPhoto.featureDescriptors is None:
-                with TT('Warning:  Found a friend without featureDescriptors!'):
-                    pass
-                        
-            #Get our features
-            friendFeatureKeypoints=friend.photo.featureKeypoints
-            friendFeatureDescriptors=friend.photo.featureDescriptors
-            
-            numFeatures=len(friendFeatureDescriptors)
-            
-            assert numFeatures == len(friendFeatureKeypoints), \
-                'The number of keypoints and descriptors should be equal.'
-            
-            #Add our indices to the list:
-            friendIdsList.append(np.full(numFeatures,index))
-            
-            #Add our descriptors to the list:
-            friendDescriptorsList.append(friendFeatureDescriptors)
-            
-            #Add our keypoints to the list:
-            friendKPPosList.append(friendFeatureKeypoints)
-                            
-        #Combine the lists together to make one array for the whole list of friends:
-        friendIds=np.concatenate(friendIdsList)
-        friendDescriptorsBytes=np.concatenate(friendDescriptorsList)
-        friendKPPos=np.vstack(friendKPPosList)
-        
-        #Convert the byte representation to an array of bits:      
-        friendDescriptors=np.unpackbits(friendDescriptorsBytes, axis=1).astype('float32')
-        
-        assert len(friendIds) == friendDescriptors.shape[0] \
-                   and friendDescriptors.shape[0] == friendKPPos.shape[0], \
-                   'These should be the same.'
-
-        #Make a matcher object using our friend image features:
-        matcher = ImageMatcher(friendDescriptors, g, index_definition)
-        
-        matcher_info=(friendKPPos, friendIds, matcher)
-    else:
-        #Unpack the variables we saved before:
-        friendKPPos, friendIds, matcher = matcher_info
+    #Unpack the variables:
+    friendKPPos, friendIds, matcher = matcher_info
         
     #Convert f_ids_excluded to featureIdsExcluded:
     #Initialize a binary mask saying if we should exclude this feature:
