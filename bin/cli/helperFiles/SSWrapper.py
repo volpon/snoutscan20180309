@@ -75,50 +75,49 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
         #Get our start time in seconds since the epoch.
         startTime=time.time()
         
-        #Use this instead of the stuff below if you want to break for pdb on errors:
-        confusionMatrix=SSMatchAll(friendDirectories, indexDefinition, g)
-        percentCorrect=ResultsJudge(confusionMatrix)
-
+        ##Use this instead of the stuff below if you want to break for pdb on errors:
+        #confusionMatrix=SSMatchAll(friendDirectories, indexDefinition, g)
+        #percentCorrect=ResultsJudge(confusionMatrix)
         
-#        #with TT("Trying parameters: \n" + StringIndent(pformat(gAsDict),paramIndentLevel)):
-#        with TT("Running the benchmark in a separate process:"):
-#            try: 
-#                #Call SSMatch, and get the model and cost back, but do it in it's own process.
-#                #This prevents segfaults or memory leaks in an opencv implementation from stoping
-#                #the optimization (which has happened already):
-#                
-#                #Set up a multiprocessing queue we can use to get the return value from SSMatchAll:
-#                ssQueue=mp.Queue()
-#                
-#                #Set up a Process object.
-#                ssProc= mp.Process( target=SSMatchAll, 
-#                                    args=(friendDirectories, indexDefinition, g, False, ssQueue),
-#                                    name='SSMatchAll')
-#                
-#                #Start the process running SSMatchAll.
-#                ssProc.start()
-#                
-#                #Get our confusion matrix from the queue.  Wait at most ssMatchTimeoutSec for it 
-#                # to be available.  Needs to be done before the join.
-#                confusionMatrix=ssQueue.get(block=True, timeout=ssMatchTimeoutSec)
-#                
-#                #At this point, it should be done.  Join it.  If it takes longer than 15 seconds, 
-#                #something is wrong.
-#                ssProc.join(timeout=15)
-#                
-#                #We return an empty pandas array if there was an exception.  If the child has an 
-#                #exceptuion raise one in the parent too to keep things consistent.
-#                assert confusionMatrix.empty == False, 'SSMatchAll exited with an exception.'
-#                
-#                #Calculate our percentCorrect from that:
-#                percentCorrect=ResultsJudge(confusionMatrix)
-#
-#            except Exception as e:
-#                print(StringIndent('Error:  '+ str(e),errorIndentLevel), file=sys.stderr)
-#                print(StringIndent(traceback.format_exc(),errorIndentLevel+2), file=sys.stderr)
-#                
-#                #If we got an error there was 0 correct:
-#                percentCorrect=0
+        #with TT("Trying parameters: \n" + StringIndent(pformat(gAsDict),paramIndentLevel)):
+        with TT("Running the benchmark in a separate process:"):
+            try: 
+                #Call SSMatch, and get the model and cost back, but do it in it's own process.
+                #This prevents segfaults or memory leaks in an opencv implementation from stoping
+                #the optimization (which has happened already):
+                
+                #Set up a multiprocessing queue we can use to get the return value from SSMatchAll:
+                ssQueue=mp.Queue()
+                
+                #Set up a Process object.
+                ssProc= mp.Process( target=SSMatchAll, 
+                                    args=(friendDirectories, indexDefinition, g, False, ssQueue),
+                                    name='SSMatchAll')
+                
+                #Start the process running SSMatchAll.
+                ssProc.start()
+                
+                #Get our confusion matrix from the queue.  Wait at most ssMatchTimeoutSec for it 
+                # to be available.  Needs to be done before the join.
+                confusionMatrix=ssQueue.get(block=True, timeout=ssMatchTimeoutSec)
+                
+                #At this point, it should be done.  Join it.  If it takes longer than 15 seconds, 
+                #something is wrong.
+                ssProc.join(timeout=15)
+                
+                #We return an empty pandas array if there was an exception.  If the child has an 
+                #exceptuion raise one in the parent too to keep things consistent.
+                assert confusionMatrix.empty == False, 'SSMatchAll exited with an exception.'
+                
+                #Calculate our percentCorrect from that:
+                percentCorrect=ResultsJudge(confusionMatrix)
+
+            except Exception as e:
+                print(StringIndent('Error:  '+ str(e),errorIndentLevel), file=sys.stderr)
+                print(StringIndent(traceback.format_exc(),errorIndentLevel+2), file=sys.stderr)
+                #If we got an error there was 0 correct:
+                percentCorrect=0
+                raise
             
         #Get our end time in seconds since the epoch.
         endTime=time.time()

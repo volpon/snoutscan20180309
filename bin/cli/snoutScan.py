@@ -8,7 +8,6 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),".."));
 #Also add the path to main.api too:
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..", 'main', 'api'));                                                      
                                             
-import HyperparameterSearch
 from main.api.matcher import find_best_match
 from ResultsJudge import ResultsJudge
 from StringIndent import StringIndent
@@ -17,12 +16,14 @@ from FriendLoad import FriendLoad
 from ArgsParse import ArgsParse
 from GlobalConstants import g
 import multiprocessing as mp
+import HyperparameterSearch
 from TicToc import TT
+import pandas as pd
 import numpy as np
+import traceback
 import sys
 import cv2
 import os
-import pandas as pd
 
 
 def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueue=None):
@@ -61,7 +62,6 @@ def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueu
     confusionMatrix=pd.DataFrame()
     
     try:
-    
         #Our list of friends:
         friends=[]
         
@@ -173,6 +173,7 @@ def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueu
     except Exception as e:
         print(StringIndent('Error in SSMatchAll:  '+ str(e),errorIndentLevel), file=sys.stderr)
         print(StringIndent(traceback.format_exc(),errorIndentLevel+2), file=sys.stderr)
+        raise
                 
     #Make sure this runs, even if there is an exception:
     finally:
@@ -180,7 +181,7 @@ def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueu
         if mpQueue is not None:
             mpQueue.put(confusionMatrix)
         
-        return confusionMatrix
+    return confusionMatrix
         
             
 #If this is called as a program and not imported:

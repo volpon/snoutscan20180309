@@ -42,7 +42,7 @@ def HyperparameterSearch(friendDirectories, indexDefinition):
 
     #Ignore KeyboardInterrupts:
     except KeyboardInterrupt:
-        with TT('CKeyboardInterrupt received.  Exiting early.'):
+        with TT('KeyboardInterrupt received.  Exiting early.'):
             pass
 
     #Always do this cleanup, even if we run into an error or do a ctrl-C
