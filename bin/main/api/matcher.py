@@ -451,8 +451,6 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
     if g is None:
         g=g_default
 
-    assert len(friends) >=1, 'Must have at least one friend to match with.'
-
     subjectFeatures=ImageFeatures(g)
     
     #Make our features and keypoints.
@@ -464,7 +462,9 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
     numSubjectFeatures=subjectFeatureDescriptors.shape[0]
       
     #If we don't already have a matcher and corresponding info, create one:
-    if matcher_info==None:    
+    if matcher_info==None:
+        assert len(friends) >=1, 'Must have at least one friend to match with.'
+
         matcher_info=matcher_info_create(friends,index_definition, g)
         
     #Unpack the variables:

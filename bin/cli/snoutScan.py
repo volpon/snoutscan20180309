@@ -8,7 +8,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),".."));
 #Also add the path to main.api too:
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),"..", 'main', 'api'));                                                      
                                             
-from main.api.matcher import find_best_match
+from main.api.matcher import matcher_info_create, find_best_match
 from ResultsJudge import ResultsJudge
 from StringIndent import StringIndent
 from collections import OrderedDict
@@ -121,8 +121,9 @@ def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueu
         # Initialize our confusionMatrixData:
         confusionMatrixData=np.zeros((numDogNames, numDogNames))
         
-        #Initialize our matcherInfo as None so we build it on the first use:
-        matcherInfo=None
+        with TT('Creating friend index'):
+            #Initialize our matcherInfo as None so we build it on the first use:
+            matcherInfo=matcher_info_create(friends,indexDefinition, g)
                 
         with TT('Matching'):
             #For each friend:
