@@ -26,7 +26,7 @@ import cv2
 import os
 
 
-def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueue=None):
+def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueue=None, TT=None):
     '''
     This function matches each of the friend images of specific dogs with each of the other 
     friend images and outputs a confusion matrix showing how many of each dog was matched with
@@ -49,6 +49,8 @@ def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueu
                                  return the output if this is run as a separate process instead of
                                  a function.
                                           
+        TT                     - Which TT to use.
+        
     Outputs:
     
         confusionMatrix        - A pandas array confusion matrix, labeled with dog names.

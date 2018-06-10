@@ -9,8 +9,8 @@ import sys
 class TicToc:
   startTimesForTictoc=[];
 
-  #This stores our indent levels for each started Tic()
-  indentLevelsForTictoc=[];
+  #This stores our current indent level:
+  indentStack=[];
 
   outFile=None
 
@@ -36,17 +36,14 @@ class TicToc:
       if self.indentLevel in (0,1) and not self.firstUse:
         print('', file=self.outFile)
       
-      #Indent this many times:
-      print ("  "*(self.indentLevel), end='',file=self.outFile)
-
       #Then, print the label:
-      print(label+self.labelEnding, file=self.outFile)
+      self.print(label+self.labelEnding)
     
     #Append our start time to the stack:
     self.startTimesForTictoc.append(time.time());
     
     #Store our indent level for this time:
-    self.indentLevelsForTictoc.append(self.indentLevel)
+    self.indentStack.append(self.indentLevel)
     
     #Increment our indent level for the next new Tic()
     self.indentLevel+=1
@@ -56,42 +53,57 @@ class TicToc:
   def Toc(self, quietMode=False):
     '''This closes the last started timer and removes it from the stack, printing the elapsed time.'''
   
-    #Get our indent level from the stack:
-    indentLevel=self.indentLevelsForTictoc.pop()
-        
+    #Get our ending time:
     elapsedTime=(time.time() - self.startTimesForTictoc.pop())
 
-    #If we're verbose enough to display stuff and and not in quiet mode:
+    #If we're verbose enough to display stuff and and not in quiet mode (where we don't display 
+    # the toc endings)
     if self.verbosityLevel>self.indentLevel and not (quietMode or self.quietAlways):
-      #Indent this many times:
-      print ("  "*(indentLevel+1), end='',file=self.outFile)
-        
       try: 
         #I limit it to 5 decimal places because just calling tic() and toc() takes around 1-3 e-6.
-        print("Elapsed time is %.5f seconds." % elapsedTime,file=self.outFile)
+        self.print("Elapsed time is %.5f seconds.\n" % elapsedTime)
       except:
-        print("toc: start time not set",file=self.outFile)
-        
-      print ('', file=self.outFile)
-    
-      
+        self.print("toc: start time not set\n")
+              
     #Decrement our indent level for the next new Tic()
     self.indentLevel+=-1
       
     return elapsedTime
-  
-  #def p(self,varStr):
-    #'''
-    #This function prints a variable represented by the string varStr (variable name), in a human readable way, 
-    #and at the appropriate indentation level.
-    #'''
-    
-    ##Get the last indentation level:
-    #indentLevel=self.indentLevelsForTictoc[-1]
-    
-    ##Print the variable, with the appropriate indentation amount:
-    #print ("  "*(indentLevel+1) + '%s = "%s"' % (varStr, str(eval(varStr))),file=self.outFile)
 
+  def print(self,s):
+    '''
+    This function prints a string s at the current indentation level, also indenting new lines
+    appropriately.
+    '''
+
+    #Get the last indentation level:
+    try:
+        indentLevel=self.indentStack[-1]
+    except:
+        indentLevel=0
+        
+    #Indent each line:
+    s = s.split('\n')
+    s = ["  " * (indentLevel+1) + line for line in s]
+    s = '\n'.join(s)
+
+    #Print it if we're at this verbosity level at least:    
+    if self.verbosityLevel> self.indentLevel:
+        #Print it:
+        print(s, file=self.outFile)
+    
+  
+  def p(self,varStr):
+    '''
+    This function prints a variable represented by the string varStr (variable name), in a human readable way, 
+    and at the appropriate indentation level.
+    '''
+    
+    #Get the last indentation level:
+    indentLevel=self.indentStack[-1]
+    
+    #Print the variable, with the appropriate indentation amount:
+    self.print ('%s = "%s"' % (varStr, str(eval(varStr))))
 
 
 #So that Tic and Toc can still be used in a functional, global way, make one default, global 

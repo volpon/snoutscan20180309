@@ -8,14 +8,14 @@ from Namespace import Namespace
 import multiprocessing as mp
 from pprint import pformat
 from random import random
-from TicToc import TT
+from TicToc import TT as TTDefault
 from math import log
 import traceback
 import pickle
 import time
 import sys
 
-def SSWrapper(friendDirectories, indexDefinition, parameters):
+def SSWrapper(friendDirectories, indexDefinition, parameters, TT=None):
     '''
     This function wraps SSMatchAll(), and returns a cost that takes into account how much time
     was spent training.  
@@ -34,6 +34,8 @@ def SSWrapper(friendDirectories, indexDefinition, parameters):
         costIncludingTime           - A number that reflects the accuracy of the model and the 
                                       time the model required to train (lower is better).
     '''
+    if TT is None:
+        TT=TTDefault
 
     with TT('Running SSWrapper'):
         timeImportantance=.01
