@@ -1,4 +1,5 @@
 import multiprocessing as mp
+from functools import wraps
 from copy import deepcopy
 from io import StringIO
 import sys
@@ -37,7 +38,10 @@ def TTMap(functionToRun, collectionOfInputs, numJobs=None, timeout=None):
     
     #Iterate over all of the inputs we have:
     for inputs in collectionOfInputs:
-        asyncResult=pool.apply_async(func=_TTStringIOWrap(functionToRun), args=inputs, 
+        
+        wrappedFunction=_TTStringIOWrap(functionToRun)
+        
+        asyncResult=pool.apply_async(func=wrappedFunction, args=inputs, 
                                             callback=_WorkerResultsProcess)
         
         #Get the result (not the result of the function call, but the result of the async call)
@@ -76,6 +80,7 @@ def _TTStringIOWrap(functionToWrap):
     The output can be read with myStderr.getvalue()
     '''
     
+    @wraps(functionToWrap)
     def decorated(*args, **kwargs):
         print('Before')
         
@@ -95,18 +100,20 @@ def _TTStringIOWrap(functionToWrap):
         
         print('After')
         return myStderr, result
+    
     return decorated
+
+def _testFunction(TT, n):
+    with TT('Inside function.'):
+        pass
+    return (n+1,n+2,n+3,n+4)
         
 if __name__=="__main__":
     
-    def testFunction(TT, n):
-        with TT('Inside function.'):
-            pass
-        return (n+1,n+2,n+3,n+4)
     
     inputs=[(1,),(2,),(3,)]
     
-    print(TTMap(testFunction, inputs))
+    print(TTMap(_testFunction, inputs))
         
      
 
