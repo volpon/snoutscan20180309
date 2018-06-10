@@ -166,7 +166,6 @@ def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueu
                                 file=sys.stderr)
         
         #Make a pandas array that bundles the dog names and confusion matrix together for display:
-        
         confusionMatrix=pd.DataFrame(data=confusionMatrixData, index=dogNames, columns=dogNames,
                                     dtype=int)
     except Exception as e:
@@ -189,7 +188,7 @@ if __name__=="__main__":
     args=ArgsParse()
     
     #Set some numpy options that let us print better:
-    #np.set_printoptions(threshold=np.nan)
+    #np.set_printoptions(threshold=np.nan)  
     
     #Set some pandas options that let us print better:
     pd.set_option('display.height', 10000)
