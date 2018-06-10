@@ -120,34 +120,6 @@ class TicToc:
     #Finish it:
     self.Toc(quietMode)
     
-  def __deepcopy__(self, memo):
-    '''
-    This method helps the deepcopy routine copy this class since having a link to a file desciptor
-    messes that up via the pickle/unpickle route:
-    '''
-    
-    cls=self.__class__
-    
-    result= cls.__new__(cls)
-    print('Made it here!', file=sys.stderr)
-    
-    memo[id(self)] = result
-    
-    #For each key and value:
-    for k, v in self.__dict__items():
-        
-        #If it's the outFile key:
-        if k=='outFile':
-            #Do a copy by reference:
-            setattr(result,k, self.outFile)
-        else:
-            #Do a deep copy:
-            setattr(result,k, deepcopy(v,memo))
-            
-    return result
-    
-    
-
 #So that Tic and Toc can still be used in a functional, global way, make one default, global 
 # instance of it, and define Tic,Toc, and TT to be in reference to that object.
 

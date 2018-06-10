@@ -76,17 +76,16 @@ def _WorkerResultsProcess(result):
     to stdout all at once.
     '''
     #Extract myStderr:
-    myStderr, _ = result
+    outString, _ = result
     
     #Print it:
-    print(myStderr.getvalue(),file=sys.stderr, end='')
+    print(outString, file=sys.stderr, end='')
    
 class _TTStringIOWrap(object):
     '''
     This decorator redirects all TT() used in the functionToRun to use a StringIO temporarily and
-    then ouput the StringIO as an additional output at the beginning of the output list.
-    
-    The output can be read with myStderr.getvalue()
+    then ouput anything written to the StringIO as an additional string output at the beginning 
+    of the output list.
     '''
     
     def __init__(self, functionToWrap, ticToc):
@@ -107,8 +106,10 @@ class _TTStringIOWrap(object):
         
         result=self.functionToWrap(*args, ticToc=ticTocNew, **kwargs,)
         
+        outString=myStderr.getvalue()
+        
         print('After')
-        return myStderr, result
+        return outString, result
     
 def _testFunction(n, ticToc):
     
