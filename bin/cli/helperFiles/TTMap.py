@@ -19,7 +19,7 @@ def TTMap(functionToRun, collectionOfInputs, numJobs=None, timeout=None):
     
     Inputs:
         functionToRun         - The function to run.  Must be threadsafe, and must accept an argument
-                                named tt that specifies which TT to use.
+                                as the last argument, named TT, that specifies which TT to use.
         collectionOfInputs    - A collection of tuples of the inputs for each call to the function.
         numJobs               - How many parallel processes to start.  None= ask the system for how 
                                 many cpus it sees and use that many processes.
@@ -72,7 +72,7 @@ def _WorkerResultsProcess(result):
     #Print it:
     print(myStderr.getvalue(),file=sys.stderr, end='')
    
-def _TTStringIOWrap(functionToWrap):
+class _TTStringIOWrap(object):
     '''
     This function redirects all TT() used in the functionToRun to use a StringIO temporarily and
     then ouput the StringIO as an additional output at the beginning of the output list.
@@ -80,8 +80,10 @@ def _TTStringIOWrap(functionToWrap):
     The output can be read with myStderr.getvalue()
     '''
     
-    @wraps(functionToWrap)
-    def decorated(*args, **kwargs):
+    def __init__(self, functionToWrap):
+        self.functionToWrap=functionToWrap
+        
+    def __call__(self, *args, **kwargs):
         print('Before')
         
         #Make a stringIO:
@@ -96,17 +98,16 @@ def _TTStringIOWrap(functionToWrap):
         #Set the ticTocInstance for this TT to t:
         TTNew.ticTocInstance=t
         
-        result=functionToWrap(*args, tt=TTNew, **kwargs,)
+        result=self.functionToWrap(*args, TT=TTNew, **kwargs,)
         
         print('After')
         return myStderr, result
     
-    return decorated
-
-def _testFunction(TT, n):
-    with TT('Inside function.'):
+def _testFunction(n, TT):
+    
+    with TT('Inside function'):
         pass
-    return (n+1,n+2,n+3,n+4)
+    return (n+0,n+1,n+2,n+3)
         
 if __name__=="__main__":
     
