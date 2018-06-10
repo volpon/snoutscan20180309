@@ -10,25 +10,31 @@ if __name__=="__main__":
     #Import a path to the TicToc module:
     sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),'..', "..", 'main', 'api'));                                                      
 
-from TicToc import TT, TicToc
+from TicToc import ticTockGlobalInstance
 
-def TTMap(functionToRun, collectionOfInputs, numJobs=None, timeout=None):
+def TTMap(functionToRun, collectionOfInputs, numJobs=None, ticToc=None):
     '''
     This function runs the functionToRun with each entry of collectionOfInputs, in parallel,
     in such a way so that their TT output doesn't get garbled with eachother.
     
     Inputs:
         functionToRun         - The function to run.  Must be threadsafe, and must accept an argument
-                                as the last argument, named TT, that specifies which TT to use.
+                                as the last argument, named ticToc, that specifies which ticToc 
+                                instance to use.
         collectionOfInputs    - A collection of tuples of the inputs for each call to the function.
         numJobs               - How many parallel processes to start.  None= ask the system for how 
                                 many cpus it sees and use that many processes.
-        timeout               - How long to let each function call go before we interrupt it.
+        ticToc                - a specific ticToc instance to start with.  If None, use the global
+                                one.
                                 
     Outputs:
         resultsList           - a list of whatever each run of the function output.  One entry per 
                                 entry in collectionOfInputs.
     '''
+    
+    #Make sure we have a ticToc to use:
+    if ticToc is None:
+        ticToc=ticTockGlobalInstance
     
     #Make our pool:
     pool=mp.Pool(numJobs)
@@ -39,10 +45,13 @@ def TTMap(functionToRun, collectionOfInputs, numJobs=None, timeout=None):
     #Iterate over all of the inputs we have:
     for inputs in collectionOfInputs:
         
-        wrappedFunction=_TTStringIOWrap(functionToRun)
+        wrappedFunction=_TTStringIOWrap(functionToRun, ticToc)
         
         asyncResult=pool.apply_async(func=wrappedFunction, args=inputs, 
                                             callback=_WorkerResultsProcess)
+        
+        ##For testing:
+        #wrappedFunction(*inputs)
         
         #Get the result (not the result of the function call, but the result of the async call)
         asyncResultsList.append(asyncResult)
@@ -74,38 +83,36 @@ def _WorkerResultsProcess(result):
    
 class _TTStringIOWrap(object):
     '''
-    This function redirects all TT() used in the functionToRun to use a StringIO temporarily and
+    This decorator redirects all TT() used in the functionToRun to use a StringIO temporarily and
     then ouput the StringIO as an additional output at the beginning of the output list.
     
     The output can be read with myStderr.getvalue()
     '''
     
-    def __init__(self, functionToWrap):
+    def __init__(self, functionToWrap, ticToc):
         self.functionToWrap=functionToWrap
-        
+        self.ticToc=ticToc
+            
     def __call__(self, *args, **kwargs):
         print('Before')
         
         #Make a stringIO:
         myStderr=StringIO()
         
-        #Make a TicToc that uses it:
-        t=TicToc(outFile=myStderr, labelEnding=', soThere!')
-        
         #Make a special copy of the TT class and edit that one:
-        TTNew=deepcopy(TT)
+        ticTocNew=deepcopy(self.ticToc)
             
-        #Set the ticTocInstance for this TT to t:
-        TTNew.ticTocInstance=t
+        #Change the outFile for this copy:
+        ticTocNew.outFile=myStderr
         
-        result=self.functionToWrap(*args, TT=TTNew, **kwargs,)
+        result=self.functionToWrap(*args, ticToc=ticTocNew, **kwargs,)
         
         print('After')
         return myStderr, result
     
-def _testFunction(n, TT):
+def _testFunction(n, ticToc):
     
-    with TT('Inside function'):
+    with ticToc.TT('Inside function'):
         pass
     return (n+0,n+1,n+2,n+3)
         
