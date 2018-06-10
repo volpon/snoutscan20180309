@@ -12,6 +12,7 @@ from main.api.matcher import matcher_info_create, find_best_match
 from ResultsJudge import ResultsJudge
 from StringIndent import StringIndent
 from collections import OrderedDict
+from TicToc import TT as TTDefault
 from FriendLoad import FriendLoad
 from ArgsParse import ArgsParse
 from GlobalConstants import g
@@ -57,6 +58,9 @@ def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueu
                                  Each position (i,j) says how many images that were of a given dog 
                                  name (i) were recognized as being of a dog name (j) instead. 
     '''
+    
+    if TT is None:
+        TT=TTDefault
     
     errorIndentLevel=6
     
