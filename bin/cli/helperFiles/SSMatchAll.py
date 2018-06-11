@@ -116,6 +116,9 @@ def SSMatchAll(friendDirectories, indexDefinition, g, tt, displayImages=True, mp
             
             #NOTE:  This currently errors because of the inability to pickle the indexer.
             #Do the matching in parallel:
+            #I believe the solution is to use faiss threads or the multiprocessing.dummy module as
+            #outlined here.  Perhapse I can edit TTMap to support the multiprocessing.dummy?
+            #https://github.com/facebookresearch/faiss/issues/227#issuecomment-396154885
             matchResults=TTMap(FriendMatch, friendMatchArgs)
         
         with TT('Displaying results:'):
