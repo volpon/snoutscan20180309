@@ -5,6 +5,7 @@ import pickle
 import base64
 import cv2
 import io
+from TicToc import tt as ticTocGlobalInstance
 
 #A search of nearest neighbor search implementations brings me to this page:
 #https://www.benfrederickson.com/approximate-nearest-neighbours-for-recommender-systems/
@@ -455,8 +456,8 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
     if g is None:
         g=g_default
 
-#    if tt is None:
-#        tt=ticTocGlobalInstance
+    if tt is None:
+        tt=ticTocGlobalInstance
         
     TT=tt.TT
 
