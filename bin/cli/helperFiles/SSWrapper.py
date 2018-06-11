@@ -38,7 +38,7 @@ def SSWrapper(friendDirectories, indexDefinition, parameters, tt):
     TT=tt.TT
 
     with TT('Running SSWrapper'):
-        timeImportantance=.01
+        timeImportantance=.002
         
         #How many seconds to let ssMatchRun before killing it:
         ssMatchTimeoutSec=1000
@@ -65,9 +65,10 @@ def SSWrapper(friendDirectories, indexDefinition, parameters, tt):
         #Create our g out of it:
         g=Namespace(gAsDict)
         
-        #Save it so that if there is an error we can run SSMatchAll and get the same parameters to 
-        #inspect.
-        pickle.dump(g, open(savedParametersFile, 'wb'))
+        ##Save it so that if there is an error we can run SSMatchAll and get the same parameters to 
+        ##inspect.
+        ##Disabled because it makes it so that when I ctrl-C I no longer have the best parameters.
+        #pickle.dump(g, open(savedParametersFile, 'wb'))
         
         #Get our start time in seconds since the epoch.
         startTime=time.time()
@@ -124,14 +125,15 @@ def SSWrapper(friendDirectories, indexDefinition, parameters, tt):
         
         #A log scale represents the fact that getting the first 10% accuracy is easier than getting
         #the last 10% accuracy:
+        #Inverse is: percentCorrect= 2-2^costFromAccuracy
         costFromAccuracy=log(2-percentCorrect,2)
         costFromTime=timeImportantance*log(elapsedSec+1,2)
         
         #Combine the cost returned by SSMatchAll and the elapsed time to make a new cost.
         compositeCost=costFromAccuracy+costFromTime
         
-        tt.print('SSWrapper: compositeCost: %f\tcostFromAccuracy: %f\tcostFromTime: %f' % \
-            (compositeCost, costFromAccuracy, costFromTime))
+        tt.print('SSWrapper: percentCorrect: %f\tcompositeCost: %f\tcostFromAccuracy: %f\tcostFromTime: %f' % \
+            (percentCorrect, compositeCost, costFromAccuracy, costFromTime))
 
         #If that new cost is the lowest we've seen so far, save the model in memory for cbOptimize to 
         #use when we're done:
