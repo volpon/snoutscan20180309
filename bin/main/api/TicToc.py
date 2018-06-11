@@ -97,6 +97,8 @@ class TicToc:
 
         #Print it if we're at this verbosity level at least:    
         if self.verbosityLevel> self.indentLevelGet():
+                #print('indentLevel: %i' % self.indentLevelGet(), file=self.outFile)
+
                 #Print it:
                 print(s, file=self.outFile)
         

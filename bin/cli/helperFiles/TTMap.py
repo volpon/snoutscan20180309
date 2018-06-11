@@ -3,9 +3,11 @@ import multiprocessing.dummy as mpThreadding
 from functools import wraps
 from copy import deepcopy
 from io import StringIO
+from time import sleep
+import random
+import pickle
 import sys
 import os
-import pickle
 
 #Only import if it's not called as a command line tool.  Otherwise import when calling.
 if __name__=="__main__":
@@ -82,13 +84,13 @@ def TTMap(functionToRun, collectionOfInputs, tt, concurrency='multiprocessing', 
 def _WorkerResultsProcess(result):
     '''
     This function writes whatever was written to stderr through TT during the worker thread
-    to stdout all at once.
+    to stderr all at once.
     '''
     #Extract myStderr:
     outString, _ = result
     
     #Print it:
-    print(outString, file=sys.stderr, end='')
+    print(outString, file=sys.stderr)
    
 class _TTStringIOWrap(object):
     '''
@@ -97,16 +99,22 @@ class _TTStringIOWrap(object):
     of the output list.
     '''
     
-    def __init__(self, functionToWrap, ticToc):
+    def __init__(self, functionToWrap, tt):
         self.functionToWrap=functionToWrap
-        self.ticToc=ticToc
+        self.tt=tt
             
     def __call__(self, *args, **kwargs):
         #Make a stringIO:
         myStderr=StringIO()
         
         #Make a special copy of the TT class and edit that one:
-        ticTocNew=deepcopy(self.ticToc)
+        ticTocNew=deepcopy(self.tt)
+        
+        #Manually copy the list in the class - the deep copy did not seem to do it:
+        ticTocNew.startTimesForTictoc=ticTocNew.startTimesForTictoc[:]
+        
+        #print('deep copy worked:', self.tt.startTimesForTictoc is not ticTocNew.startTimesForTictoc, file=sys.stderr)
+        #print('ids:', id(self.tt.startTimesForTictoc), id(ticTocNew.startTimesForTictoc), file=sys.stderr)
             
         #Change the outFile for this copy:
         ticTocNew.outFile=myStderr
@@ -115,19 +123,29 @@ class _TTStringIOWrap(object):
         
         outString=myStderr.getvalue()
         
+        #Get rid of the last \n, if we have one, so we can print it with the endl:
+        if len(outString)>1 and outString[-1]=='\n':
+            outString=outString[0:-1]
+        
         return outString, result
     
 def _testFunction(n, tt):
     
     with tt.TT('Inside function'):
-        pass
+        with tt.TT('Calculating something'):
+            sleep(random.random())
     return (n+0,n+1,n+2,n+3)
         
 if __name__=="__main__":
     
-    inputs=[(1,),(2,),(3,)]
+    inputs=[(i,) for i in range(5) ]
     
-    print(TTMap(_testFunction, inputs))
+    concurrency='threading'
+    concurrency='multiprocessing'
+    
+    for concurrency in ('multiprocessing', 'threading'):
+        with ttDefault.TT('Running _testFunction in parallel using: concurrency=%s' % concurrency):
+            print(TTMap(_testFunction, inputs, ttDefault, concurrency))
         
      
 
