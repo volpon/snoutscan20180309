@@ -459,8 +459,6 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
     if tt is None:
         tt=ticTocGlobalInstance
         
-    TT=tt.TT
-
     subjectFeatures=ImageFeatures(g)
     
     #Make our features and keypoints.
@@ -555,7 +553,7 @@ def find_best_match(image_data, image_type, friends, g=None, index_definition=No
     #Find our best match:
     best_db_ids_sorted, percentMatched, friend_ids, matcher_info=\
         find_best_matches(image_data, image_type, friends, 1, g, f_ids_excluded, index_definition, 
-                          matcher_info)
+                          matcher_info, tt)
 
     #Get our info for the bet matching friend:
     best_db_id=best_db_ids_sorted[0]

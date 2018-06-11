@@ -122,7 +122,7 @@ def SSMatchAll(friendDirectories, indexDefinition, g, tt, displayImages=True, mp
                     #Find the other friend that matches this friend best:
                     best_db_id, percentOfSubjectFeaturesMatched, best_index, matcherInfo= \
                         find_best_match(subjectImgBinary, subjectImgType, friends, g,
-                                        indexDefinition, fIdsExcluded, matcherInfo)
+                                        indexDefinition, fIdsExcluded, matcherInfo, tt)
                     
                     #Get our names:
                     dogName=friend.name
