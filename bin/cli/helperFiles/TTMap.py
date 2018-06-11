@@ -120,18 +120,9 @@ def _testFunction(n, ticToc):
         
 if __name__=="__main__":
     
-    #First, as a test, try pickling the original function:
-#    func=pickle.loads(pickle.dumps(_testFunction))
+    inputs=[(1,),(2,),(3,)]
     
-    ticTocPickled=pickle.dumps(ticTockGlobalInstance)
-    
-    
-#    decoratedFuncPickled=pickle.dumps(_TTStringIOWrap(_testFunction, ticTockGlobalInstance))
-#    decoratedFunc=pickle.loads(decoratedFuncPickled)
-    
-#    inputs=[(1,),(2,),(3,)]
-#    
-#    print(TTMap(_testFunction, inputs))
+    print(TTMap(_testFunction, inputs))
         
      
 
