@@ -76,7 +76,7 @@ def SSWrapper(friendDirectories, indexDefinition, parameters, tt):
         #confusionMatrix=SSMatchAll(friendDirectories, indexDefinition, g, tt)
         #percentCorrect=ResultsJudge(confusionMatrix)
         
-        #with TT("Trying parameters: \n" + StringIndent(pformat(gAsDict),paramIndentLevel)):
+        #tt.print("Trying parameters: \n" + pformat(gAsDict)):
         with TT("Running the benchmark in a separate process:"):
             try: 
                 #Call SSMatch, and get the model and cost back, but do it in it's own process.

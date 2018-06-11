@@ -1,12 +1,9 @@
 from shared import savedParametersFile
-from StringIndent import StringIndent
 from Namespace import Namespace        
 from pprint import pformat
-from TicToc import TT
-import numpy as np
+from TicToc import tt
 import pickle
 import os
-
 
 
 def GCExtract(gc):
@@ -36,23 +33,23 @@ def GCExtract(gc):
     '''
     #Note: g stands for "global constants".  Elements can be retrieved with g.<name>
     
-    #If a saved parameters file exists:
-    if os.access(savedParametersFile, os.R_OK):
-        
-        #Load it.
-        g=pickle.load(open(savedParametersFile, 'rb'))
+    with tt.TT('Loading parameters'):
+        #If a saved parameters file exists:
+        if os.access(savedParametersFile, os.R_OK):
             
-        with TT('Saved parameters found: \n' + StringIndent(pformat(g.__dict__),2)):
-            pass
-    else:
-        with TT('No saved parameters found.  Using defaults.'):
-            #Make g from the fixedValues (just a backup.)
-            
-            #the dictionary is :{parameterName: fixedValue, ...}
-            gcAsDict={ c[0] : c[3] for c in gc }
-
-            # Make g from gc's fixedValues:
-            g=Namespace(gcAsDict)
+            #Load it.
+            g=pickle.load(open(savedParametersFile, 'rb'))
+                
+            tt.print('Saved parameters found: \n%s\n' % pformat(g.__dict__))
+        else:
+            with tt.TT('No saved parameters found.  Using defaults.'):
+                #Make g from the fixedValues (just a backup.)
+                
+                #the dictionary is :{parameterName: fixedValue, ...}
+                gcAsDict={ c[0] : c[3] for c in gc }
+    
+                # Make g from gc's fixedValues:
+                g=Namespace(gcAsDict)
 
     # Make the searchSpace from gc:
     searchSpace=[]

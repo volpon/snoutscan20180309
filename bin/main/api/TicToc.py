@@ -159,10 +159,10 @@ class TicToc:
 #So that Tic and Toc can still be used in a functional, global way, make one default, global 
 # instance of it, and define Tic,Toc, and TT to be in reference to that object.
 
-ticTockGlobalInstance=TicToc()
-Tic=ticTockGlobalInstance.Tic
-Toc=ticTockGlobalInstance.Toc
-TT=ticTockGlobalInstance.TT
+tt=TicToc()
+Tic=tt.Tic
+Toc=tt.Toc
+TT=tt.TT
 
 
 

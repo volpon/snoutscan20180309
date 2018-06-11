@@ -1,5 +1,4 @@
 from main.api.matcher import matcher_info_create, find_best_match
-from StringIndent import StringIndent
 from collections import OrderedDict
 from FriendLoad import FriendLoad
 from TTMap import TTMap
@@ -150,8 +149,8 @@ def SSMatchAll(friendDirectories, indexDefinition, g, tt, displayImages=True, mp
         confusionMatrix=pd.DataFrame(data=confusionMatrixData, index=dogNames, columns=dogNames,
                                     dtype=int)
     except Exception as e:
-        print(StringIndent('Error in SSMatchAll:  '+ str(e),errorIndentLevel), file=sys.stderr)
-        print(StringIndent(traceback.format_exc(),errorIndentLevel+2), file=sys.stderr)
+        tt.print('Error in SSMatchAll:  '+ str(e))
+        tt.print(traceback.format_exc())
         raise
                 
     #Make sure this runs, even if there is an exception:

@@ -11,7 +11,7 @@ if __name__=="__main__":
     #Import a path to the TicToc module:
     sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),'..', "..", 'main', 'api'));                                                      
 
-from TicToc import ticTockGlobalInstance
+from TicToc import tt
 
 def TTMap(functionToRun, collectionOfInputs, numJobs=None, ticToc=None):
     '''
@@ -35,7 +35,7 @@ def TTMap(functionToRun, collectionOfInputs, numJobs=None, ticToc=None):
     
     #Make sure we have a ticToc to use:
     if ticToc is None:
-        ticToc=ticTockGlobalInstance
+        ticToc=tt
     
     #Make our pool:
     pool=mp.Pool(numJobs)

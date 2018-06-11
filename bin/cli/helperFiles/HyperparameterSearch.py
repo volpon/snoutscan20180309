@@ -4,7 +4,6 @@ import sys,os; sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__f
 
 from shared import savedParametersFile
 from GlobalConstants import searchSpace
-from StringIndent import StringIndent
 from SSWrapper import SSWrapper
 from hyperopt import fmin, tpe
 from pprint import pformat
@@ -54,7 +53,7 @@ def HyperparameterSearch(friendDirectories, indexDefinition, tt):
         if SSWrapper.bestG != None:
             with TT("Saving Best Parameters, which had compositeCost=%f: \n" \
                         % SSWrapper.bestCompositeCost \
-                            + StringIndent(pformat(SSWrapper.bestG.__dict__),2)):
+                            + pformat(SSWrapper.bestG.__dict__)):
                 
                 #Save our best g to savedParametersFile:
                 pickle.dump(SSWrapper.bestG, open(savedParametersFile, 'wb'))
