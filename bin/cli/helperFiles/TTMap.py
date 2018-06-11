@@ -4,6 +4,7 @@ from copy import deepcopy
 from io import StringIO
 import sys
 import os
+import pickle
 
 #Only import if it's not called as a command line tool.  Otherwise import when calling.
 if __name__=="__main__":
@@ -119,10 +120,18 @@ def _testFunction(n, ticToc):
         
 if __name__=="__main__":
     
+    #First, as a test, try pickling the original function:
+#    func=pickle.loads(pickle.dumps(_testFunction))
     
-    inputs=[(1,),(2,),(3,)]
+    ticTocPickled=pickle.dumps(ticTockGlobalInstance)
     
-    print(TTMap(_testFunction, inputs))
+    
+#    decoratedFuncPickled=pickle.dumps(_TTStringIOWrap(_testFunction, ticTockGlobalInstance))
+#    decoratedFunc=pickle.loads(decoratedFuncPickled)
+    
+#    inputs=[(1,),(2,),(3,)]
+#    
+#    print(TTMap(_testFunction, inputs))
         
      
 
