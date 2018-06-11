@@ -19,6 +19,7 @@ from GlobalConstants import g
 import multiprocessing as mp
 import HyperparameterSearch
 from TicToc import TT
+from TTMap import TTMap
 import pandas as pd
 import numpy as np
 import traceback
@@ -106,16 +107,13 @@ def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueu
                                                   in friendLoadArgsList])):
             pass
         
-        #Create a multiprocessing pool we can use to load images and compute features in parallel:
-        friendLoadPool=mp.Pool()
-    
         with TT('Loading all images and computing features in parallel'):
 #            #The sequential version (for debugging only):
 #            friends=[]
 #            for friendLoadArgs in friendLoadArgsList:
 #                friends.append(FriendLoad(friendLoadArgs))
             
-            friends=friendLoadPool.map(FriendLoad, friendLoadArgsList)
+            friends=TTMap(FriendLoad, friendLoadArgsList)
             
         numFriends=len(friends)
         
