@@ -94,8 +94,6 @@ class _TTStringIOWrap(object):
         self.ticToc=ticToc
             
     def __call__(self, *args, **kwargs):
-        print('Before')
-        
         #Make a stringIO:
         myStderr=StringIO()
         
@@ -109,7 +107,6 @@ class _TTStringIOWrap(object):
         
         outString=myStderr.getvalue()
         
-        print('After')
         return outString, result
     
 def _testFunction(n, ticToc):
