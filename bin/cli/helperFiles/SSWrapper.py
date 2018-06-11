@@ -1,14 +1,13 @@
 from GlobalConstants import searchVarNamesInOrder, fixedParamDict
 from SSOptProgressPlot import SSOptProgressPlot
+from TicToc import ticTockGlobalInstance
 from shared import savedParametersFile
 from ResultsJudge import ResultsJudge
 from StringIndent import StringIndent
-from snoutScan import SSMatchAll
+from SSMatchAll import SSMatchAll
 from Namespace import Namespace
 import multiprocessing as mp
 from pprint import pformat
-from random import random
-from TicToc import ticTockGlobalInstance
 from math import log
 import traceback
 import pickle
