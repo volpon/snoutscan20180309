@@ -2,7 +2,6 @@
 # MOE) can use it:
 from __future__ import absolute_import, division, print_function
 from contextlib import contextmanager
-from copy import deepcopy
 import time
 import sys
 

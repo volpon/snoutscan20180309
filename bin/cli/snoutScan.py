@@ -13,7 +13,7 @@ from SSMatchAll import SSMatchAll
 from ArgsParse import ArgsParse
 from GlobalConstants import g
 import HyperparameterSearch
-from TicToc import TT
+from TicToc import TicToc
 import pandas as pd
 import sys
 import os
@@ -31,14 +31,20 @@ if __name__=="__main__":
     pd.set_option('display.max_rows', 5000)
     pd.set_option('display.max_columns', 5000)
     pd.set_option('display.width', 10000)
+    
+    #Make a ticToc instance:
+    tt=TicToc()
+    TT=tt.TT
         
     if (args.optimizeHyperparameters):
         with TT('Running HyperParmeterSearch'):
-            HyperparameterSearch.HyperparameterSearch(args.friendDirectories, args.indexDefinition)
+            HyperparameterSearch.HyperparameterSearch(args.friendDirectories, args.indexDefinition,
+                                                      tt)
         sys.exit()
     else:
         with TT('Running SSMatchAll'):
-            confusionMatrix=SSMatchAll(args.friendDirectories, args.indexDefinition, g, False, )
+            confusionMatrix=SSMatchAll(args.friendDirectories, args.indexDefinition, g, tt, False,
+                                       None)
             
     print('Confusion Matrix:')
     print('=================')

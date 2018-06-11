@@ -1,7 +1,6 @@
 from main.api.matcher import matcher_info_create, find_best_match
 from StringIndent import StringIndent
 from collections import OrderedDict
-from TicToc import TT as TTDefault
 from FriendLoad import FriendLoad
 from TTMap import TTMap
 import pandas as pd
@@ -10,7 +9,7 @@ import traceback
 import sys
 import os
 
-def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueue=None, TT=None):
+def SSMatchAll(friendDirectories, indexDefinition, g, tt, displayImages=True, mpQueue=None):
     '''
     This function matches each of the friend images of specific dogs with each of the other 
     friend images and outputs a confusion matrix showing how many of each dog was matched with
@@ -33,7 +32,7 @@ def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueu
                                  return the output if this is run as a separate process instead of
                                  a function.
                                           
-        TT                     - Which TT to use.
+        tt                     - Which TicToc instance to use.
         
     Outputs:
     
@@ -42,10 +41,7 @@ def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueu
                                  name (i) were recognized as being of a dog name (j) instead. 
     '''
     
-    if TT is None:
-        TT=TTDefault
-    
-    errorIndentLevel=6
+    TT=tt.TT
     
     #Get a default confusionMatrix in case we need to return something in case of an error:
     confusionMatrix=pd.DataFrame()
@@ -109,7 +105,7 @@ def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueu
         
         with TT('Creating friend index'):
             #Initialize our matcherInfo as None so we build it on the first use:
-            matcherInfo=matcher_info_create(friends,indexDefinition, g)
+            matcherInfo=matcher_info_create(friends,indexDefinition, g, tt)
                 
         with TT('Matching'):
             #For each friend:
@@ -145,11 +141,10 @@ def SSMatchAll(friendDirectories, indexDefinition, g, displayImages=True, mpQueu
                     confusionMatrixData[dogNameIndex][matchedDogNameIndex]+=1
                     
                     #Print info about this best match:
-                    print('      %s:\t%s (%s) => %s (%s):\t%f' %(
-                                str(dogName == matchedDogName),
-                                actualDogFile, dogName, matchedDogFile, matchedDogName, 
-                                percentOfSubjectFeaturesMatched), 
-                                file=sys.stderr)
+                    tt.print('      %s:\t%s (%s) => %s (%s):\t%f' %(
+                                    str(dogName == matchedDogName),
+                                    actualDogFile, dogName, matchedDogFile, matchedDogName, 
+                                    percentOfSubjectFeaturesMatched))
         
         #Make a pandas array that bundles the dog names and confusion matrix together for display:
         confusionMatrix=pd.DataFrame(data=confusionMatrixData, index=dogNames, columns=dogNames,

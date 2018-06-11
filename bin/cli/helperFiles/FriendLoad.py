@@ -1,6 +1,6 @@
 from FriendMake import FriendMake
 
-def FriendLoad(dogName, imgFilePath, g, ticToc):
+def FriendLoad(dogName, imgFilePath, g, tt):
     '''
     This function loads a single friend.
     
@@ -8,9 +8,9 @@ def FriendLoad(dogName, imgFilePath, g, ticToc):
         dogName         - The name of the dog for this image file.
         imgFilePath     - A string representing the path to the image we found.
         g               - Our global parameters.
-        ticToc          - a TicToc() instance to use for output.
+        tt              - a TicToc() instance to use for output.
     '''
-    TT=ticToc.TT
+    TT=tt.TT
 
     with TT('Computing features for %s: %s' % (dogName, imgFilePath)):
         

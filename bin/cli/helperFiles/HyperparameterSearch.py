@@ -8,13 +8,12 @@ from StringIndent import StringIndent
 from SSWrapper import SSWrapper
 from hyperopt import fmin, tpe
 from pprint import pformat
-from TicToc import TT
 import pickle
 
 #How many trainings we want to do:
 numIterations=1000
     
-def HyperparameterSearch(friendDirectories, indexDefinition):
+def HyperparameterSearch(friendDirectories, indexDefinition, tt):
     '''
     This function performs a hyperparameter search on the paramters defined in GlobalConstants.py
     to optimize an objective function output by SSWrapper.
@@ -27,7 +26,11 @@ def HyperparameterSearch(friendDirectories, indexDefinition):
                                 
         indexDefinition        - A string representing the faiss index setup to use, or ''
                                  or None to represent "use the default"
+                                 
+        tt                     - a TicToc instance to use for printing.
     '''
+    
+    TT=tt.TT
     
     assert len(searchSpace)>0, 'All variables are fixed.  There\'s no point in running this.'
     
@@ -35,7 +38,7 @@ def HyperparameterSearch(friendDirectories, indexDefinition):
         with TT('Searching for optimal hyper-parameters'):
             #Do the search:
             bestArgs=fmin(  fn=lambda parameters: SSWrapper(friendDirectories, indexDefinition, 
-                                                            parameters),
+                                                            parameters, tt),
                             space=searchSpace,
                             algo=tpe.suggest,
                             max_evals=numIterations)

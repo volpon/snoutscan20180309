@@ -20,7 +20,7 @@ def TTMap(functionToRun, collectionOfInputs, numJobs=None, ticToc=None):
     
     Inputs:
         functionToRun         - The function to run.  Must be threadsafe, and must accept an argument
-                                as the last argument, named ticToc, that specifies which ticToc 
+                                as the last argument, named tt, that specifies which ticToc 
                                 instance to use.
         collectionOfInputs    - A collection of tuples of the inputs for each call to the function.
         numJobs               - How many parallel processes to start.  None= ask the system for how 
@@ -103,15 +103,15 @@ class _TTStringIOWrap(object):
         #Change the outFile for this copy:
         ticTocNew.outFile=myStderr
         
-        result=self.functionToWrap(*args, ticToc=ticTocNew, **kwargs,)
+        result=self.functionToWrap(*args, tt=ticTocNew, **kwargs,)
         
         outString=myStderr.getvalue()
         
         return outString, result
     
-def _testFunction(n, ticToc):
+def _testFunction(n, tt):
     
-    with ticToc.TT('Inside function'):
+    with tt.TT('Inside function'):
         pass
     return (n+0,n+1,n+2,n+3)
         

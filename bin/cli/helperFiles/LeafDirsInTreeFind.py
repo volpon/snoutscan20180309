@@ -1,9 +1,6 @@
 #Make python 2 and 3 compliant so that ArgsParseOptimize (written in python2 so it can be used with 
 # MOE) can use it:
 import os
-import sys
-from TicToc import TT
-
 
 def LeafDirsInTreeFind(inputRootDirs):
     '''This function finds all directories that do not have subdirectories in a set of 

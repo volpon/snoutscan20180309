@@ -2,6 +2,7 @@ from main.api.model import Profile, Friend, Photo
 from sqlalchemy.orm.session import make_transient
 from CachePersistent import CachePersistent
 
+#TODO:  Update these:
 friendMakingDependencies=['/.condaUser/app/main/api/model.py']
 
 

@@ -1,9 +1,7 @@
 from GlobalConstants import searchVarNamesInOrder, fixedParamDict
 from SSOptProgressPlot import SSOptProgressPlot
-from TicToc import ticTockGlobalInstance
 from shared import savedParametersFile
 from ResultsJudge import ResultsJudge
-from StringIndent import StringIndent
 from SSMatchAll import SSMatchAll
 from Namespace import Namespace
 import multiprocessing as mp
@@ -12,9 +10,8 @@ from math import log
 import traceback
 import pickle
 import time
-import sys
 
-def SSWrapper(friendDirectories, indexDefinition, parameters, ticToc=None):
+def SSWrapper(friendDirectories, indexDefinition, parameters, tt):
     '''
     This function wraps SSMatchAll(), and returns a cost that takes into account how much time
     was spent training.  
@@ -29,7 +26,7 @@ def SSWrapper(friendDirectories, indexDefinition, parameters, ticToc=None):
                                  
         parameters             - a Tuple of the parameter values we're currently using.
         
-        ticToc                 - an instance of TicToc to use for output, or None to use the 
+        tt                     - an instance of TicToc to use for output, or None to use the 
                                  global one.
         
     Outputs:
@@ -37,17 +34,11 @@ def SSWrapper(friendDirectories, indexDefinition, parameters, ticToc=None):
                                       time the model required to train (lower is better).
     '''
     
-    #Set our default ticToc if we don't have one:
-    if ticToc is None:
-        ticToc=ticTockGlobalInstance
-
-    #Make a shorthand for ticToc.TT:
-    TT=ticToc.TT
+    #Make a shorthand for tt.TT:
+    TT=tt.TT
 
     with TT('Running SSWrapper'):
         timeImportantance=.01
-        errorIndentLevel=8
-        paramIndentLevel=8
         
         #How many seconds to let ssMatchRun before killing it:
         ssMatchTimeoutSec=1000
@@ -64,12 +55,9 @@ def SSWrapper(friendDirectories, indexDefinition, parameters, ticToc=None):
             #Add this parameter name and value to gAsDict:
             gAsDict.update({pName: parameters[i]})
         
-        with TT("Fixed Parameters: \n" + StringIndent(pformat(fixedParamDict),paramIndentLevel)):
-            pass
+        tt.print("Fixed Parameters: \n" + pformat(fixedParamDict))
         
-        with TT("Variable Parameters: \n" + StringIndent(pformat(gAsDict),paramIndentLevel)):
-            pass
-        
+        tt.print("Variable Parameters: \n" + pformat(gAsDict))
         
         #Also add our fixed variables:
         gAsDict.update(fixedParamDict)
@@ -85,7 +73,7 @@ def SSWrapper(friendDirectories, indexDefinition, parameters, ticToc=None):
         startTime=time.time()
         
         ##Use this instead of the stuff below if you want to break for pdb on errors:
-        #confusionMatrix=SSMatchAll(friendDirectories, indexDefinition, g)
+        #confusionMatrix=SSMatchAll(friendDirectories, indexDefinition, g, tt)
         #percentCorrect=ResultsJudge(confusionMatrix)
         
         #with TT("Trying parameters: \n" + StringIndent(pformat(gAsDict),paramIndentLevel)):
@@ -100,7 +88,8 @@ def SSWrapper(friendDirectories, indexDefinition, parameters, ticToc=None):
                 
                 #Set up a Process object.
                 ssProc= mp.Process( target=SSMatchAll, 
-                                    args=(friendDirectories, indexDefinition, g, False, ssQueue),
+                                    args=(friendDirectories, indexDefinition, g, tt, False, 
+                                          ssQueue),
                                     name='SSMatchAll')
                 
                 #Start the process running SSMatchAll.
@@ -122,8 +111,8 @@ def SSWrapper(friendDirectories, indexDefinition, parameters, ticToc=None):
                 percentCorrect=ResultsJudge(confusionMatrix)
 
             except Exception as e:
-                print(StringIndent('Error:  '+ str(e),errorIndentLevel), file=sys.stderr)
-                print(StringIndent(traceback.format_exc(),errorIndentLevel+2), file=sys.stderr)
+                tt.print('Error:  '+ str(e))
+                tt.print(traceback.format_exc())
                 #If we got an error there was 0 correct:
                 percentCorrect=0
                 raise
@@ -141,7 +130,7 @@ def SSWrapper(friendDirectories, indexDefinition, parameters, ticToc=None):
         #Combine the cost returned by SSMatchAll and the elapsed time to make a new cost.
         compositeCost=costFromAccuracy+costFromTime
         
-        print('SSWrapper: compositeCost: %f\tcostFromAccuracy: %f\tcostFromTime: %f' % \
+        tt.print('SSWrapper: compositeCost: %f\tcostFromAccuracy: %f\tcostFromTime: %f' % \
             (compositeCost, costFromAccuracy, costFromTime))
 
         #If that new cost is the lowest we've seen so far, save the model in memory for cbOptimize to 

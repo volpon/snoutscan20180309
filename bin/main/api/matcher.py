@@ -1,11 +1,9 @@
 from GlobalConstants import g as g_default
 from main.api.matches_refine import matches_refine
-from TicToc import TT
 import numpy as np
 import pickle
 import base64
 import cv2
-import sys
 import io
 
 #A search of nearest neighbor search implementations brings me to this page:
@@ -170,21 +168,26 @@ class ImageMatcher(object):
     
     '''
     
-    def __init__(self, friendFeatureDescriptors, g, index_definition=None,):
+    def __init__(self, friendFeatureDescriptors, g, tt, index_definition=None):
         '''
         Inputs:
             friendFeatureDescriptors    - The feature descriptors for all the friends, concatenated
                                           together.
+
+            tt                          - Which tt instance to use.
+            
             indexDefinition             - A string representing the faiss index setup to use, or ''
                                           or None to represent "use the default"
                                           
             g                      - Our global constants.
+            
 
 
         Side-effects:
             self.FeatureMatcher is created and the friendFeatureDescriptors are added to it and 
                 indexed.                                       
         '''     
+        TT=tt.TT
 
         numFriendFeatures,numDimensions=friendFeatureDescriptors.shape
         
@@ -315,7 +318,7 @@ class MatchResult(object):
         cv2.imwrite(path, self.image)
         
 
-def matcher_info_create(friends,index_definition, g):
+def matcher_info_create(friends,index_definition, g, tt):
     '''
     This function creates a pre-computed matcher and corresponding information we need to use it,
     given a set of friends and an index definition.
@@ -327,6 +330,7 @@ def matcher_info_create(friends,index_definition, g):
         indexDefinition - A string representing the faiss index setup to use, or ''
                           or None to represent "use the default"
         g               - Our global constants, or None if we should load the defaults.
+        tt              - which TicToc instance to use.
                           
     Output:
         matcher_info    - A tuple (friendKPPos, friendIds, matcher) where:
@@ -366,8 +370,7 @@ def matcher_info_create(friends,index_definition, g):
             fPhoto.set_binary(fPhoto.data, fPhoto.type)
 
         if fPhoto.featureDescriptors is None:
-            with TT('Warning:  Found a friend without featureDescriptors!'):
-                pass
+            tt.print('Warning:  Found a friend without featureDescriptors!')
                     
         #Get our features
         friendFeatureKeypoints=friend.photo.featureKeypoints
@@ -400,12 +403,12 @@ def matcher_info_create(friends,index_definition, g):
                'These should be the same.'
 
     #Make a matcher object using our friend image features:
-    matcher = ImageMatcher(friendDescriptors, g, index_definition)
+    matcher = ImageMatcher(friendDescriptors, g, tt, index_definition)
     
     return (friendKPPos, friendIds, matcher)
 
 def find_best_matches(image_data, image_type, friends, max_best_friends, g=None, f_ids_excluded=None,
-                      index_definition=None, matcher_info=None):
+                      index_definition=None, matcher_info=None, tt=None):
     '''
     This function finds the <num_best_friends> best matches for image_data among a collection of 
     friends (excluding the ones indexed by f_ids_excluded ), where each friend represents 
@@ -427,6 +430,7 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
                           to save computations.
                           Set as None to calculate it instead.  If this is provided, friends and 
                           matcher_info are ignored.
+        tt              - which ticToc instance to use, or None to use the default.
                               
     Outputs:
         best_indicies   - A list of indicies to the the num_best_friends closest matching friends.
@@ -451,6 +455,11 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
     if g is None:
         g=g_default
 
+#    if tt is None:
+#        tt=ticTocGlobalInstance
+        
+    TT=tt.TT
+
     subjectFeatures=ImageFeatures(g)
     
     #Make our features and keypoints.
@@ -465,7 +474,7 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
     if matcher_info==None:
         assert len(friends) >=1, 'Must have at least one friend to match with.'
 
-        matcher_info=matcher_info_create(friends,index_definition, g)
+        matcher_info=matcher_info_create(friends,index_definition, g, tt)
         
     #Unpack the variables:
     friendKPPos, friendIds, matcher = matcher_info
@@ -482,16 +491,16 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
     (matchedQueryTrainIds, matchDist) = matcher.match(subjectFeatureDescriptors, 
                                                       excludeFeatureMask,g)
     
-    with TT('Found %i matches based on ratio test.' % len(matchDist)): pass
+    tt.print('Found %i matches based on ratio test.' % len(matchDist))
     
     #Further filter these matches using our geometric constraints:
     (matchedQueryTrainIds, matchDist)=matches_refine( subjectKPPos,
                                                       friendKPPos, 
                                                       friendIds,
                                                       matchedQueryTrainIds, 
-                                                      matchDist, g)  
+                                                      matchDist, g)
 
-    with TT('Filtered to %i matches using RANSAC.' % len(matchDist)): pass
+    tt.print('Filtered to %i matches using RANSAC.' % len(matchDist))
     
     #These are the friendIds of the best-matched feature of each subject feature:
     friendIdsOfBestMatch=friendIds[matchedQueryTrainIds[:,1]]
@@ -530,7 +539,7 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
     
     
 def find_best_match(image_data, image_type, friends, g=None, index_definition=None, f_ids_excluded=None, 
-                    matcher_info=None):
+                    matcher_info=None, tt=None):
     '''
     This function finds the best match for image_data among a collection of friends, where
     each friend represents a photo of a dog, with accompanying metadata.
