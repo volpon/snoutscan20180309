@@ -1,4 +1,5 @@
-import multiprocessing as mp
+import multiprocessing
+import multiprocessing.dummy as mpThreadding
 from functools import wraps
 from copy import deepcopy
 from io import StringIO
@@ -11,31 +12,38 @@ if __name__=="__main__":
     #Import a path to the TicToc module:
     sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)),'..', "..", 'main', 'api'));                                                      
 
-from TicToc import tt
+from TicToc import tt as ttDefault
 
-def TTMap(functionToRun, collectionOfInputs, numJobs=None, ticToc=None):
+def TTMap(functionToRun, collectionOfInputs, tt, concurrency='multiprocessing', numJobs=None):
     '''
     This function runs the functionToRun with each entry of collectionOfInputs, in parallel,
     in such a way so that their TT output doesn't get garbled with eachother.
     
     Inputs:
-        functionToRun         - The function to run.  Must be threadsafe, and must accept an argument
-                                as the last argument, named tt, that specifies which ticToc 
-                                instance to use.
-        collectionOfInputs    - A collection of tuples of the inputs for each call to the function.
+        functionToRun         - The function to run.  Must be threadsafe, and must accept an 
+                                argument as the last argument, named tt, that specifies which  
+                                ticToc instance to use.
+        collectionOfInputs    - A collection of tuples of the inputs for each call to the function, 
+                                excluding the tt argument.
+        tt                    - a specific ticToc instance to start with.  If None, use the global
+                                one.
+        concurrency           - A string of either 'multiprocessing' or 'threading', representing
+                                which type of parallelization to use.  Threadding is really only
+                                useful for code that releases the Global Interpreter Lock.
         numJobs               - How many parallel processes to start.  None= ask the system for how 
                                 many cpus it sees and use that many processes.
-        ticToc                - a specific ticToc instance to start with.  If None, use the global
-                                one.
                                 
     Outputs:
         resultsList           - a list of whatever each run of the function output.  One entry per 
                                 entry in collectionOfInputs.
     '''
     
-    #Make sure we have a ticToc to use:
-    if ticToc is None:
-        ticToc=tt
+    if concurrency=='multiprocessing':
+        mp=multiprocessing
+    elif concurrency=='threading':
+        mp=mpThreadding
+    else:
+        assert False, 'Unexpected concurrency argument: %s' % concurrency      
     
     #Make our pool:
     pool=mp.Pool(numJobs)
@@ -46,7 +54,7 @@ def TTMap(functionToRun, collectionOfInputs, numJobs=None, ticToc=None):
     #Iterate over all of the inputs we have:
     for inputs in collectionOfInputs:
         
-        wrappedFunction=_TTStringIOWrap(functionToRun, ticToc)
+        wrappedFunction=_TTStringIOWrap(functionToRun, tt)
         
         asyncResult=pool.apply_async(func=wrappedFunction, args=inputs, 
                                             callback=_WorkerResultsProcess)

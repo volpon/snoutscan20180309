@@ -210,7 +210,7 @@ class ImageMatcher(object):
         with TT('      Total num features in  index: %i' % self.featureMatcher.ntotal):
             pass
                                                         
-    def match(self, subjectFeatureDescriptors, excludeFeatureMask, g):
+    def match(self, subjectFeatureDescriptors, excludeFeatureMask, g, tt):
         '''
         This function matches the given subject subjectImg with a given friend subjectImg based on 
         the features in friendFeatureDescriptors.
@@ -225,6 +225,8 @@ class ImageMatcher(object):
                                       excluded from being considered a match.
                                       
             g                       - Our global constants.
+            
+            tt                      - Our ticToc instance.
 
                                       
         Outputs:
@@ -243,66 +245,68 @@ class ImageMatcher(object):
         #How many subject features we have:
         nSubFeatures=subjectFeatureDescriptors.shape[0]
         
-        # For each of the subject image features, find the closest feature descriptor in the 
-        #friend image:
-        #Arguments: queryDescriptors, k)
-        #Return them as a (numSubjectFeatures x k) matrix of distances and ids, 
-        # with rows sorted in increasing distance
-        distances,ids =self.featureMatcher.search(subjectFeatureDescriptors, numBestFeaturesToFind);
+        with tt.TT('Searching the index'):
+            # For each of the subject image features, find the closest feature descriptor in the 
+            #friend image:
+            #Arguments: queryDescriptors, k)
+            #Return them as a (numSubjectFeatures x k) matrix of distances and ids, 
+            # with rows sorted in increasing distance
+            distances,ids =self.featureMatcher.search(subjectFeatureDescriptors, numBestFeaturesToFind);
         
-        #Convert excludeFeatureMask to a array of Ids to exclude:
-        excludeFriendFeatureIds=np.where(excludeFeatureMask)[0]
-        
-        #The subject feature id and friends feature ids of "good matches"
-        matchedQueryTrainIdList=[]
-        #Their corresponding distance:
-        matchDistList=[]
-        
-        # Check to make sure that the best match is at least 1/g.bestToSecondBestDistRatio
-        # as close as the second best match, and only use those:
-        for i in range(nSubFeatures):
+        with tt.TT('Filtering the results'):
+            #Convert excludeFeatureMask to a array of Ids to exclude:
+            excludeFriendFeatureIds=np.where(excludeFeatureMask)[0]
             
-            #Iterate over our subject matches and find the first one that isn't in 
-            # excludeFriendFeatureIds, and call it bestFriendMatchId
-            for bestFriendMatchId in range(numBestFeaturesToFind-1):
-                subjectFeatureId=ids[i,bestFriendMatchId]
-                
-                #Break when we have the first one not excluded:
-                if subjectFeatureId not in excludeFriendFeatureIds:
-                    break
+            #The subject feature id and friends feature ids of "good matches"
+            matchedQueryTrainIdList=[]
+            #Their corresponding distance:
+            matchDistList=[]
             
-            #Search for the second best subject id that isn't in our excludeFeatureFriendsId:
-            for secondBestFriendMatchId in range(bestFriendMatchId+1,numBestFeaturesToFind):
-                subjectFeatureId=ids[i,secondBestFriendMatchId]
-                #Break when we have the first one not excluded:
-                if subjectFeatureId not in excludeFriendFeatureIds:
-                    break
+            # Check to make sure that the best match is at least 1/g.bestToSecondBestDistRatio
+            # as close as the second best match, and only use those:
+            for i in range(nSubFeatures):
                 
-                assert secondBestFriendMatchId != numBestFeaturesToFind-1, \
-                    'All matching subject features are excluded. Increase numBestFeaturesToFind.'
-            
-            #Get what we need from the results:
-            bestSubFeatMatchId=ids[i,bestFriendMatchId]
-            bestMatchDist=distances[i,bestFriendMatchId]
-            secondBestDist=distances[i,secondBestFriendMatchId]
-
-            #Do the ratio test:
-            if (    bestMatchDist < g.bestToSecondBestDistRatio*secondBestDist \
-                    and bestMatchDist<g.matchDistanceThreshold):
+                #Iterate over our subject matches and find the first one that isn't in 
+                # excludeFriendFeatureIds, and call it bestFriendMatchId
+                for bestFriendMatchId in range(numBestFeaturesToFind-1):
+                    subjectFeatureId=ids[i,bestFriendMatchId]
+                    
+                    #Break when we have the first one not excluded:
+                    if subjectFeatureId not in excludeFriendFeatureIds:
+                        break
                 
-                #Then, add the subject feature and friend feature to our "best matches" lists:
-                matchedQueryTrainIdList.append((i,bestSubFeatMatchId));
-                matchDistList.append(bestMatchDist)
+                #Search for the second best subject id that isn't in our excludeFeatureFriendsId:
+                for secondBestFriendMatchId in range(bestFriendMatchId+1,numBestFeaturesToFind):
+                    subjectFeatureId=ids[i,secondBestFriendMatchId]
+                    #Break when we have the first one not excluded:
+                    if subjectFeatureId not in excludeFriendFeatureIds:
+                        break
+                    
+                    assert secondBestFriendMatchId != numBestFeaturesToFind-1, \
+                        'All matching subject features are excluded. Increase numBestFeaturesToFind.'
                 
-
-        #A special case for when there aren't any matches:
-        if len(matchedQueryTrainIdList)==0:
-            matchedQueryTrainIds=np.zeros((0,2), dtype='int')
-            matchDist=np.zeros((0), dtype='float32')
-        else:
-            #Just convert the lists to np arrays:
-            matchedQueryTrainIds=np.array(matchedQueryTrainIdList)
-            matchDist=np.array(matchDistList)
+                #Get what we need from the results:
+                bestSubFeatMatchId=ids[i,bestFriendMatchId]
+                bestMatchDist=distances[i,bestFriendMatchId]
+                secondBestDist=distances[i,secondBestFriendMatchId]
+    
+                #Do the ratio test:
+                if (    bestMatchDist < g.bestToSecondBestDistRatio*secondBestDist \
+                        and bestMatchDist<g.matchDistanceThreshold):
+                    
+                    #Then, add the subject feature and friend feature to our "best matches" lists:
+                    matchedQueryTrainIdList.append((i,bestSubFeatMatchId));
+                    matchDistList.append(bestMatchDist)
+                    
+    
+            #A special case for when there aren't any matches:
+            if len(matchedQueryTrainIdList)==0:
+                matchedQueryTrainIds=np.zeros((0,2), dtype='int')
+                matchDist=np.zeros((0), dtype='float32')
+            else:
+                #Just convert the lists to np arrays:
+                matchedQueryTrainIds=np.array(matchedQueryTrainIdList)
+                matchDist=np.array(matchDistList)
                         
         return (matchedQueryTrainIds, matchDist)
 
@@ -493,7 +497,7 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
     #Using our subject-image based matcher, calculate how well it matches with this specific 
     # subject image.
     (matchedQueryTrainIds, matchDist) = matcher.match(subjectFeatureDescriptors, 
-                                                      excludeFeatureMask,g)
+                                                      excludeFeatureMask,g, tt)
     
     tt.print('Found %i matches based on ratio test.' % len(matchDist))
     
@@ -563,8 +567,12 @@ def find_best_match(image_data, image_type, friends, g=None, index_definition=No
         find_best_matches(image_data, image_type, friends, 1, g, f_ids_excluded, index_definition, 
                           matcher_info, tt)
 
-    #Get our info for the bet matching friend:
-    best_db_id=best_db_ids_sorted[0]
+    if friends is not None:
+        #Get our info for the bet matching friend:
+        best_db_id=best_db_ids_sorted[0]
+    else:
+        best_db_id=None
+    
     percentOfSubjectFeaturesMatched=percentMatched[0]
     friend_id=friend_ids[0]
     

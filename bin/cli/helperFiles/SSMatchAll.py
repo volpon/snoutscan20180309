@@ -91,7 +91,7 @@ def SSMatchAll(friendDirectories, indexDefinition, g, tt, displayImages=True, mp
 #            for friendLoadArgs in friendLoadArgsList:
 #                friends.append(FriendLoad(friendLoadArgs))
             
-            friends=TTMap(FriendLoad, friendLoadArgsList)
+            friends=TTMap(FriendLoad, friendLoadArgsList, tt)
             
         #Get a list of our dogNames:
         dogNames=list(dogNamesOD.keys())
@@ -108,18 +108,15 @@ def SSMatchAll(friendDirectories, indexDefinition, g, tt, displayImages=True, mp
         with TT('Matching friends in parallel'):
             
             #Make a big list of all of the arguments we'll use for FriendMatch:
-            friendMatchArgs=[(matcherInfo, friend, friendNum, g, tt)
+            friendMatchArgs=[(matcherInfo, friend, friendNum, g)
                                 for (friendNum, friend) in enumerate(friends)]
             
-            #This is a test to show why the TTMap likely errors out and simplify the problem:
-            test=pickle.dumps(matcherInfo[2])
-            
-            #NOTE:  This currently errors because of the inability to pickle the indexer.
-            #Do the matching in parallel:
-            #I believe the solution is to use faiss threads or the multiprocessing.dummy module as
-            #outlined here.  Perhapse I can edit TTMap to support the multiprocessing.dummy?
-            #https://github.com/facebookresearch/faiss/issues/227#issuecomment-396154885
-            matchResults=TTMap(FriendMatch, friendMatchArgs)
+            ##The sequential version, for debugging:
+            #matchResults=[]
+            #for (matcherInfo, friend, friendNum, g, tt) in friendMatchArgs:
+            #    matchResults.append(FriendMatch(matcherInfo, friend, friendNum, g, tt))
+                
+            matchResults=TTMap(FriendMatch, friendMatchArgs, tt, 'threading')
         
         with TT('Displaying results:'):
             #Output the results, and update our confusion matrix:
