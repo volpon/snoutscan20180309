@@ -419,12 +419,13 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
         image_data      - the subject image data, in numpy format.
         image_type      - Not currently used.
         friends         - A collection of Friend() objects representing the pictures the given image
-                          could match to.
+                          could match to, or None if we have matcher_info and don't need to return 
+                          a db id.
         max_best_friends- n in the sentence "Find at most n best matching friends that aren't 
                           excluded"
         g               - Our global constants, or None if we should load the defaults.
         f_ids_excluded  - A collection of the friend ids (indicies into friends) to not match with.
-        indexDefinition - A string representing the faiss index setup to use, or ''
+        index_definition- A string representing the faiss index setup to use, or ''
                           or None to represent "use the default"
         matcher_info    - A tuple including a matcher and some other internal variables that can be
                           re-used between calls if friends and matcerh_info stay the same 
@@ -434,7 +435,11 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
         tt              - which ticToc instance to use, or None to use the default.
                               
     Outputs:
-        best_indicies   - A list of indicies to the the num_best_friends closest matching friends.
+        bestFriendDbIdsSorted
+                        - The database ids of the friends corresponding to the indicies in 
+                          friendIdsSorted. 
+        
+        friendIdsSorted - A list of indicies to the the num_best_friends closest matching friends.
                           Sorted in decending order by quality metric.
         pctSubjectFeaturesMatchedToFriend
                         - The quality metric for each best friend, sorted in descending order.
@@ -530,8 +535,11 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
     friendIdsSorted=friendIdsSorted[:max_best_friends].tolist()
     pctSubjectFeaturesMatchedToFriend=pctSubjectFeaturesMatchedToFriend[:max_best_friends].tolist()
     
-    #Convert to database ids:
-    bestFriendDbIdsSorted=[ friends[friendId].id for friendId in friendIdsSorted ]
+    if friends is not None:
+        #Convert to database ids:
+        bestFriendDbIdsSorted=[ friends[friendId].id for friendId in friendIdsSorted ]
+    else:
+        bestFriendDbIdsSorted=None
     
     #Return our list of best indicies to friends[] and their corresponding best scores:
     return bestFriendDbIdsSorted, pctSubjectFeaturesMatchedToFriend, friendIdsSorted, matcher_info

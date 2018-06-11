@@ -1,11 +1,11 @@
-from main.api.matcher import matcher_info_create, find_best_match
+from main.api.matcher import matcher_info_create
 from collections import OrderedDict
 from FriendLoad import FriendLoad
 from TTMap import TTMap
 import pandas as pd
 import numpy as np
 import traceback
-import sys
+from FriendMatch import FriendMatch
 import os
 
 def SSMatchAll(friendDirectories, indexDefinition, g, tt, displayImages=True, mpQueue=None):
@@ -106,45 +106,40 @@ def SSMatchAll(friendDirectories, indexDefinition, g, tt, displayImages=True, mp
             #Initialize our matcherInfo as None so we build it on the first use:
             matcherInfo=matcher_info_create(friends,indexDefinition, g, tt)
                 
-        with TT('Matching'):
-            #For each friend:
-            for friendNum in range(numFriends):
-                #Get the friend:
-                friend=friends[friendNum]
-                with TT('Finding matches for %s' % friend.breed):
-                    
-                    #This is a list of friendIds to not consider as a candidate for "best friend" - 
-                    #basically, exclude the current image so we don't match to it:
-                    fIdsExcluded=[friendNum]
-                    
-                    subjectImgBinary,subjectImgType=friend.photo.get_binary()
-                    
-                    #Find the other friend that matches this friend best:
-                    best_db_id, percentOfSubjectFeaturesMatched, best_index, matcherInfo= \
-                        find_best_match(subjectImgBinary, subjectImgType, friends, g,
-                                        indexDefinition, fIdsExcluded, matcherInfo, tt)
-                    
-                    #Get our names:
-                    dogName=friend.name
-                    matchedDogName=friends[best_index].name
-                    
-                    #Get our file names:
-                    actualDogFile=friend.breed
-                    matchedDogFile=friends[best_index].breed
-                    
-                    #Convert them to indicies to dogNames:
-                    dogNameIndex=dogNames.index(dogName)
-                    matchedDogNameIndex=dogNames.index(matchedDogName)
-                    
-                    #Increment that position in the confusion matrix:
-                    confusionMatrixData[dogNameIndex][matchedDogNameIndex]+=1
-                    
-                    #Print info about this best match:
-                    tt.print('      %s:\t%s (%s) => %s (%s):\t%f' %(
-                                    str(dogName == matchedDogName),
-                                    actualDogFile, dogName, matchedDogFile, matchedDogName, 
-                                    percentOfSubjectFeaturesMatched))
+        with TT('Matching friends in parallel'):
+            
+            #Make a big list of all of the arguments we'll use for FriendMatch:
+            friendMatchArgs=[(matcherInfo, friend, friendNum, g, tt)
+                                for (friendNum, friend) in enumerate(friends)]
+            
+            #Do the matching in parallel:
+            matchResults=TTMap(FriendMatch, friendMatchArgs)
         
+        with TT('Displaying results:'):
+            #Output the results, and update our confusion matrix:
+            for (friend, best_index, percentOfSubjectFeaturesMatched) in matchResults:
+                
+                #Get our names:
+                dogName=friend.name
+                matchedDogName=friends[best_index].name
+                
+                #Get our file names:
+                actualDogFile=friend.breed
+                matchedDogFile=friends[best_index].breed
+                
+                #Convert them to indicies to dogNames:
+                dogNameIndex=dogNames.index(dogName)
+                matchedDogNameIndex=dogNames.index(matchedDogName)
+                
+                #Increment that position in the confusion matrix:
+                confusionMatrixData[dogNameIndex][matchedDogNameIndex]+=1
+                
+                #Print info about this best match:
+                tt.print('%s:\t%s (%s) => %s (%s):\t%f' %(
+                            str(dogName == matchedDogName),
+                            actualDogFile, dogName, matchedDogFile, matchedDogName, 
+                            percentOfSubjectFeaturesMatched))
+    
         #Make a pandas array that bundles the dog names and confusion matrix together for display:
         confusionMatrix=pd.DataFrame(data=confusionMatrixData, index=dogNames, columns=dogNames,
                                     dtype=int)
