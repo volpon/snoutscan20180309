@@ -1,11 +1,12 @@
 from main.api.matcher import matcher_info_create
 from collections import OrderedDict
+from FriendMatch import FriendMatch
 from FriendLoad import FriendLoad
 from TTMap import TTMap
 import pandas as pd
 import numpy as np
 import traceback
-from FriendMatch import FriendMatch
+import pickle
 import os
 
 def SSMatchAll(friendDirectories, indexDefinition, g, tt, displayImages=True, mpQueue=None):
@@ -92,8 +93,6 @@ def SSMatchAll(friendDirectories, indexDefinition, g, tt, displayImages=True, mp
             
             friends=TTMap(FriendLoad, friendLoadArgsList)
             
-        numFriends=len(friends)
-        
         #Get a list of our dogNames:
         dogNames=list(dogNamesOD.keys())
         
@@ -112,6 +111,10 @@ def SSMatchAll(friendDirectories, indexDefinition, g, tt, displayImages=True, mp
             friendMatchArgs=[(matcherInfo, friend, friendNum, g, tt)
                                 for (friendNum, friend) in enumerate(friends)]
             
+            #This is a test to show why the TTMap likely errors out and simplify the problem:
+            test=pickle.dumps(matcherInfo[2])
+            
+            #NOTE:  This currently errors because of the inability to pickle the indexer.
             #Do the matching in parallel:
             matchResults=TTMap(FriendMatch, friendMatchArgs)
         
