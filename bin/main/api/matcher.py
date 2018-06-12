@@ -253,7 +253,7 @@ class ImageMatcher(object):
             # with rows sorted in increasing distance
             distances,ids =self.featureMatcher.search(subjectFeatureDescriptors, numBestFeaturesToFind);
         
-        with tt.TT('Filtering the results'):
+        with tt.TT('Applying the ratio test'):
             #Convert excludeFeatureMask to a array of Ids to exclude:
             excludeFriendFeatureIds=np.where(excludeFeatureMask)[0]
             
@@ -454,96 +454,104 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
                           If it's given as an input, it's output again unchanged.
     '''
     
-    #Take care of the default:
-    if f_ids_excluded is None:
-        f_ids_excluded=[]
+    TT=tt.TT
     
-    if image_data is None:
-        return None, None
-    
-    #If we don't have a g.  Load the defualts from our best optimization run so far:
-    if g is None:
-        g=g_default
-
-    if tt is None:
-        tt=ticTocGlobalInstance
+    with TT('Making subject image features'):
+        #Take care of the default:
+        if f_ids_excluded is None:
+            f_ids_excluded=[]
         
-    subjectFeatures=ImageFeatures(g)
+        if image_data is None:
+            return None, None
+        
+        #If we don't have a g.  Load the defualts from our best optimization run so far:
+        if g is None:
+            g=g_default
     
-    #Make our features and keypoints.
-    subjectKPPos, subjectFeatureDescriptorsBytes=subjectFeatures.from_image(image_data,g)
-    
-    #Unpack the bytes now that we're about to use them:
-    subjectFeatureDescriptors=np.unpackbits(subjectFeatureDescriptorsBytes,axis=1).astype('float32')
-    
-    numSubjectFeatures=subjectFeatureDescriptors.shape[0]
+        if tt is None:
+            tt=ticTocGlobalInstance
+            
+        subjectFeatures=ImageFeatures(g)
+        
+        #Make our features and keypoints.
+        subjectKPPos, subjectFeatureDescriptorsBytes=subjectFeatures.from_image(image_data,g)
+        
+        #Unpack the bytes now that we're about to use them:
+        subjectFeatureDescriptors=np.unpackbits(subjectFeatureDescriptorsBytes,axis=1).astype('float32')
+        
+        numSubjectFeatures=subjectFeatureDescriptors.shape[0]
       
     #If we don't already have a matcher and corresponding info, create one:
     if matcher_info==None:
-        assert len(friends) >=1, 'Must have at least one friend to match with.'
-
-        matcher_info=matcher_info_create(friends,index_definition, g, tt)
+        
+        with TT('Making index.'):
+            assert len(friends) >=1, 'Must have at least one friend to match with.'
+    
+            matcher_info=matcher_info_create(friends,index_definition, g, tt)
         
     #Unpack the variables:
     friendKPPos, friendIds, matcher = matcher_info
-        
-    #Convert f_ids_excluded to featureIdsExcluded:
-    #Initialize a binary mask saying if we should exclude this feature:
-    excludeFeatureMask=np.zeros((len(friendIds)), dtype=bool)
-    for i in f_ids_excluded:
-        #Add any to the mask that have value in friendIds equal to i:
-        excludeFeatureMask=np.bitwise_or(excludeFeatureMask, friendIds==i)
+    
+    with TT('Creating excludeFeatureMask'):
+        #Convert f_ids_excluded to featureIdsExcluded:
+        #Initialize a binary mask saying if we should exclude this feature:
+        excludeFeatureMask=np.zeros((len(friendIds)), dtype=bool)
+        for i in f_ids_excluded:
+            #Add any to the mask that have value in friendIds equal to i:
+            excludeFeatureMask=np.bitwise_or(excludeFeatureMask, friendIds==i)
 
-    #Using our subject-image based matcher, calculate how well it matches with this specific 
-    # subject image.
-    (matchedQueryTrainIds, matchDist) = matcher.match(subjectFeatureDescriptors, 
-                                                      excludeFeatureMask,g, tt)
+    with TT("Using matcher.match to find a match"):
+        #Using our subject-image based matcher, calculate how well it matches with this specific 
+        # subject image.
+        (matchedQueryTrainIds, matchDist) = matcher.match(subjectFeatureDescriptors, 
+                                                          excludeFeatureMask,g, tt)
     
-    tt.print('Found %i matches based on ratio test.' % len(matchDist))
-    
-    #Further filter these matches using our geometric constraints:
-    (matchedQueryTrainIds, matchDist)=matches_refine( subjectKPPos,
-                                                      friendKPPos, 
-                                                      friendIds,
-                                                      matchedQueryTrainIds, 
-                                                      matchDist, g)
-
-    tt.print('Filtered to %i matches using RANSAC.' % len(matchDist))
-    
-    #These are the friendIds of the best-matched feature of each subject feature:
-    friendIdsOfBestMatch=friendIds[matchedQueryTrainIds[:,1]]
-    
-    #This is the unique set of friendIds represented in this set, and the number of features 
-    #matches that correspond to that friend:
-    [friendIdsMatched, numMatches]=np.unique(friendIdsOfBestMatch, return_counts=True)
-    
-    #Return a list of indicies saying how we would sort numMatches in descending order:
-    howToSort=np.flip(np.argsort(numMatches),0)
-    
-    ##TODO:  This would be a good place to display some info about what's matching and what isn't
-    # but we would need the friend names and maybe file names for that to make sense.
-    
-    #Make sure we return at least one as "best", even if it's a sucky one with 0 confidence:    
-    if len(howToSort) == 0:
-        friendIdsSorted=np.array([0])
-        numMatchesSorted=np.array([0])
-    else:
-        #Sort them in descending order by numMatches:
-        friendIdsSorted=friendIdsMatched[howToSort]
-        numMatchesSorted=numMatches[howToSort]
+    with TT('Filtering matches to find just the best ones'):
+        tt.print('Found %i matches based on ratio test.' % len(matchDist))
         
-    #Convert to a percent:
-    pctSubjectFeaturesMatchedToFriend=numMatchesSorted/numSubjectFeatures
+        #Further filter these matches using our geometric constraints:
+        (matchedQueryTrainIds, matchDist)=matches_refine( subjectKPPos,
+                                                          friendKPPos, 
+                                                          friendIds,
+                                                          matchedQueryTrainIds, 
+                                                          matchDist, g)
     
-    #Make sure we only return at most max_best_friends results:
-    friendIdsSorted=friendIdsSorted[:max_best_friends].tolist()
-    pctSubjectFeaturesMatchedToFriend=pctSubjectFeaturesMatchedToFriend[:max_best_friends].tolist()
-    
-    if friends is not None:
-        #Convert to database ids:
-        bestFriendDbIdsSorted=[ friends[friendId].id for friendId in friendIdsSorted ]
-    else:
-        bestFriendDbIdsSorted=None
+        tt.print('Filtered to %i matches using RANSAC.' % len(matchDist))
+        
+        #These are the friendIds of the best-matched feature of each subject feature:
+        friendIdsOfBestMatch=friendIds[matchedQueryTrainIds[:,1]]
+        
+        #This is the unique set of friendIds represented in this set, and the number of features 
+        #matches that correspond to that friend:
+        [friendIdsMatched, numMatches]=np.unique(friendIdsOfBestMatch, return_counts=True)
+        
+        #Return a list of indicies saying how we would sort numMatches in descending order:
+        howToSort=np.flip(np.argsort(numMatches),0)
+        
+        ##TODO:  This would be a good place to display some info about what's matching and what isn't
+        # but we would need the friend names and maybe file names for that to make sense.
+        
+        #Make sure we return at least one as "best", even if it's a sucky one with 0 confidence:    
+        if len(howToSort) == 0:
+            friendIdsSorted=np.array([0])
+            numMatchesSorted=np.array([0])
+        else:
+            #Sort them in descending order by numMatches:
+            friendIdsSorted=friendIdsMatched[howToSort]
+            numMatchesSorted=numMatches[howToSort]
+            
+        #Convert to a percent:
+        pctSubjectFeaturesMatchedToFriend=numMatchesSorted/numSubjectFeatures
+        
+        #Make sure we only return at most max_best_friends results:
+        friendIdsSorted=friendIdsSorted[:max_best_friends].tolist()
+        pctSubjectFeaturesMatchedToFriend=pctSubjectFeaturesMatchedToFriend[:max_best_friends].tolist()
+        
+        if friends is not None:
+            #Convert to database ids:
+            bestFriendDbIdsSorted=[ friends[friendId].id for friendId in friendIdsSorted ]
+        else:
+            bestFriendDbIdsSorted=None
     
     #Return our list of best indicies to friends[] and their corresponding best scores:
     return bestFriendDbIdsSorted, pctSubjectFeaturesMatchedToFriend, friendIdsSorted, matcher_info

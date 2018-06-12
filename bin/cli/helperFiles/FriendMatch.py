@@ -23,17 +23,21 @@ def FriendMatch(matcherInfo, friend, friendNum, g, tt):
                           image features that are matched with the friend image.
     '''
     
-    with tt.TT('Finding matches for %s' % friend.breed):
+    TT=tt.TT
+    
+    with TT('Finding matches for %s' % friend.breed):
                 
         #This is a list of friendIds to not consider as a candidate for "best friend" - 
         #basically, exclude the current image so we don't match to it:
         fIdsExcluded=[friendNum]
         
-        subjectImgBinary,subjectImgType=friend.photo.get_binary()
+        with TT('Getting photo'):
+            subjectImgBinary,subjectImgType=friend.photo.get_binary()
         
-        #Find the other friend that matches this friend best:
-        best_db_id, percentOfSubjectFeaturesMatched, best_index, matcherInfo= \
-            find_best_match(subjectImgBinary, subjectImgType, None, g,
-                            None, fIdsExcluded, matcherInfo, tt)
+        with TT('Finding best match'):
+            #Find the other friend that matches this friend best:
+            best_db_id, percentOfSubjectFeaturesMatched, best_index, matcherInfo= \
+                find_best_match(subjectImgBinary, subjectImgType, None, g,
+                                None, fIdsExcluded, matcherInfo, tt)
             
         return (friend, best_index, percentOfSubjectFeaturesMatched)

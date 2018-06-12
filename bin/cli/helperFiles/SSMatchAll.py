@@ -111,12 +111,12 @@ def SSMatchAll(friendDirectories, indexDefinition, g, tt, displayImages=True, mp
             friendMatchArgs=[(matcherInfo, friend, friendNum, g)
                                 for (friendNum, friend) in enumerate(friends)]
             
-            ##The sequential version, for debugging:
-            #matchResults=[]
-            #for (matcherInfo, friend, friendNum, g, tt) in friendMatchArgs:
-            #    matchResults.append(FriendMatch(matcherInfo, friend, friendNum, g, tt))
+            #The sequential version, for debugging:
+            matchResults=[]
+            for (matcherInfo, friend, friendNum, g) in friendMatchArgs:
+                matchResults.append(FriendMatch(matcherInfo, friend, friendNum, g, tt))
                 
-            matchResults=TTMap(FriendMatch, friendMatchArgs, tt, 'threading')
+            #matchResults=TTMap(FriendMatch, friendMatchArgs, tt, 'threading')
         
         with TT('Displaying results:'):
             #Output the results, and update our confusion matrix:
