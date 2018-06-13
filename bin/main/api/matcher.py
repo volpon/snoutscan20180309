@@ -454,6 +454,9 @@ def find_best_matches(image_data, image_type, friends, max_best_friends, g=None,
                           If it's given as an input, it's output again unchanged.
     '''
     
+    if tt is None:
+        tt= ticTocGlobalInstance
+    
     TT=tt.TT
     
     with TT('Making subject image features'):
